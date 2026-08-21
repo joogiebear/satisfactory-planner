@@ -423,35 +423,41 @@ function buildTree(plan: Plan, targets: PlanTarget[], importable: Set<string>): 
 
     if (!madeBy.length) {
       return {
-        id, item, ratePerMin: rate, step: null,
+        id, item, ratePerMin: rate, step: null, machines: 0, powerMW: 0,
         kind: item.isRaw ? 'raw' : importable.has(itemKey) ? 'imported' : 'raw',
         children: [], isRepeat: false, depth,
       }
     }
+
+    const total = production.get(itemKey) ?? 0
+    // This branch consumes `rate` of the item's `total` output, so it owns that
+    // fraction of the machines and power that produce it.
+    const shareOfStep = total > EPS ? rate / total : 0
+    const machines = madeBy.reduce((n, s2) => n + s2.machines * shareOfStep, 0)
+    const powerMW = madeBy.reduce((n, s2) => n + s2.powerMW * shareOfStep, 0)
+
     if (path.has(itemKey)) {
       // Recycling loop: stop here so the tree stays finite, and flag it.
       return {
-        id, item, ratePerMin: rate, step: madeBy[0],
+        id, item, ratePerMin: rate, step: madeBy[0], machines, powerMW,
         kind: 'byproduct-loop', children: [], isRepeat: true, depth,
       }
     }
 
-    const total = production.get(itemKey) ?? 0
     const nextPath = new Set(path).add(itemKey)
     const children: PlanNode[] = []
 
     for (const step of madeBy) {
-      const madeHere = step.outputs.find((o) => o.item.key === itemKey)?.ratePerMin ?? 0
-      if (madeHere <= EPS || total <= EPS) continue
-      // Fraction of this step's run rate needed to cover our share of `rate`.
-      const share = (rate * (madeHere / total)) / madeHere
       for (const input of step.inputs) {
-        const childRate = input.ratePerMin * share
+        const childRate = input.ratePerMin * shareOfStep
         if (childRate > EPS) children.push(visit(input.item.key, childRate, nextPath, depth + 1))
       }
     }
 
-    return { id, item, ratePerMin: rate, step: madeBy[0], kind: 'produced', children, isRepeat: false, depth }
+    return {
+      id, item, ratePerMin: rate, step: madeBy[0], machines, powerMW,
+      kind: 'produced', children, isRepeat: false, depth,
+    }
   }
 
   return targets.map((t) => visit(t.item, t.ratePerMin, new Set(), 0))

@@ -195,6 +195,13 @@ export interface PlanNode {
   /** Rate of this item consumed by the parent edge. */
   ratePerMin: number
   step: ProductionStep | null
+  /**
+   * Machines and power for *this branch's share* of the step. An item made once
+   * but consumed in several places is split proportionally, so the shares add
+   * back up to the step total rather than repeating it at every use.
+   */
+  machines: number
+  powerMW: number
   kind: 'produced' | 'raw' | 'imported' | 'byproduct-loop'
   children: PlanNode[]
   /** True when this item already appears higher in the tree (cycle guard). */
