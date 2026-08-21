@@ -1,0 +1,464 @@
+"""
+Extract a clean production-planning database from Satisfactory's shipped docs.
+
+The game ships its full item/recipe/building definitions in
+    <install>/CommunityResources/Docs/en-US.json
+as UTF-16LE JSON, where struct-valued fields are Unreal's text format rather
+than nested JSON. This script parses those, normalises the units, and writes a
+compact game-data.json for the planner to consume.
+
+Unit notes (verified against in-game values):
+  * Fluid/gas amounts in recipes are stored in centilitres -> divide by 1000.
+  * Conveyor mSpeed is cm/min -> items/min = mSpeed / 2.
+  * Pipeline mFlowLimit is m3/s -> m3/min = mFlowLimit * 60.
+  * Extractor rate = mItemsPerCycle / mExtractCycleTime * 60 (then fluid-scaled).
+
+Usage:
+    python tools/extract_game_data.py [--docs PATH] [--out PATH]
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+# --------------------------------------------------------------------------
+# Locating the game
+# --------------------------------------------------------------------------
+
+STEAM_APP_ID = "526870"
+FLUID_FORMS = {"RF_LIQUID", "RF_GAS"}
+FLUID_SCALE = 1000.0
+
+
+def find_docs() -> Path | None:
+    """Locate en-US.json by walking Steam's library folder registry."""
+    roots = [
+        Path("C:/Program Files (x86)/Steam"),
+        Path("C:/Program Files/Steam"),
+    ]
+    libraries: list[Path] = []
+    for root in roots:
+        vdf = root / "steamapps" / "libraryfolders.vdf"
+        if not vdf.exists():
+            continue
+        text = vdf.read_text(encoding="utf-8", errors="replace")
+        # Each library block has a "path" line; collect them all.
+        for match in re.finditer(r'"path"\s+"([^"]+)"', text):
+            libraries.append(Path(match.group(1).replace("\\\\", "\\")))
+    libraries.extend(roots)
+
+    for lib in libraries:
+        candidate = (
+            lib / "steamapps" / "common" / "Satisfactory"
+            / "CommunityResources" / "Docs" / "en-US.json"
+        )
+        if candidate.exists():
+            return candidate
+    return None
+
+
+# --------------------------------------------------------------------------
+# Unreal text-format parsing
+# --------------------------------------------------------------------------
+
+# Matches: ItemClass="...'/Game/.../Desc_IronOre.Desc_IronOre_C'",Amount=3
+ITEM_AMOUNT_RE = re.compile(
+    r'ItemClass\s*=\s*"[^"]*?[\'"]?(?:/[\w\-/]+\.)?(?P<cls>\w+_C)[\'"]?"'
+    r'\s*,\s*Amount\s*=\s*(?P<amt>[\d.]+)'
+)
+
+# Matches a trailing class name inside a quoted object path.
+CLASS_PATH_RE = re.compile(r'(?:/[\w\-/]+\.)?(\w+_C)')
+
+
+def parse_item_amounts(raw: str | None) -> list[dict]:
+    """Parse an mIngredients / mProduct field into [{item, amount}]."""
+    if not raw:
+        return []
+    out = []
+    for m in ITEM_AMOUNT_RE.finditer(raw):
+        out.append({"item": m.group("cls"), "amount": float(m.group("amt"))})
+    return out
+
+
+def parse_class_list(raw: str | None) -> list[str]:
+    """Parse a quoted list of object paths into bare class names."""
+    if not raw:
+        return []
+    out = []
+    for chunk in re.findall(r'"([^"]+)"', raw):
+        m = CLASS_PATH_RE.search(chunk)
+        if m:
+            out.append(m.group(1))
+        elif chunk.startswith("/Script/"):
+            out.append(chunk.rsplit(".", 1)[-1])
+    return out
+
+
+def parse_forms(raw: str | None) -> list[str]:
+    """Parse '(RF_LIQUID,RF_GAS)' into ['RF_LIQUID', 'RF_GAS']."""
+    if not raw:
+        return []
+    return re.findall(r"RF_\w+", raw)
+
+
+def fnum(value, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def clean_text(value: str | None) -> str:
+    """Strip the narrow no-break spaces the game uses in display strings."""
+    if not value:
+        return ""
+    return value.replace("\u202f", " ").replace("\u00a0", " ").strip()
+
+
+# --------------------------------------------------------------------------
+# Extraction
+# --------------------------------------------------------------------------
+
+# Groups whose classes describe craftable/extractable *items*.
+ITEM_GROUPS = [
+    "FGItemDescriptor",
+    "FGResourceDescriptor",
+    "FGItemDescriptorBiomass",
+    "FGItemDescriptorNuclearFuel",
+    "FGItemDescriptorPowerBoosterFuel",
+    "FGConsumableDescriptor",
+    "FGEquipmentDescriptor",
+    "FGAmmoTypeProjectile",
+    "FGAmmoTypeInstantHit",
+    "FGAmmoTypeSpreadshot",
+    "FGPowerShardDescriptor",
+    "FGBuildingDescriptor",
+    "FGVehicleDescriptor",
+]
+
+MANUFACTURER_GROUPS = [
+    "FGBuildableManufacturer",
+    "FGBuildableManufacturerVariablePower",
+]
+
+EXTRACTOR_GROUPS = [
+    "FGBuildableResourceExtractor",
+    "FGBuildableWaterPump",
+    "FGBuildableFrackingExtractor",
+]
+
+GENERATOR_GROUPS = [
+    "FGBuildableGeneratorFuel",
+    "FGBuildableGeneratorNuclear",
+    "FGBuildableGeneratorGeoThermal",
+]
+
+
+def build_groups(raw: list) -> dict[str, list[dict]]:
+    groups: dict[str, list[dict]] = {}
+    for entry in raw:
+        name = entry["NativeClass"].split(".")[-1].rstrip("'")
+        groups.setdefault(name, []).extend(entry["Classes"])
+    return groups
+
+
+def extract_items(groups: dict) -> dict[str, dict]:
+    resource_keys = {
+        c["ClassName"] for c in groups.get("FGResourceDescriptor", [])
+    }
+    items: dict[str, dict] = {}
+    for group in ITEM_GROUPS:
+        for c in groups.get(group, []):
+            key = c["ClassName"]
+            if key in items:
+                continue
+            form = c.get("mForm", "RF_SOLID")
+            is_fluid = form in FLUID_FORMS
+            # Fluid energy is stored per litre; normalise to per m3 so it lines
+            # up with the m3/min the rest of the planner speaks in.
+            energy = fnum(c.get("mEnergyValue")) * (FLUID_SCALE if is_fluid else 1.0)
+            items[key] = {
+                "key": key,
+                "name": clean_text(c.get("mDisplayName")) or key,
+                "form": form,
+                "isFluid": is_fluid,
+                "isRaw": key in resource_keys,
+                "stackSize": c.get("mStackSize", "SS_MEDIUM"),
+                "energyMJ": round(energy, 4),
+                "sinkPoints": int(fnum(c.get("mResourceSinkPoints"))),
+                "category": group,
+            }
+    return items
+
+
+def extract_buildings(groups: dict) -> dict[str, dict]:
+    buildings: dict[str, dict] = {}
+    for group in MANUFACTURER_GROUPS:
+        for c in groups.get(group, []):
+            key = c["ClassName"]
+            can_boost = str(c.get("mCanChangeProductionBoost", "True")) == "True"
+            override_slots = str(c.get("mOverrideProductionShardSlotSize", "False")) == "True"
+            # When the building doesn't override the slot count it falls back to
+            # the engine default of one slot (Constructor/Smelter both = 1).
+            slots = int(fnum(c.get("mProductionShardSlotSize"))) if override_slots else 1
+            boost_per = fnum(c.get("mProductionShardBoostMultiplier"), 1.0) if override_slots else 1.0
+            if not can_boost:
+                slots, boost_per = 0, 0.0
+            buildings[key] = {
+                "key": key,
+                "name": clean_text(c.get("mDisplayName")) or key,
+                "powerMW": round(fnum(c.get("mPowerConsumption")), 4),
+                "powerExponent": round(fnum(c.get("mPowerConsumptionExponent"), 1.321929), 6),
+                "boostPowerExponent": round(fnum(c.get("mProductionBoostPowerConsumptionExponent"), 2.0), 4),
+                "manufacturingSpeed": fnum(c.get("mManufacturingSpeed"), 1.0),
+                "sloopSlots": slots,
+                "sloopBoostPerSlot": round(boost_per, 6),
+                "canOverclock": str(c.get("mCanChangePotential", "True")) == "True",
+                "maxPotential": fnum(c.get("mMaxPotential"), 1.0),
+                "variablePower": group == "FGBuildableManufacturerVariablePower",
+            }
+    return buildings
+
+
+def extract_recipes(groups: dict, items: dict, buildings: dict) -> dict[str, dict]:
+    recipes: dict[str, dict] = {}
+    for c in groups.get("FGRecipe", []):
+        key = c["ClassName"]
+        produced_in = parse_class_list(c.get("mProducedIn"))
+        machines = [m for m in produced_in if m in buildings]
+        if not machines:
+            # Build-gun / workbench-only recipes can't be automated.
+            continue
+
+        ingredients = parse_item_amounts(c.get("mIngredients"))
+        products = parse_item_amounts(c.get("mProduct"))
+        if not products:
+            continue
+
+        # Skip recipes referencing items we don't know about.
+        refs = [e["item"] for e in ingredients + products]
+        if any(r not in items for r in refs):
+            continue
+
+        # Fluids are stored x1000.
+        for entry in ingredients + products:
+            if items[entry["item"]]["isFluid"]:
+                entry["amount"] = entry["amount"] / FLUID_SCALE
+
+        duration = fnum(c.get("mManufactoringDuration"), 1.0)
+        if duration <= 0:
+            continue
+
+        const = fnum(c.get("mVariablePowerConsumptionConstant"))
+        factor = fnum(c.get("mVariablePowerConsumptionFactor"), 1.0)
+        machine = machines[0]
+        var_power = None
+        if buildings[machine]["variablePower"] and (const or factor != 1.0):
+            var_power = {
+                "minMW": round(const, 3),
+                "maxMW": round(const + factor, 3),
+                "avgMW": round(const + factor / 2.0, 3),
+            }
+
+        name = clean_text(c.get("mDisplayName")) or key
+        is_alt = name.startswith("Alternate:") or "_Alternate_" in key
+
+        recipes[key] = {
+            "key": key,
+            "name": name[len("Alternate:"):].strip() if is_alt else name,
+            "isAlternate": is_alt,
+            "timeSeconds": duration,
+            "machine": machine,
+            "ingredients": [
+                {"item": e["item"], "amount": round(e["amount"], 6)} for e in ingredients
+            ],
+            "products": [
+                {"item": e["item"], "amount": round(e["amount"], 6)} for e in products
+            ],
+            "variablePower": var_power,
+        }
+    return recipes
+
+
+def extract_extractors(groups: dict, items: dict) -> list[dict]:
+    out = []
+    for group in EXTRACTOR_GROUPS:
+        for c in groups.get(group, []):
+            cycle = fnum(c.get("mExtractCycleTime"), 1.0)
+            per_cycle = fnum(c.get("mItemsPerCycle"))
+            if cycle <= 0:
+                continue
+            forms = parse_forms(c.get("mAllowedResourceForms"))
+            is_fluid = bool(set(forms) & FLUID_FORMS)
+            rate = per_cycle / cycle * 60.0
+            if is_fluid:
+                rate /= FLUID_SCALE
+            only_certain = str(c.get("mOnlyAllowCertainResources", "False")) == "True"
+            allowed = parse_class_list(c.get("mAllowedResources")) if only_certain else []
+            out.append({
+                "key": c["ClassName"],
+                "name": clean_text(c.get("mDisplayName")) or c["ClassName"],
+                "kind": "fracking" if group == "FGBuildableFrackingExtractor" else (
+                    "fluid" if is_fluid else "solid"),
+                "baseRatePerMin": round(rate, 6),
+                "powerMW": round(fnum(c.get("mPowerConsumption")), 4),
+                "powerExponent": round(fnum(c.get("mPowerConsumptionExponent"), 1.321929), 6),
+                "allowedForms": forms,
+                "allowedResources": [a for a in allowed if a in items],
+                # Purity only scales solid nodes and fracking; water is unlimited.
+                "affectedByPurity": group != "FGBuildableWaterPump",
+            })
+    out.sort(key=lambda e: (e["kind"], e["baseRatePerMin"]))
+    return out
+
+
+def extract_belts(groups: dict) -> list[dict]:
+    belts = []
+    seen = set()
+    for c in groups.get("FGBuildableConveyorBelt", []):
+        name = clean_text(c.get("mDisplayName"))
+        if "Clean" in name or name in seen:
+            continue
+        seen.add(name)
+        belts.append({
+            "key": c["ClassName"],
+            "name": name,
+            "itemsPerMin": round(fnum(c.get("mSpeed")) / 2.0, 3),
+        })
+    belts.sort(key=lambda b: b["itemsPerMin"])
+    return belts
+
+
+def extract_pipes(groups: dict) -> list[dict]:
+    pipes = []
+    seen = set()
+    for c in groups.get("FGBuildablePipeline", []):
+        name = clean_text(c.get("mDisplayName"))
+        if "Clean" in name or name in seen:
+            continue
+        seen.add(name)
+        pipes.append({
+            "key": c["ClassName"],
+            "name": name,
+            "cubicMetersPerMin": round(fnum(c.get("mFlowLimit")) * 60.0, 3),
+        })
+    pipes.sort(key=lambda p: p["cubicMetersPerMin"])
+    return pipes
+
+
+def extract_generators(groups: dict, items: dict) -> list[dict]:
+    """Generators, with per-fuel burn rates derived from fuel energy content.
+
+    mFuel is already nested JSON here (unlike the Unreal-struct string fields).
+    Verified: Coal gen 75 MW * ratio 10 -> 45 m3/min water; Nuclear 2500 MW *
+    ratio 1.6 -> 240 m3/min water.
+    """
+    out = []
+    for group in GENERATOR_GROUPS:
+        for c in groups.get(group, []):
+            power = fnum(c.get("mPowerProduction"))
+            if power <= 0:
+                continue
+            sup_ratio = fnum(c.get("mSupplementalToPowerRatio"))
+            needs_sup = str(c.get("mRequiresSupplementalResource", "False")) == "True"
+
+            fuels = []
+            for entry in c.get("mFuel") or []:
+                if not isinstance(entry, dict):
+                    continue
+                fuel_key = entry.get("mFuelClass", "")
+                if fuel_key not in items:
+                    continue
+                energy = items[fuel_key]["energyMJ"]
+                # Fluid energy values are per m3 already; solids are per item.
+                burn = (power / energy * 60.0) if energy > 0 else 0.0
+
+                byproduct = entry.get("mByproduct") or ""
+                byproduct_amount = fnum(entry.get("mByproductAmount"))
+                fuels.append({
+                    "item": fuel_key,
+                    "ratePerMin": round(burn, 6),
+                    "supplemental": (entry.get("mSupplementalResourceClass") or "") or None,
+                    "supplementalPerMin": round(power * sup_ratio * 60.0 / 1000.0, 6)
+                    if needs_sup else 0.0,
+                    "byproduct": byproduct if byproduct in items else None,
+                    "byproductPerMin": round(burn * byproduct_amount, 6)
+                    if byproduct in items else 0.0,
+                })
+
+            out.append({
+                "key": c["ClassName"],
+                "name": clean_text(c.get("mDisplayName")) or c["ClassName"],
+                "powerMW": round(power, 3),
+                "fuels": fuels,
+            })
+    out.sort(key=lambda g: g["powerMW"])
+    return out
+
+
+def prune_unreachable(items: dict, recipes: dict) -> dict:
+    """Keep only items that participate in an automatable recipe."""
+    used = set()
+    for r in recipes.values():
+        for e in r["ingredients"] + r["products"]:
+            used.add(e["item"])
+    return {k: v for k, v in items.items() if k in used}
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--docs", type=Path, default=None, help="Path to en-US.json")
+    ap.add_argument("--out", type=Path,
+                    default=Path(__file__).resolve().parents[1] / "src" / "data" / "game-data.json")
+    ap.add_argument("--version", default="unknown", help="Game version label to embed")
+    args = ap.parse_args()
+
+    docs = args.docs or find_docs()
+    if not docs or not docs.exists():
+        print("ERROR: could not find en-US.json. Pass --docs <path>.", file=sys.stderr)
+        print("  Expected under: <Satisfactory>/CommunityResources/Docs/en-US.json", file=sys.stderr)
+        return 1
+
+    print(f"Reading {docs}")
+    raw = json.loads(docs.read_text(encoding="utf-16"))
+    groups = build_groups(raw)
+
+    items = extract_items(groups)
+    buildings = extract_buildings(groups)
+    recipes = extract_recipes(groups, items, buildings)
+    items = prune_unreachable(items, recipes)
+
+    data = {
+        "gameVersion": args.version,
+        "source": str(docs),
+        "items": items,
+        "recipes": recipes,
+        "buildings": buildings,
+        "extractors": extract_extractors(groups, items),
+        "belts": extract_belts(groups),
+        "pipes": extract_pipes(groups),
+        "generators": extract_generators(groups, items),
+    }
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
+
+    size_kb = args.out.stat().st_size / 1024
+    print(f"Wrote {args.out}  ({size_kb:.0f} KB)")
+    print(f"  items       {len(items)}")
+    print(f"  recipes     {len(recipes)}  ({sum(1 for r in recipes.values() if r['isAlternate'])} alternate)")
+    print(f"  buildings   {len(buildings)}")
+    print(f"  extractors  {len(data['extractors'])}")
+    print(f"  belts       {len(data['belts'])}")
+    print(f"  pipes       {len(data['pipes'])}")
+    print(f"  generators  {len(data['generators'])}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
