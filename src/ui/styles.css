@@ -896,3 +896,29 @@ table.mini .num { font-family: var(--mono); }
 @media (prefers-reduced-motion: reduce) {
   .mesh-progress-bar span { animation: none; }
 }
+
+/* Always-on readout of whether real geometry is in use. */
+.mesh-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--rivet);
+  border-radius: var(--r);
+  background: var(--plate);
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+.mesh-status strong { font-family: var(--mono); color: var(--ink); font-weight: 400; }
+.mesh-status .btn { margin-left: auto; }
+.mesh-status[data-muted='true'] { color: var(--ink-faint); }
+
+.mesh-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--go);
+  flex: none;
+}
+.mesh-status-dot[data-off='true'] { background: var(--ink-faint); }

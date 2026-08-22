@@ -70,9 +70,39 @@ export function MeshSetup({ onReady }: Props) {
     void run(picked.dir)
   }, [run])
 
-  // Browser build, or meshes already extracted: nothing to set up.
-  if (!isDesktop || !status || dismissed) return null
-  if (status.count > 0 && !busy) return null
+  if (!isDesktop || !status) return null
+
+  // Models already installed: shrink to a one-line readout so the state is
+  // always visible, and re-running after a game update is one click.
+  if (status.count > 0 && !busy) {
+    return (
+      <div className="mesh-status">
+        <span className="mesh-status-dot" />
+        Real models in use · <strong>{status.count}</strong> buildings
+        <button
+          type="button"
+          className="btn btn-icon"
+          onClick={() => status.detectedGame && run(status.detectedGame)}
+          disabled={!status.detectedGame || !status.exporterAvailable}
+          title="Read the models again, after a game update"
+        >
+          Re-extract
+        </button>
+      </div>
+    )
+  }
+
+  if (dismissed) {
+    return (
+      <div className="mesh-status" data-muted="true">
+        <span className="mesh-status-dot" data-off="true" />
+        Buildings drawn as sized boxes
+        <button type="button" className="btn btn-icon" onClick={() => setDismissed(false)}>
+          Use real models
+        </button>
+      </div>
+    )
+  }
 
   const pct = progress && progress.total > 0
     ? Math.round((progress.done / progress.total) * 100)

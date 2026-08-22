@@ -14,6 +14,8 @@ type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'blueprint'
 
 const STORAGE_KEY = 'satisfactory-planner/v1'
 
+const APP_VERSION = __APP_VERSION__
+
 const TAB_LABELS: Record<Tab, string> = {
   factory: 'Factory',
   tree: 'Tree',
@@ -96,8 +98,8 @@ export function App() {
             </button>
           ))}
         </nav>
-        <span className="version" title={`Data extracted from ${gameData.source}`}>
-          {gameData.gameVersion}
+        <span className="version" title={`App ${APP_VERSION} · game data from ${gameData.source}`}>
+          v{APP_VERSION} · {gameData.gameVersion}
         </span>
       </header>
 
