@@ -7,11 +7,20 @@ import { StepsTable } from './components/StepsTable'
 import { SummaryPanel } from './components/SummaryPanel'
 import { TreeView } from './components/TreeView'
 import { BlueprintPanel } from './components/BlueprintPanel'
+import { FactoryGraph } from './components/FactoryGraph'
 import { fmt, fmtPower } from './format'
 
-type Tab = 'tree' | 'steps' | 'summary' | 'blueprint'
+type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'blueprint'
 
 const STORAGE_KEY = 'satisfactory-planner/v1'
+
+const TAB_LABELS: Record<Tab, string> = {
+  factory: 'Factory',
+  tree: 'Tree',
+  steps: 'Steps',
+  summary: 'Summary',
+  blueprint: 'Blueprints',
+}
 
 interface Saved {
   settings: PlannerSettings
@@ -42,7 +51,7 @@ export function App() {
   const initial = useMemo(load, [])
   const [settings, setSettings] = useState<PlannerSettings>(initial.settings)
   const [targets, setTargets] = useState<PlanTarget[]>(initial.targets)
-  const [tab, setTab] = useState<Tab>('tree')
+  const [tab, setTab] = useState<Tab>('factory')
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -75,7 +84,7 @@ export function App() {
           <span className="brand-sub">Production Planner</span>
         </div>
         <nav className="tabs" role="tablist">
-          {(['tree', 'steps', 'summary', 'blueprint'] as Tab[]).map((t) => (
+          {(['factory', 'tree', 'steps', 'summary', 'blueprint'] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
@@ -83,7 +92,7 @@ export function App() {
               aria-selected={tab === t}
               onClick={() => setTab(t)}
             >
-              {t === 'tree' ? 'Tree' : t === 'steps' ? 'Steps' : t === 'summary' ? 'Summary' : 'Blueprints'}
+              {TAB_LABELS[t]}
             </button>
           ))}
         </nav>
@@ -101,7 +110,7 @@ export function App() {
           plan={plan}
         />
 
-        <main className="main">
+        <main className="main" data-tab={tab}>
           {plan.errors.length > 0 && (
             <div className="notice" data-kind="error">
               <strong>Can't build this plan.</strong>
@@ -126,7 +135,7 @@ export function App() {
 
           {tab !== 'blueprint' && hasPlan && (
             <>
-              <div className="rail">
+              {tab !== 'factory' && <div className="rail">
                 <Stat label="Machines" value={String(plan.totals.machines)} accent="amber" />
                 <Stat label="Total power" value={fmtPower(plan.totals.totalPowerMW)} />
                 <Stat
@@ -137,8 +146,9 @@ export function App() {
                 <Stat label="Raw inputs" value={String(plan.raw.length)} />
                 <Stat label="Byproducts" value={String(plan.byproducts.length)} />
                 <Stat label="Sink points" value={fmt(plan.totals.sinkPointsPerMin, 0)} unit="/min" />
-              </div>
+              </div>}
 
+              {tab === 'factory' && <FactoryGraph plan={plan} settings={settings} setSettings={setSettings} />}
               {tab === 'tree' && <TreeView plan={plan} settings={settings} />}
               {tab === 'steps' && <StepsTable plan={plan} settings={settings} onTune={onTune} />}
               {tab === 'summary' && <SummaryPanel plan={plan} settings={settings} />}

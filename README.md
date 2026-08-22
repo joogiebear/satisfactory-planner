@@ -9,10 +9,19 @@ build you have installed rather than a wiki snapshot.
 
 ## What it does
 
-- **Production tree** — the full chain for any item, with per-branch machine
-  counts and power. Connectors are drawn as the logistics: amber for belts,
-  teal for pipes, and hazard stripes on any link that exceeds the tier you
-  picked, with the number of lines it would need.
+- **Factory view** — the plan as a machine-to-machine flow graph. Every machine
+  is a card showing its building, count, recipe, power and each input and output
+  with its rate; belts and pipes run between the exact ports that carry them,
+  labelled with the item and throughput. Click a machine to swap its recipe, set
+  its clock or fit Somersloops, and everything it isn't wired to dims so you can
+  follow one chain through a large build. Drag to rearrange, and save the whole
+  thing as a PNG.
+- **Real icons** — every item and machine, fetched once with
+  `npm run fetch-icons`.
+- **Production tree** — the same plan as a compact outline, with per-branch
+  machine counts and power. Connectors are drawn as the logistics: amber for
+  belts, teal for pipes, and hazard stripes on any link that exceeds the tier
+  you picked, with the number of lines it would need.
 - **Correct byproducts and loops** — recipes with two outputs (Plastic also
   makes Heavy Oil Residue) and mutually recursive pairs (Recycled Plastic and
   Recycled Rubber consume each other) are solved as one material balance, not
@@ -79,9 +88,21 @@ are checked against known in-game figures in the test suite.
 
 ## Icons
 
-Optional, and off by default: the app ships with lettered tiles. To use the
-game's own artwork, see [docs/ICONS.md](docs/ICONS.md). It needs a one-time
-FModel export because the textures live inside UE5 IoStore containers.
+```bash
+npm run fetch-icons
+```
+
+Downloads an icon for every item and machine from the Satisfactory wiki and
+drops them in `src/data/icons/`. One run covers all 179; re-run it after a game
+update adds new items.
+
+The folder is gitignored, so each machine fetches its own copy rather than the
+repo redistributing the artwork. Without it the app falls back to lettered
+tiles, tinted amber for solids and teal for fluids, and stays fully usable.
+
+To use the game's own texture files instead of the wiki's copies, see
+[docs/ICONS.md](docs/ICONS.md) — that route needs a one-time FModel export,
+because the textures live inside UE5 IoStore containers.
 
 ## Tests
 
@@ -132,9 +153,15 @@ Solving every producible item in the game takes about 100 ms in total.
 ```
 src/core/     game data, types, the LP solver, the blueprint reader
 src/ui/       React interface
+src/ui/graph/ the factory flow graph: nodes, belt edges, inspector
 tools/        extraction scripts for game data and icons
 electron/     desktop shell
 ```
+
+The graph is React Flow with a dagre layout. The plan says how fast each recipe
+runs but not which machine feeds which, so the graph splits every item's supply
+across the machines that want it in proportion to how much each handles. Supply
+equals demand for every item, so that split conserves flow exactly.
 
 ## Licence
 
