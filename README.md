@@ -33,7 +33,9 @@ build you have installed rather than a wiki snapshot.
   clock, feeding exact extractor counts.
 - **Blueprint viewer** — drop in a `.sbp` and see the build itself in 3D, using
   the game's own building meshes, extracted from your installed copy on first
-  run ([docs/MESHES.md](docs/MESHES.md)). Anything without an exported mesh falls
+  run ([docs/MESHES.md](docs/MESHES.md)). Conveyors follow the paths they
+  actually take, window panes are see-through, and hiding walls or foundations
+  exposes the machines inside. Anything without an exported mesh falls
   back to the footprint the game reserves for it, with its icon on top. Hide foundations or walls to see
   the machines inside, hover to name anything, and read the exact build cost and
   how its machines line up with your current plan.

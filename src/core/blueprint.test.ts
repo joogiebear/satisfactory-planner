@@ -120,3 +120,47 @@ maybe('blueprint placements', () => {
     }
   })
 })
+
+maybe('conveyor splines', () => {
+  it('reads a path for the belts in a blueprint', async () => {
+    let belts = 0
+    let withPath = 0
+    const lengths: number[] = []
+
+    for (const path of files) {
+      const bp = await load(path)
+      for (const p of bp.placements) {
+        if (!/ConveyorBelt/.test(p.key)) continue
+        belts++
+        if (!p.spline || p.spline.length < 2) continue
+        withPath++
+        let total = 0
+        for (let i = 1; i < p.spline.length; i++) {
+          const [ax, ay, az] = p.spline[i - 1]
+          const [bx, by, bz] = p.spline[i]
+          total += Math.hypot(bx - ax, by - ay, bz - az)
+        }
+        lengths.push(total)
+      }
+    }
+
+    expect(belts).toBeGreaterThan(0)
+    // Every belt should carry a path; a miss means the property walk drifted.
+    expect(withPath / belts).toBeGreaterThan(0.98)
+    // Belts run from a fraction of a foundation to a long haul, never zero or
+    // kilometres: coordinates read as floats instead of doubles fail this.
+    for (const len of lengths) {
+      expect(len).toBeGreaterThan(50)
+      expect(len).toBeLessThan(50000)
+    }
+  })
+
+  it('leaves splitters and poles without a path', async () => {
+    for (const path of files) {
+      const bp = await load(path)
+      for (const p of bp.placements) {
+        if (/Splitter|Merger|ConveyorPole/.test(p.key)) expect(p.spline).toBeUndefined()
+      }
+    }
+  })
+})

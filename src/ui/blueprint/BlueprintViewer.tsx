@@ -10,6 +10,72 @@ import { partsFor, urlForFile, type MeshPart } from './meshes'
 const GLTF_TO_CM = 100
 
 /**
+ * Tile a conveyor's segment mesh along the path it actually follows.
+ *
+ * The game builds a belt by repeating one short mesh along a spline, and the
+ * blueprint stores that spline per belt. Drawing a single segment at the actor's
+ * origin — which is all we could do before the path was decoded — leaves a run
+ * as a scatter of disconnected stubs.
+ */
+function layOutAlongSplines(geometry: THREE.BufferGeometry, placements: Placement[]): THREE.Matrix4[] {
+  geometry.computeBoundingBox()
+  const box = geometry.boundingBox
+  if (!box) return []
+
+  const size = new THREE.Vector3()
+  box.getSize(size)
+  // The segment runs along whichever horizontal axis is longest.
+  const alongX = size.x >= size.y
+  const segmentLength = Math.max(1, alongX ? size.x : size.y)
+  const axis = alongX ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0)
+
+  const matrices: THREE.Matrix4[] = []
+  const actor = new THREE.Matrix4()
+  const local = new THREE.Matrix4()
+  const quaternion = new THREE.Quaternion()
+  const scale = new THREE.Vector3(1, 1, 1)
+  const tangent = new THREE.Vector3()
+
+  for (const placement of placements) {
+    actor.compose(
+      new THREE.Vector3(...placement.position),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, placement.yaw)),
+      new THREE.Vector3(...placement.scale)
+    )
+
+    if (!placement.spline || placement.spline.length < 2) {
+      matrices.push(actor.clone())
+      continue
+    }
+
+    const curve = new THREE.CatmullRomCurve3(
+      placement.spline.map(([x, y, z]) => new THREE.Vector3(x, y, z)),
+      false,
+      'catmullrom',
+      0.02
+    )
+    const length = curve.getLength()
+    if (!isFinite(length) || length <= 0) { matrices.push(actor.clone()); continue }
+
+    // Stretch each copy a little rather than leave gaps at the ends.
+    const count = Math.max(1, Math.round(length / segmentLength))
+    const stretch = length / count / segmentLength
+
+    for (let i = 0; i < count; i++) {
+      const t = (i + 0.5) / count
+      const point = curve.getPointAt(t)
+      curve.getTangentAt(t, tangent)
+      quaternion.setFromUnitVectors(axis, tangent.normalize())
+      scale.set(alongX ? stretch : 1, alongX ? 1 : stretch, 1)
+      local.compose(point, quaternion, scale)
+      matrices.push(actor.clone().multiply(local))
+    }
+  }
+
+  return matrices
+}
+
+/**
  * Turn one glTF primitive into geometry that can be instanced.
  *
  * The exported meshes use KHR_mesh_quantization, so positions and normals
@@ -290,15 +356,20 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
               const geo = prepareGeometry(asMesh.geometry, asMesh.matrixWorld, partMatrix)
               if (!geo) return
 
-              const inst = new THREE.InstancedMesh(geo, material, pending.list.length)
+              const matrices = part.spline
+                ? layOutAlongSplines(geo, pending.list)
+                : pending.list.map((p) => {
+                  dummy.position.set(p.position[0], p.position[1], p.position[2])
+                  dummy.rotation.set(0, 0, p.yaw)
+                  dummy.scale.set(p.scale[0], p.scale[1], p.scale[2])
+                  dummy.updateMatrix()
+                  return dummy.matrix.clone()
+                })
+              if (!matrices.length) return
+
+              const inst = new THREE.InstancedMesh(geo, material, matrices.length)
               inst.renderOrder = part.glass ? 1 : 0
-              pending.list.forEach((p, i) => {
-                dummy.position.set(p.position[0], p.position[1], p.position[2])
-                dummy.rotation.set(0, 0, p.yaw)
-                dummy.scale.set(p.scale[0], p.scale[1], p.scale[2])
-                dummy.updateMatrix()
-                inst.setMatrixAt(i, dummy.matrix)
-              })
+              matrices.forEach((m, i) => inst.setMatrixAt(i, m))
               inst.instanceMatrix.needsUpdate = true
               inst.computeBoundingSphere()
               root.add(inst)

@@ -96,15 +96,33 @@ it* and must stay solid, while the pane is a separate `Inset` mesh. Anything
 named for glass, an inset, a wall window or a roof window is drawn translucent —
 44 parts across 40 buildings.
 
+## Conveyor paths
+
+A belt isn't a placed mesh: the game repeats one short segment along a spline,
+and that spline lives in the blueprint's own property data rather than in the
+asset. Decoding Unreal's property list in full would be a large job, so the
+reader takes a narrow path to it — each spline point is a struct of three
+vectors (Location, ArriveTangent, LeaveTangent), and a vector's payload ends
+exactly where the next field name's length prefix begins, which anchors the read
+without walking property headers.
+
+The coordinates are **doubles**. Reading them as floats produces garbage, and
+that is the quick way to tell whether a game update has changed the encoding —
+the test suite asserts belt lengths land between 50 cm and 500 m, which floats
+fail immediately.
+
+Every belt in the test blueprints resolves a path. Lifts, mergers, splitters and
+poles have no spline, which is correct: they are placed meshes.
+
 ## What still isn't right
 
-Belts, lifts and pipes are splines: the asset gives the segment mesh but the
-*path* lives in the blueprint's own property data, which the reader doesn't
-decode. One segment is drawn at each recorded position, which traces a run
-roughly but does not curve or span with it.
+Nothing is textured. Materials aren't exported, so parts are tinted by category
+— machines amber, structure grey, glass translucent — rather than carrying the
+game's own surfaces.
 
-A few dozen buildables still resolve nothing and keep their sized box, along
-with anything whose asset points at a stand-in primitive.
+Conveyor lifts point at a stand-in primitive in the asset, so they keep a sized
+box rather than a bare cube. A few dozen other buildables resolve no mesh at all
+and do the same.
 
 ## Size
 
