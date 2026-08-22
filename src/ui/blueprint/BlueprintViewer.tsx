@@ -4,8 +4,48 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { BlueprintInfo, Placement } from '../../core/blueprint'
 import { iconFor } from '../icons'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { meshFor } from './meshes'
+
+/** glTF is metres; the game, and every placement in a blueprint, is centimetres. */
+const GLTF_TO_CM = 100
+
+/**
+ * Turn one glTF primitive into geometry that can be instanced.
+ *
+ * The exported meshes use KHR_mesh_quantization, so positions and normals
+ * arrive as normalised integers. Transforming those in place writes floats back
+ * into an integer array and destroys the mesh, so they are expanded to Float32
+ * first. Reading through getX/getY/getZ de-quantises for us.
+ */
+function prepareGeometry(source: THREE.BufferGeometry, worldMatrix: THREE.Matrix4): THREE.BufferGeometry | null {
+  const position = source.getAttribute('position')
+  if (!position) return null
+
+  const geo = new THREE.BufferGeometry()
+  const expand = (attr: THREE.BufferAttribute | THREE.InterleavedBufferAttribute) => {
+    const out = new Float32Array(attr.count * 3)
+    for (let i = 0; i < attr.count; i++) {
+      out[i * 3] = attr.getX(i)
+      out[i * 3 + 1] = attr.getY(i)
+      out[i * 3 + 2] = attr.getZ(i)
+    }
+    return new THREE.BufferAttribute(out, 3)
+  }
+
+  geo.setAttribute('position', expand(position))
+  const normal = source.getAttribute('normal')
+  if (normal) geo.setAttribute('normal', expand(normal))
+  if (source.index) geo.setIndex(source.index.clone())
+
+  geo.applyMatrix4(worldMatrix)
+  // glTF measures in metres while blueprint placements are in centimetres, so
+  // the geometry arrives a hundred times too small to see.
+  geo.scale(GLTF_TO_CM, GLTF_TO_CM, GLTF_TO_CM)
+  // glTF is Y-up; the root group converts from the game's Z-up axes.
+  geo.rotateX(Math.PI / 2)
+  if (!normal) geo.computeVertexNormals()
+  return geo
+}
 
 /**
  * Draws a blueprint the way the designer holds it: every building as the box
@@ -196,56 +236,50 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
         pending.url,
         (gltf) => {
           if (disposed) return
-          const parts: THREE.BufferGeometry[] = []
           gltf.scene.updateMatrixWorld(true)
+
+          const material = new THREE.MeshPhongMaterial({
+            color: pending.colour, shininess: 10, specular: 0x151a1f,
+          })
+          let added = 0
+
           gltf.scene.traverse((child) => {
             const asMesh = child as THREE.Mesh
             if (!asMesh.isMesh || !asMesh.geometry) return
-            const geo = asMesh.geometry.clone()
-            geo.applyMatrix4(asMesh.matrixWorld)
-            // Merging needs identical attribute sets across parts.
-            for (const name of Object.keys(geo.attributes)) {
-              if (name !== 'position' && name !== 'normal') geo.deleteAttribute(name)
-            }
-            if (!geo.attributes.normal) geo.computeVertexNormals()
-            parts.push(geo)
+
+            const geo = prepareGeometry(asMesh.geometry, asMesh.matrixWorld)
+            if (!geo) return
+
+            const inst = new THREE.InstancedMesh(geo, material, pending.list.length)
+            pending.list.forEach((p, i) => {
+              dummy.position.set(p.position[0], p.position[1], p.position[2])
+              dummy.rotation.set(0, 0, p.yaw)
+              dummy.scale.set(p.scale[0], p.scale[1], p.scale[2])
+              dummy.updateMatrix()
+              inst.setMatrixAt(i, dummy.matrix)
+            })
+            inst.instanceMatrix.needsUpdate = true
+            inst.computeBoundingSphere()
+            root.add(inst)
+            loaded.push(inst)
+            meshes.push(inst)
+            lookup.push({ mesh: inst, items: pending.list })
+            added++
           })
-          if (!parts.length) return
 
-          const merged = mergeGeometries(parts, false)
-          for (const part of parts) part.dispose()
-          if (!merged) return
-
-          // glTF is authored Y-up, but the root group converts from the game's
-          // Z-up axes. Standing the geometry up here keeps every placement using
-          // the game's own coordinates.
-          merged.rotateX(Math.PI / 2)
-          merged.computeVertexNormals()
-
-          const material = new THREE.MeshPhongMaterial({
-            color: pending.colour, flatShading: false, shininess: 10, specular: 0x151a1f,
-          })
-          const inst = new THREE.InstancedMesh(merged, material, pending.list.length)
-          pending.list.forEach((p, i) => {
-            dummy.position.set(p.position[0], p.position[1], p.position[2])
-            dummy.rotation.set(0, 0, p.yaw)
-            dummy.scale.set(p.scale[0], p.scale[1], p.scale[2])
-            dummy.updateMatrix()
-            inst.setMatrixAt(i, dummy.matrix)
-          })
-          inst.instanceMatrix.needsUpdate = true
-          inst.computeBoundingSphere()
-          root.add(inst)
-          loaded.push(inst)
-
-          // Retire the placeholder boxes for this class.
-          const placeholder = lookup.find((l) => l.items === pending.list)
+          if (added === 0) {
+            console.warn(`[blueprint] ${pending.classKey}: no drawable geometry in ${pending.url}`)
+            return
+          }
+          // Retire the placeholder boxes only once something replaced them.
+          const placeholder = lookup.find((l) => l.items === pending.list && l.mesh.geometry === unit)
           if (placeholder) placeholder.mesh.visible = false
-          meshes.push(inst)
-          lookup.push({ mesh: inst, items: pending.list })
         },
         undefined,
-        () => { /* a missing or broken mesh just leaves the box in place */ }
+        (err) => {
+          // Silence here previously hid a real failure; the box stays, but say why.
+          console.warn(`[blueprint] ${pending.classKey}: mesh failed to load`, err)
+        }
       )
     }
 
