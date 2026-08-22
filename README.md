@@ -100,12 +100,21 @@ tools/mesh-exporter/publish/satisfactory-mesh-exporter.exe --game "<Satisfactory
 
 ### A trap in the tier data
 
-Every schematic carries an `mTechTier`, and only milestones mean it. MAM
+Every schematic carries an `mTechTier`, and most of them don't mean it. MAM
 research reports tier 3 for all hundred of its nodes and the AWESOME shop
 reports tier 1, so reading the field across all schematic types puts a Blender
-recipe in Tier 0 and quietly makes the whole tier limit meaningless. Tiers come
-from `EST_Milestone` and `EST_Tutorial` only; everything else is gated by
-whether its *machine* exists yet.
+recipe in Tier 0 and quietly makes the whole tier limit meaningless.
+
+Reading only `EST_Milestone` overcorrects, though, and just as quietly: Iron Rod
+and Iron Plate are granted by no milestone at all but by
+`Schematic_StartingRecipes_C`, filed under `EST_Custom`. Leave that type out and
+the two most basic recipes in the game look like locked research — a strict plan
+then imports iron plate and routes the rest through hard-drive alternates to
+avoid it, which looks like a solver problem and isn't.
+
+So tiers come from `EST_Milestone`, `EST_Tutorial` and `EST_Custom`, minus the
+`Research_*` and `*Alternate*` entries filed under Custom by mistake. Everything
+else is gated on whether its *machine* exists yet.
 
 Units are normalised on the way through — fluid amounts are stored ×1000 in the
 raw files, conveyor speeds are in cm/min, pipe flow is m³/s — and the results
@@ -122,11 +131,12 @@ at that point. The cap is what makes the answer worth having: without it a plan
 for Tier 3's Basic Steel Production will happily route through a Blender, and
 you would only find out after building it.
 
-Two things the cap deliberately does not do. It doesn't forbid MAM recipes or
-hard-drive alternates, because those aren't tier-gated — a drive can hand you a
-recipe at any point — so instead the plan says which ones it leaned on. And it
-doesn't apply to MAM research itself, which you can do whenever you find the
-resource.
+Research and hard drives aren't tier-gated — a drive can hand you a recipe at
+any point — so they get their own switch rather than a tier. **HUB only** (the
+default) plans with nothing but what the HUB has handed you by that tier, which
+is the honest answer to "can I build this today". **+ research & drives** opens
+it up and says in the plan which ones it leaned on. The cap doesn't apply to MAM
+research itself, which you can do whenever you find the resource.
 
 ## Icons
 

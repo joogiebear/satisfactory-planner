@@ -77,6 +77,35 @@ describe('milestones', () => {
     expect(warned).toBe(usesResearch)
   })
 
+  /**
+   * The strict stance: a plan that answers "can I build this today". It must
+   * not reach for a hard drive you may never have found, or MAM research you
+   * may not have done — the two things the tier limit alone can't speak to.
+   */
+  it('uses nothing but HUB recipes when research is disallowed', () => {
+    const failures: string[] = []
+
+    for (const m of milestones) {
+      if (!m.cost.length) continue
+      const plan = solvePlan(targetsFor(m.cost), {
+        ...defaultSettings(),
+        maxTier: m.tier,
+        allowResearch: false,
+      })
+      for (const step of plan.steps) {
+        if (step.recipe.isAlternate || recipeTiers[step.recipe.key] === undefined) {
+          failures.push(`T${m.tier} ${m.name}: ${step.recipe.name}`)
+        }
+      }
+      // And it never warns about research it was not allowed to use.
+      if (plan.warnings.some((w) => w.includes("the HUB doesn't hand you"))) {
+        failures.push(`T${m.tier} ${m.name}: warned about research it couldn't use`)
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
   it('leaves the plan unrestricted when no tier is set', () => {
     const late = Object.values(recipes).find((r) => machineTiers[r.machine] === 9)!
     const open = { ...defaultSettings(), maxTier: null }

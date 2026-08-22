@@ -456,6 +456,16 @@ public static class Program
             exporter = new MeshExporter(sm, options);
         else if (provider.TryLoadPackageObject<USkeletalMesh>(meshPath, out var sk) && sk != null)
             exporter = new MeshExporter(sk, options);
+        else if (MeshInPackage(provider, meshPath) is { } found)
+        {
+            // The object inside a package need not be named after the package:
+            // the truck station's file is Truckstation_static and the mesh in it
+            // is TruckStation_static. Asking for the object by the package's
+            // name misses on that capital S, so take the package's own geometry.
+            exporter = found is USkeletalMesh skeletal
+                ? new MeshExporter(skeletal, options)
+                : new MeshExporter((UStaticMesh)found, options);
+        }
         else
         {
             // A blueprint's spelling of a path need not match the file's: the
@@ -841,7 +851,13 @@ public static class Program
             // is far better than nothing, though the run itself isn't traced.
             foreach (var field in new[] { "mMesh", "mMeshBody", "mConveyorMesh" })
             {
-                var splineMesh = ResolvePath(export.GetOrDefault<FPackageIndex?>(field, null));
+                var reference = export.GetOrDefault<FPackageIndex?>(field, null);
+                // Usually geometry -- a belt's mMesh is its segment -- but not
+                // always: the elevator floor stop points mMesh at one of its own
+                // components, which resolves to the blueprint package and then
+                // exports as nothing at all.
+                if (!PointsAtGeometry(reference)) continue;
+                var splineMesh = ResolvePath(reference);
                 if (splineMesh == null || IsPlaceholder(splineMesh)) continue;
                 parts.Add(new MeshPart { Mesh = splineMesh, Spline = true });
                 break;
@@ -1033,6 +1049,15 @@ public static class Program
     }
 
     /// <summary>Package path of a referenced asset, minus the object suffix.</summary>
+    /// <summary>The one mesh a package holds, whatever its export is named.</summary>
+    private static UObject? MeshInPackage(DefaultFileProvider provider, string meshPath)
+    {
+        if (!provider.TryLoadPackage(meshPath, out var package)) return null;
+        foreach (var export in package.GetExports())
+            if (export is UStaticMesh or USkeletalMesh) return export;
+        return null;
+    }
+
     /// <summary>
     /// An object path spelled the way the file table spells it, or null.
     ///
@@ -1064,6 +1089,15 @@ public static class Program
             index[tail.ToLowerInvariant()] = "/Game/" + tail;
         }
         return index;
+    }
+
+    /// <summary>True when a reference points at mesh geometry rather than, say,
+    /// a component or another blueprint.</summary>
+    private static bool PointsAtGeometry(object? reference)
+    {
+        if (reference is not FPackageIndex index) return false;
+        var className = index.ResolvedObject?.Class?.Name.Text;
+        return className is "StaticMesh" or "SkeletalMesh";
     }
 
     private static string? ResolvePath(object? reference)

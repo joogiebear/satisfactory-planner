@@ -93,6 +93,12 @@ export function availableRecipes(settings: PlannerSettings): GameRecipe[] {
       // nothing about it and the machine check above is the whole story.
       const tier = recipeTiers[r.key]
       if (tier !== undefined && tier > settings.maxTier) return false
+
+      // Unless the plan is meant to be buildable today, in which case research
+      // and hard drives are exactly what it must not quietly assume. Alternates
+      // are named outright rather than inferred from a missing tier: a few are
+      // filed under a schematic type that does carry one.
+      if (!settings.allowResearch && (r.isAlternate || tier === undefined)) return false
     }
     // A pin makes that recipe the only permitted source of its item. Only the
     // recipe's primary output is constrained, so an unrelated pin can't block a
@@ -427,7 +433,7 @@ function addImportWarnings(plan: Plan, noProducer: Set<string>, warnings: string
  * "build this now" without checking, so it says which.
  */
 function addResearchWarnings(plan: Plan, settings: PlannerSettings, warnings: string[]): void {
-  if (settings.maxTier === null) return
+  if (settings.maxTier === null || !settings.allowResearch) return
 
   const research = new Set<string>()
   for (const step of plan.steps) {

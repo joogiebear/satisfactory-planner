@@ -513,6 +513,12 @@ def extract_buildable_names(groups: dict) -> dict[str, str]:
 # The MAM's research trees, keyed by the prefix its class names carry. The
 # game groups these visually and nothing in the docs names the grouping, so the
 # class name is the only handle there is.
+# The schematic types the HUB hands you as you progress, as opposed to research
+# you opt into. Iron Rod and Iron Plate live in EST_Custom
+# (`Schematic_StartingRecipes_C`) rather than in any milestone, so leaving that
+# type out makes the most basic recipes in the game look like locked research.
+HUB_SCHEMATIC_TYPES = {"EST_Milestone", "EST_Tutorial", "EST_Custom"}
+
 MAM_TREES = {
     "Quartz": "Quartz",
     "Caterium": "Caterium",
@@ -652,20 +658,30 @@ def load_game_phases(path: Path | None, items: dict) -> list[dict]:
 def recipe_tiers(groups: dict, recipes: dict) -> dict[str, int]:
     """The tier at which each recipe is handed to you by the HUB.
 
-    Only milestones and the Tier 0 tutorial steps count. Every schematic
-    carries an `mTechTier`, but it only means something for those two: MAM
-    research reports tier 3 for all hundred of its nodes, the AWESOME shop
-    reports tier 1, and the customiser reports 0 -- reading those as gospel
-    puts a Blender recipe in Tier 0 and makes the whole limit meaningless.
+    Only the schematics the HUB progression actually hands you count. Every
+    schematic carries an `mTechTier`, but it means nothing on most of them: MAM
+    research reports tier 3 for all hundred of its nodes and the AWESOME shop
+    reports tier 1, so reading the field across all types puts a Blender recipe
+    in Tier 0 and makes the whole limit meaningless.
 
-    A recipe no milestone grants gets no entry rather than a zero. That is the
+    A recipe the HUB never grants gets no entry rather than a zero. That is the
     honest answer: MAM research and hard drives are not tier-gated, so the
-    limit has nothing to say about them and the machine check below carries the
+    limit has nothing to say about them and the machine check carries the
     weight instead.
     """
     tiers: dict[str, int] = {}
     for c in groups.get("FGSchematic", []):
-        if c.get("mType") not in ("EST_Milestone", "EST_Tutorial"):
+        if c.get("mType") not in HUB_SCHEMATIC_TYPES:
+            continue
+        # EST_Custom is a grab bag. Most of what it holds belongs to the HUB
+        # progression -- the recipes you start the game with, and the companion
+        # schematics that carry the second half of a milestone's unlocks -- but
+        # a few MAM nodes and hard-drive alternates are filed there too, and
+        # those are research whatever the field says.
+        key = c.get("ClassName", "")
+        if c.get("mType") == "EST_Custom" and (
+            key.startswith("Research_") or "Alternate" in key
+        ):
             continue
         tier = int(fnum(c.get("mTechTier"), 0))
         for unlock in c.get("mUnlocks", []) or []:

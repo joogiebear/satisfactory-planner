@@ -191,6 +191,17 @@ export interface PlannerSettings {
    * could actually build at that point in the game.
    */
   maxTier: number | null
+  /**
+   * Whether a tier-limited plan may use recipes the HUB never hands you — MAM
+   * research and hard-drive alternates. On for free-form planning, where the
+   * question is "what is the best way to make this". Off when planning a
+   * milestone, where the question is "can I build this now" and assuming a
+   * hard drive you may never have found makes the answer worthless.
+   *
+   * Ignored entirely when maxTier is null: with no tier limit there is no
+   * point in the game to be honest about.
+   */
+  allowResearch: boolean
 }
 
 // ---------------------------------------------------------------------------

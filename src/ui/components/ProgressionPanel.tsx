@@ -73,6 +73,9 @@ interface Props {
 export function ProgressionPanel({ settings, setSettings, setTargets, onPlanned }: Props) {
   const [track, setTrack] = useState<ProgressionTrack>('milestone')
   const [minutes, setMinutes] = useState(60)
+  // Off by default: a milestone plan is answering "can I build this now", and
+  // a route through a hard drive you may never have found doesn't answer it.
+  const [allowResearch, setAllowResearch] = useState(false)
 
   const active = TRACKS.find((t) => t.id === track)!
 
@@ -117,6 +120,26 @@ export function ProgressionPanel({ settings, setSettings, setTargets, onPlanned 
                 </button>
               ))}
             </div>
+
+            <span className="field-label">Recipes</span>
+            <div className="prog-times">
+              <button
+                className="btn"
+                aria-pressed={!allowResearch}
+                onClick={() => setAllowResearch(false)}
+                title="Only what the HUB has handed you by this tier"
+              >
+                HUB only
+              </button>
+              <button
+                className="btn"
+                aria-pressed={allowResearch}
+                onClick={() => setAllowResearch(true)}
+                title="Also use MAM research and hard-drive alternates"
+              >
+                + research &amp; drives
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -125,6 +148,7 @@ export function ProgressionPanel({ settings, setSettings, setTargets, onPlanned 
         <TieredGoals
           goals={milestones}
           minutes={minutes}
+          allowResearch={allowResearch}
           settings={settings}
           setSettings={setSettings}
           setTargets={setTargets}
@@ -139,6 +163,7 @@ export function ProgressionPanel({ settings, setSettings, setTargets, onPlanned 
               key={g.key}
               goal={g}
               minutes={minutes}
+              allowResearch={allowResearch}
               subtitle={`Built with Tier ${g.tier} tech`}
               settings={settings}
               setSettings={setSettings}
@@ -153,6 +178,7 @@ export function ProgressionPanel({ settings, setSettings, setTargets, onPlanned 
         <GroupedGoals
           goals={mamResearch}
           minutes={minutes}
+          allowResearch={allowResearch}
           settings={settings}
           setSettings={setSettings}
           setTargets={setTargets}
@@ -168,6 +194,7 @@ export function ProgressionPanel({ settings, setSettings, setTargets, onPlanned 
 interface ListProps {
   goals: ProgressionGoal[]
   minutes: number
+  allowResearch: boolean
   settings: PlannerSettings
   setSettings: (s: PlannerSettings) => void
   setTargets: (t: PlanTarget[]) => void
@@ -261,10 +288,11 @@ function Section({
 }
 
 function GoalCard({
-  goal, minutes, subtitle, settings, setSettings, setTargets, onPlanned,
+  goal, minutes, allowResearch, subtitle, settings, setSettings, setTargets, onPlanned,
 }: {
   goal: ProgressionGoal
   minutes: number
+  allowResearch: boolean
   subtitle?: string
   settings: PlannerSettings
   setSettings: (s: PlannerSettings) => void
@@ -286,7 +314,11 @@ function GoalCard({
     // for Basic Steel Production that routes through a machine you unlock two
     // tiers later is worse than useless: you'd build it and find you can't.
     // MAM research isn't tier-gated, so it plans against everything.
-    setSettings({ ...settings, maxTier: goal.track === 'mam' ? null : goal.tier })
+    setSettings({
+      ...settings,
+      maxTier: goal.track === 'mam' ? null : goal.tier,
+      allowResearch,
+    })
     onPlanned()
   }
 

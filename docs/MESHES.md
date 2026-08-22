@@ -87,6 +87,15 @@ Four mechanisms, and a building can use more than one:
   (`mSupportMeshInstanceData`, with the pole height variations beside it)
   rather than on a component at all.
 
+Two more things stand between a class name and a mesh once one is named. A
+reference in one of those fields is not always geometry: the elevator floor stop
+points `mMesh` at one of its own components, which resolves to the blueprint
+package and exports as nothing, so a reference is only followed when it
+genuinely points at a StaticMesh or SkeletalMesh. And the object inside a
+package need not be named after the package — the truck station's file is
+`Truckstation_static` while the mesh in it is `TruckStation_static` — so a miss
+on the object name falls back to whatever geometry the package holds.
+
 Two more things stand between a class name and its geometry. A **variant
 blueprint** may name no mesh whatsoever, because it records only how it differs
 from its parent: `Build_Pipeline_NoIndicator_C` — the Clean Pipeline, and what

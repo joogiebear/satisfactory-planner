@@ -125,6 +125,7 @@ export function defaultSettings(): PlannerSettings {
     tuning: {},
     objective: 'raw',
     maxTier: null,
+    allowResearch: true,
   }
 }
 
