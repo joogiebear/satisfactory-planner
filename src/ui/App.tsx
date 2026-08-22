@@ -6,9 +6,10 @@ import { Sidebar } from './components/Sidebar'
 import { StepsTable } from './components/StepsTable'
 import { SummaryPanel } from './components/SummaryPanel'
 import { TreeView } from './components/TreeView'
+import { BlueprintPanel } from './components/BlueprintPanel'
 import { fmt, fmtPower } from './format'
 
-type Tab = 'tree' | 'steps' | 'summary'
+type Tab = 'tree' | 'steps' | 'summary' | 'blueprint'
 
 const STORAGE_KEY = 'satisfactory-planner/v1'
 
@@ -74,7 +75,7 @@ export function App() {
           <span className="brand-sub">Production Planner</span>
         </div>
         <nav className="tabs" role="tablist">
-          {(['tree', 'steps', 'summary'] as Tab[]).map((t) => (
+          {(['tree', 'steps', 'summary', 'blueprint'] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
@@ -82,7 +83,7 @@ export function App() {
               aria-selected={tab === t}
               onClick={() => setTab(t)}
             >
-              {t === 'tree' ? 'Tree' : t === 'steps' ? 'Steps' : 'Summary'}
+              {t === 'tree' ? 'Tree' : t === 'steps' ? 'Steps' : t === 'summary' ? 'Summary' : 'Blueprints'}
             </button>
           ))}
         </nav>
@@ -114,14 +115,16 @@ export function App() {
             </div>
           )}
 
-          {!hasPlan && plan.errors.length === 0 && (
+          {tab === 'blueprint' && <BlueprintPanel plan={plan} />}
+
+          {tab !== 'blueprint' && !hasPlan && plan.errors.length === 0 && (
             <div className="empty">
               <h2>Nothing to build yet</h2>
               <p>Add an item under Output in the sidebar and set how many you want per minute.</p>
             </div>
           )}
 
-          {hasPlan && (
+          {tab !== 'blueprint' && hasPlan && (
             <>
               <div className="rail">
                 <Stat label="Machines" value={String(plan.totals.machines)} accent="amber" />

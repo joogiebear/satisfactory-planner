@@ -401,6 +401,25 @@ def extract_generators(groups: dict, items: dict) -> list[dict]:
     return out
 
 
+def extract_buildable_names(groups: dict) -> dict[str, str]:
+    """Display name for every placeable building, keyed by its Build_*_C class.
+
+    Blueprints reference buildables by class path, including scenery like
+    foundations and walls that never appear in a recipe, so this covers far more
+    than the production machines the planner itself needs.
+    """
+    names: dict[str, str] = {}
+    for group, classes in groups.items():
+        if not group.startswith("FGBuildable"):
+            continue
+        for c in classes:
+            key = c.get("ClassName", "")
+            label = clean_text(c.get("mDisplayName"))
+            if key and label and key not in names:
+                names[key] = label
+    return names
+
+
 def prune_unreachable(items: dict, recipes: dict) -> dict:
     """Keep only items that participate in an automatable recipe."""
     used = set()
@@ -443,6 +462,7 @@ def main() -> int:
         "belts": extract_belts(groups),
         "pipes": extract_pipes(groups),
         "generators": extract_generators(groups, items),
+        "buildableNames": extract_buildable_names(groups),
     }
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -457,6 +477,7 @@ def main() -> int:
     print(f"  belts       {len(data['belts'])}")
     print(f"  pipes       {len(data['pipes'])}")
     print(f"  generators  {len(data['generators'])}")
+    print(f"  buildables  {len(data['buildableNames'])}")
     return 0
 
 

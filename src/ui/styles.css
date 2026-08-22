@@ -486,3 +486,33 @@ tbody tr:hover { background: var(--plate-hi); }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* --- blueprint drop zone --------------------------------------------------- */
+
+.dropzone {
+  border: 1px dashed var(--rivet-hi);
+  border-radius: var(--r);
+  background: var(--plate);
+  padding: 26px 20px;
+  text-align: center;
+  margin-bottom: 18px;
+}
+.dropzone[data-dragging='true'] { border-color: var(--ficsit); background: #f89a3c0f; }
+
+.dropzone-title {
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 0 0 6px;
+}
+.dropzone .hint { max-width: 620px; margin: 0 auto 14px; }
+.dropzone code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--void);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--ink-dim);
+}
