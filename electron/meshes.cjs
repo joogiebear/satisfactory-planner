@@ -70,24 +70,32 @@ async function status() {
   } catch {
     count = 0
   }
+  let buildings = 0
+  try {
+    buildings = Object.keys(JSON.parse(await fsp.readFile(path.join(dir, 'manifest.json'), 'utf8'))).length
+  } catch {
+    buildings = 0
+  }
   return {
-    count,
+    count: buildings || count,
+    meshFiles: count,
     dir,
     exporterAvailable: fs.existsSync(exporterPath()),
     detectedGame: findGame(),
   }
 }
 
-/** Class name -> file name, read back from what is actually on disk. */
+/**
+ * Class name -> the parts that draw it, written by the extractor.
+ *
+ * A building is rarely one mesh: a window wall is a frame plus a pane, and a
+ * foundation's mesh sits below its actor origin, so each part carries its own
+ * offset, rotation and scale.
+ */
 async function manifest() {
-  const dir = meshDir()
   try {
-    const files = await fsp.readdir(dir)
-    const map = {}
-    for (const file of files) {
-      if (file.toLowerCase().endsWith('.glb')) map[file.replace(/\.glb$/i, '')] = file
-    }
-    return map
+    const raw = await fsp.readFile(path.join(meshDir(), 'manifest.json'), 'utf8')
+    return JSON.parse(raw)
   } catch {
     return {}
   }
@@ -198,6 +206,14 @@ async function optimise(rawDir, outDir, onProgress) {
       total: files.length,
       message: friendly(file.replace(/\.glb$/i, '')),
     })
+  }
+
+  // The manifest says which parts make up each building; without it the viewer
+  // has meshes but no idea where they belong.
+  try {
+    await fsp.copyFile(path.join(rawDir, 'manifest.json'), path.join(outDir, 'manifest.json'))
+  } catch {
+    /* no manifest means no real geometry, and the boxes stand in */
   }
   return written
 }

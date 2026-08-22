@@ -5,25 +5,48 @@
  * Satisfactory on that machine and served from the app's data folder over the
  * `mesh://` scheme. Nothing of the game's is bundled or redistributed.
  *
- * A build that ran `npm run fetch-meshes` during development also has them in
- * src/data/meshes, which Vite inlines; that path is the fallback so the viewer
- * still works in a browser.
+ * A building is rarely a single mesh: a window wall is a frame plus a pane, and
+ * a foundation's mesh sits below its actor origin, so the manifest gives every
+ * part its own offset, rotation and scale.
  */
 
-const bundled = import.meta.glob('../../data/meshes/*.glb', {
+/** One drawable piece of a building, positioned relative to the actor. */
+export interface MeshPart {
+  file: string
+  /** Centimetres, in the game's axes. */
+  loc: [number, number, number]
+  /** Quaternion, x y z w. */
+  rot: [number, number, number, number]
+  scale: [number, number, number]
+  /** Glass and windows are drawn see-through. */
+  glass?: boolean
+  /**
+   * Belts, lifts and pipes repeat this mesh along a spline in game. The path
+   * lives in the save data rather than the asset, so one segment is drawn at
+   * the recorded position instead of the full run.
+   */
+  spline?: boolean
+}
+
+const bundledMeshes = import.meta.glob('../../data/meshes/*.glb', {
   eager: true,
   query: '?url',
   import: 'default',
 })
+const bundledManifest = import.meta.glob('../../data/meshes/manifest.json', { eager: true })
 
 const bundledUrls: Record<string, string> = {}
-for (const [path, url] of Object.entries(bundled)) {
-  const key = path.split('/').pop()?.replace(/\.glb$/, '')
+for (const [path, url] of Object.entries(bundledMeshes)) {
+  const key = path.split('/').pop()
   if (key) bundledUrls[key] = url as string
 }
 
+const bundledParts: Record<string, MeshPart[]> =
+  (Object.values(bundledManifest)[0] as { default?: Record<string, MeshPart[]> })?.default ?? {}
+
 export interface MeshStatus {
   count: number
+  meshFiles?: number
   dir: string
   exporterAvailable: boolean
   detectedGame: string | null
@@ -38,7 +61,7 @@ export interface MeshProgress {
 
 interface MeshApi {
   status(): Promise<MeshStatus>
-  manifest(): Promise<Record<string, string>>
+  manifest(): Promise<Record<string, MeshPart[]>>
   browse(): Promise<{ dir: string; valid: boolean } | null>
   extract(gameDir: string): Promise<{ ok: boolean; count?: number; dir?: string; error?: string }>
   clear(): Promise<MeshStatus>
@@ -57,8 +80,7 @@ export const meshApi: MeshApi | undefined =
 
 export const isDesktop = Boolean(meshApi)
 
-/** Class names the app has extracted, refreshed after every extraction. */
-let extracted: Record<string, string> = {}
+let extracted: Record<string, MeshPart[]> = {}
 
 export async function refreshMeshManifest(): Promise<number> {
   if (!meshApi) return 0
@@ -70,13 +92,20 @@ export async function refreshMeshManifest(): Promise<number> {
   return Object.keys(extracted).length
 }
 
-export function meshFor(buildableKey: string): string | undefined {
-  const file = extracted[buildableKey]
-  // Cache-bust per extraction so a re-run doesn't serve stale geometry.
-  if (file) return `mesh://model/${encodeURIComponent(file)}`
-  return bundledUrls[buildableKey]
+/** The parts that draw a building, or an empty list to fall back to a box. */
+export function partsFor(buildableKey: string): MeshPart[] {
+  const found = extracted[buildableKey] ?? bundledParts[buildableKey]
+  // An earlier build wrote one file name per building instead of a parts list;
+  // a stale cache like that must fall back to boxes, not be iterated as a string.
+  return Array.isArray(found) ? found : []
+}
+
+/** Resolve a part's file to something the page can fetch. */
+export function urlForFile(file: string): string | undefined {
+  if (Object.keys(extracted).length > 0) return `mesh://model/${encodeURIComponent(file)}`
+  return bundledUrls[file]
 }
 
 export function meshCount(): number {
-  return Object.keys(extracted).length || Object.keys(bundledUrls).length
+  return Object.keys(extracted).length || Object.keys(bundledParts).length
 }

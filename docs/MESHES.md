@@ -70,14 +70,41 @@ the export:
   component. The other mesh components are vertex-animated moving parts and the
   production indicator, which would be the wrong thing to draw.
 
-## What doesn't get a mesh
+## How a building's meshes are found
 
-About 428 buildables resolve no mesh, almost all of them lightweight foundation
-and wall variants that are built from shared instanced geometry. They keep their
-sized boxes, which for a flat slab or a wall panel is the right shape anyway.
+Three mechanisms, and a building can use more than one:
 
-Belts, lifts, pipes and power lines are splines: the file stores a path, not a
-placed mesh. They show as small markers along their run.
+- **Machines** hang meshes off `UStaticMeshComponent`s. The body is on an
+  `FGColoredInstanceMeshProxy`; the others are vertex-animated moving parts and
+  the production indicator.
+- **Foundations, walls and most scenery** carry an `AbstractInstanceDataObject`
+  whose `Instances` array names the mesh and its offset. Looking only at
+  components misses several hundred buildings entirely, which is why early
+  versions drew every foundation as a box.
+- **Belts, lifts and pipes** name a segment mesh on the class default
+  (`mMesh`) that the game repeats along a spline.
+
+Every part keeps its relative transform, because they matter: a foundation's
+slab sits 50 cm below its actor origin, a splitter's 55 cm below, and a window
+wall is a frame plus a separate pane.
+
+## Glass
+
+Materials aren't exported, so see-through parts are identified by mesh name.
+The rule is narrow on purpose: `WallSet` meshes are the panel *with a hole in
+it* and must stay solid, while the pane is a separate `Inset` mesh. Anything
+named for glass, an inset, a wall window or a roof window is drawn translucent —
+44 parts across 40 buildings.
+
+## What still isn't right
+
+Belts, lifts and pipes are splines: the asset gives the segment mesh but the
+*path* lives in the blueprint's own property data, which the reader doesn't
+decode. One segment is drawn at each recorded position, which traces a run
+roughly but does not curve or span with it.
+
+A few dozen buildables still resolve nothing and keep their sized box, along
+with anything whose asset points at a stand-in primitive.
 
 ## Size
 

@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { BlueprintInfo, Placement } from '../../core/blueprint'
 import { iconFor } from '../icons'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { meshFor } from './meshes'
+import { partsFor, urlForFile, type MeshPart } from './meshes'
 
 /** glTF is metres; the game, and every placement in a blueprint, is centimetres. */
 const GLTF_TO_CM = 100
@@ -17,7 +17,11 @@ const GLTF_TO_CM = 100
  * into an integer array and destroys the mesh, so they are expanded to Float32
  * first. Reading through getX/getY/getZ de-quantises for us.
  */
-function prepareGeometry(source: THREE.BufferGeometry, worldMatrix: THREE.Matrix4): THREE.BufferGeometry | null {
+function prepareGeometry(
+  source: THREE.BufferGeometry,
+  worldMatrix: THREE.Matrix4,
+  partMatrix: THREE.Matrix4
+): THREE.BufferGeometry | null {
   const position = source.getAttribute('position')
   if (!position) return null
 
@@ -43,6 +47,8 @@ function prepareGeometry(source: THREE.BufferGeometry, worldMatrix: THREE.Matrix
   geo.scale(GLTF_TO_CM, GLTF_TO_CM, GLTF_TO_CM)
   // glTF is Y-up; the root group converts from the game's Z-up axes.
   geo.rotateX(Math.PI / 2)
+  // Now in the building's own space, place the piece within it.
+  geo.applyMatrix4(partMatrix)
   if (!normal) geo.computeVertexNormals()
   return geo
 }
@@ -140,7 +146,7 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
       byClass.set(p.key, list)
     }
 
-    const pendingMeshes: { classKey: string; url: string; list: Placement[]; colour: number }[] = []
+    const pendingMeshes: { classKey: string; parts: MeshPart[]; list: Placement[]; colour: number }[] = []
     const unit = new THREE.BoxGeometry(1, 1, 1)
     const meshes: THREE.InstancedMesh[] = []
     const lookup: { mesh: THREE.InstancedMesh; items: Placement[] }[] = []
@@ -186,10 +192,11 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
       const mesh = new THREE.InstancedMesh(unit, faces, list.length)
       mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage)
 
-      // Swap in the real geometry once it arrives. Buildings without an
-      // exported mesh (belts, most wall variants) keep the sized box.
-      const meshUrl = meshFor(classKey)
-      if (meshUrl) pendingMeshes.push({ classKey, url: meshUrl, list, colour })
+      // Swap in the real geometry once it arrives. Buildings with no exported
+      // mesh — belts, lifts, pipes and power lines, which are splines — keep
+      // their sized box.
+      const parts = partsFor(classKey)
+      if (parts.length) pendingMeshes.push({ classKey, parts, list, colour })
 
       list.forEach((p, i) => {
         const box = p.box ?? { min: [...MARKER.min], max: [...MARKER.max] }
@@ -232,55 +239,83 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
     const loaded: THREE.InstancedMesh[] = []
 
     for (const pending of pendingMeshes) {
-      loader.load(
-        pending.url,
-        (gltf) => {
-          if (disposed) return
-          gltf.scene.updateMatrixWorld(true)
+      let outstanding = pending.parts.length
+      let drawn = 0
 
-          const material = new THREE.MeshPhongMaterial({
-            color: pending.colour, shininess: 10, specular: 0x151a1f,
-          })
-          let added = 0
+      const finish = () => {
+        outstanding--
+        if (outstanding > 0) return
+        if (drawn === 0) return
+        // Retire the placeholder box only once something replaced it.
+        const placeholder = lookup.find((l) => l.items === pending.list && l.mesh.geometry === unit)
+        if (placeholder) placeholder.mesh.visible = false
+      }
 
-          gltf.scene.traverse((child) => {
-            const asMesh = child as THREE.Mesh
-            if (!asMesh.isMesh || !asMesh.geometry) return
+      for (const part of pending.parts) {
+        const url = urlForFile(part.file)
+        if (!url) { finish(); continue }
 
-            const geo = prepareGeometry(asMesh.geometry, asMesh.matrixWorld)
-            if (!geo) return
+        // Where this piece sits relative to the building's origin: a
+        // foundation's slab is 50 cm below it, a window pane sits in its frame.
+        const partMatrix = new THREE.Matrix4().compose(
+          new THREE.Vector3(part.loc[0], part.loc[1], part.loc[2]),
+          new THREE.Quaternion(part.rot[0], part.rot[1], part.rot[2], part.rot[3]),
+          new THREE.Vector3(part.scale[0] || 1, part.scale[1] || 1, part.scale[2] || 1)
+        )
 
-            const inst = new THREE.InstancedMesh(geo, material, pending.list.length)
-            pending.list.forEach((p, i) => {
-              dummy.position.set(p.position[0], p.position[1], p.position[2])
-              dummy.rotation.set(0, 0, p.yaw)
-              dummy.scale.set(p.scale[0], p.scale[1], p.scale[2])
-              dummy.updateMatrix()
-              inst.setMatrixAt(i, dummy.matrix)
+        loader.load(
+          url,
+          (gltf) => {
+            if (disposed) { finish(); return }
+            gltf.scene.updateMatrixWorld(true)
+
+            const material = part.glass
+              ? new THREE.MeshPhongMaterial({
+                color: 0x9fd4e3,
+                transparent: true,
+                opacity: 0.22,
+                shininess: 90,
+                specular: 0x556066,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+              })
+              : new THREE.MeshPhongMaterial({
+                color: pending.colour, shininess: 10, specular: 0x151a1f,
+              })
+
+            gltf.scene.traverse((child) => {
+              const asMesh = child as THREE.Mesh
+              if (!asMesh.isMesh || !asMesh.geometry) return
+
+              const geo = prepareGeometry(asMesh.geometry, asMesh.matrixWorld, partMatrix)
+              if (!geo) return
+
+              const inst = new THREE.InstancedMesh(geo, material, pending.list.length)
+              inst.renderOrder = part.glass ? 1 : 0
+              pending.list.forEach((p, i) => {
+                dummy.position.set(p.position[0], p.position[1], p.position[2])
+                dummy.rotation.set(0, 0, p.yaw)
+                dummy.scale.set(p.scale[0], p.scale[1], p.scale[2])
+                dummy.updateMatrix()
+                inst.setMatrixAt(i, dummy.matrix)
+              })
+              inst.instanceMatrix.needsUpdate = true
+              inst.computeBoundingSphere()
+              root.add(inst)
+              loaded.push(inst)
+              meshes.push(inst)
+              lookup.push({ mesh: inst, items: pending.list })
+              drawn++
             })
-            inst.instanceMatrix.needsUpdate = true
-            inst.computeBoundingSphere()
-            root.add(inst)
-            loaded.push(inst)
-            meshes.push(inst)
-            lookup.push({ mesh: inst, items: pending.list })
-            added++
-          })
-
-          if (added === 0) {
-            console.warn(`[blueprint] ${pending.classKey}: no drawable geometry in ${pending.url}`)
-            return
+            finish()
+          },
+          undefined,
+          (err) => {
+            console.warn(`[blueprint] ${pending.classKey}: ${part.file} failed to load`, err)
+            finish()
           }
-          // Retire the placeholder boxes only once something replaced them.
-          const placeholder = lookup.find((l) => l.items === pending.list && l.mesh.geometry === unit)
-          if (placeholder) placeholder.mesh.visible = false
-        },
-        undefined,
-        (err) => {
-          // Silence here previously hid a real failure; the box stays, but say why.
-          console.warn(`[blueprint] ${pending.classKey}: mesh failed to load`, err)
-        }
-      )
+        )
+      }
     }
 
     // --- ground grid, one line per 8 m foundation ---

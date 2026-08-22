@@ -14,3 +14,4 @@ src/data/meshes/
 tools/mesh-exporter/bin/
 tools/mesh-exporter/obj/
 tools/mesh-exporter/publish/
+tools/mesh-exporter/meshes/

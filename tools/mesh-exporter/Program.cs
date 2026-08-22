@@ -29,11 +29,14 @@ namespace SatisfactoryMeshExporter;
 /// </summary>
 public static class Program
 {
+    private static bool Verbose;
+
     public static int Main(string[] args)
     {
         var gameDir = ArgValue(args, "--game");
         var outDir = ArgValue(args, "--out") ?? "meshes";
         var listOnly = args.Contains("--list");
+        Verbose = args.Contains("--verbose");
         var limit = int.TryParse(ArgValue(args, "--limit"), out var l) ? l : int.MaxValue;
         var versionArg = ArgValue(args, "--ue");
 
@@ -95,19 +98,36 @@ public static class Program
 
 
 
+        var debug = ArgValue(args, "--debug");
+        if (!string.IsNullOrWhiteSpace(debug))
+        {
+            foreach (var hit in buildables.Where(k => k.Key.Contains(debug, StringComparison.OrdinalIgnoreCase)).Take(2))
+            {
+                Console.WriteLine($"DEBUG {hit.Key} -> {hit.Value}");
+                if (!provider.TryLoadPackage(hit.Value, out var dp)) { Console.WriteLine("  package failed to load"); continue; }
+                foreach (var ex in dp.GetExports())
+                {
+                    Console.WriteLine($"  export {ex.Name} class={ex.Class?.Name} type={ex.GetType().Name}");
+                    foreach (var pr in ex.Properties) Dump(pr.Name.Text, pr.Tag, 3);
+                }
+            }
+            return 0;
+        }
+
         Directory.CreateDirectory(outDir);
-        var manifest = new Dictionary<string, string>();
-        int exported = 0, noMesh = 0, failed = 0;
-        var seenMesh = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        // class -> the pieces that make it up, each with its own placement.
+        var manifest = new Dictionary<string, List<object>>();
+        int resolved = 0, noMesh = 0, failed = 0, written = 0;
+        var exportedMeshes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (className, assetPath) in buildables.OrderBy(k => k.Key))
         {
-            if (exported >= limit) break;
+            if (resolved >= limit) break;
 
-            string? meshPath;
+            List<MeshPart> parts;
             try
             {
-                meshPath = FindMesh(provider, assetPath);
+                parts = FindParts(provider, assetPath);
             }
             catch (Exception ex)
             {
@@ -116,72 +136,49 @@ public static class Program
                 continue;
             }
 
-            if (meshPath == null) { noMesh++; continue; }
+            if (parts.Count == 0) { noMesh++; continue; }
+            resolved++;
 
             if (listOnly)
             {
-                Console.WriteLine($"{className,-48} <- {meshPath}");
-                exported++;
+                Console.WriteLine($"{className,-46} {parts.Count} part(s): {string.Join(", ", parts.Take(3).Select(p => Path.GetFileName(p.Mesh)))}");
                 continue;
             }
 
-            // Many variants share one mesh; export it once and point the rest
-            // at the same file.
-            if (seenMesh.TryGetValue(meshPath, out var already))
+            var entries = new List<object>();
+            foreach (var part in parts)
             {
-                manifest[className] = already;
-                exported++;
-                Report(exported, buildables.Count, className);
-                continue;
-            }
-
-            try
-            {
-                var options = new ExporterOptions
+                if (!exportedMeshes.TryGetValue(part.Mesh, out var file))
                 {
-                    MeshFormat = EMeshFormat.Gltf2,
-                    LodFormat = ELodFormat.FirstLod,
-                    ExportMaterials = false,
-                };
-
-                // Machines are skeletal meshes, scenery is static, so try both.
-                MeshExporter exporter;
-                if (provider.TryLoadPackageObject<UStaticMesh>(meshPath, out var sm) && sm != null)
-                    exporter = new MeshExporter(sm, options);
-                else if (provider.TryLoadPackageObject<USkeletalMesh>(meshPath, out var sk) && sk != null)
-                    exporter = new MeshExporter(sk, options);
-                else { noMesh++; continue; }
-
-                if (exporter.TryWriteToDir(new DirectoryInfo(outDir), out _, out var written))
-                {
-                    var target = Path.Combine(outDir, className + ".glb");
-                    // The writer's handle can still be closing when we get here,
-                    // so give the rename a few attempts before giving up.
-                    MoveWithRetry(written, target);
-                    var fileName = Path.GetFileName(target);
-                    manifest[className] = fileName;
-                    seenMesh[meshPath] = fileName;
-                    exported++;
-                    Report(exported, buildables.Count, className);
+                    file = ExportMesh(provider, part.Mesh, outDir);
+                    if (file == null) { failed++; continue; }
+                    exportedMeshes[part.Mesh] = file;
+                    written++;
                 }
-                else failed++;
+                entries.Add(new
+                {
+                    file,
+                    loc = part.Location,
+                    rot = part.Rotation,
+                    scale = part.Scale,
+                    glass = IsSeeThrough(part.Mesh, className),
+                    spline = part.Spline,
+                });
             }
-            catch (Exception ex)
-            {
-                failed++;
-                if (failed <= 5) Console.Error.WriteLine($"  {className}: {ex.Message}");
-            }
+
+            if (entries.Count > 0) manifest[className] = entries;
+            Report(resolved, buildables.Count, className);
         }
 
         if (!listOnly)
         {
             File.WriteAllText(
                 Path.Combine(outDir, "manifest.json"),
-                JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+                JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = false }));
         }
 
-        Console.WriteLine($"Exported {exported}, no mesh for {noMesh}, failed {failed}");
-        return exported > 0 ? 0 : 1;
+        Console.WriteLine($"Resolved {resolved} buildings, wrote {written} meshes, no mesh for {noMesh}, failed {failed}");
+        return resolved > 0 ? 0 : 1;
     }
 
     /// <summary>
@@ -277,60 +274,232 @@ public static class Program
     }
 
     /// <summary>
-    /// The mesh a building actually uses, read from its blueprint rather than
-    /// guessed from the folder. A BlueprintGeneratedClass stores its component
-    /// templates as exports in the same package, so the StaticMeshComponent
-    /// among them carries the reference we want.
+    /// Export one static or skeletal mesh, returning the file name written.
+    /// Machines are skeletal, scenery is static, so both are tried.
     /// </summary>
-    private static string? FindMesh(DefaultFileProvider provider, string assetPath)
+    private static string? ExportMesh(DefaultFileProvider provider, string meshPath, string outDir)
     {
-        if (!provider.TryLoadPackage(assetPath, out var package)) return null;
+        var options = new ExporterOptions
+        {
+            MeshFormat = EMeshFormat.Gltf2,
+            LodFormat = ELodFormat.FirstLod,
+            ExportMaterials = false,
+        };
 
-        // Satisfactory hangs a building's main body on an
-        // FGColoredInstanceMeshProxy. The other mesh components are moving
-        // parts (vertex-animated) and the little production indicator, which
-        // would both be the wrong thing to draw as the building.
-        string? body = null;
-        string? fallback = null;
+        MeshExporter exporter;
+        if (provider.TryLoadPackageObject<UStaticMesh>(meshPath, out var sm) && sm != null)
+            exporter = new MeshExporter(sm, options);
+        else if (provider.TryLoadPackageObject<USkeletalMesh>(meshPath, out var sk) && sk != null)
+            exporter = new MeshExporter(sk, options);
+        else return null;
+
+        if (!exporter.TryWriteToDir(new DirectoryInfo(outDir), out _, out var producedPath)) return null;
+
+        var safe = meshPath.Replace('/', '_').TrimStart('_') + ".glb";
+        var target = Path.Combine(outDir, safe);
+        MoveWithRetry(producedPath, target);
+        return safe;
+    }
+
+    /// <summary>
+    /// Some buildables point at a stand-in primitive rather than real art;
+    /// drawing a bare cube is worse than leaving the sized box in place.
+    /// </summary>
+    private static bool IsPlaceholder(string meshPath)
+    {
+        var name = Path.GetFileName(meshPath);
+        return name.Equals("Cube", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("Sphere", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("Plane", StringComparison.OrdinalIgnoreCase)
+            || meshPath.Contains("/Environment/Misc/", StringComparison.OrdinalIgnoreCase)
+            || meshPath.Contains("BuildGun/Mesh", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Glass panes read as glass. Materials aren't exported, so this goes by
+    /// asset name, which the game is consistent about for windows and panels.
+    /// </summary>
+    private static bool IsSeeThrough(string meshPath, string className)
+    {
+        var mesh = Path.GetFileName(meshPath);
+        // "WallSet" meshes are the panel with a hole in it; the pane is a
+        // separate "Inset" mesh, so the frame must stay solid.
+        if (mesh.Contains("WallSet", StringComparison.OrdinalIgnoreCase)) return false;
+
+        return mesh.Contains("Glass", StringComparison.OrdinalIgnoreCase)
+            || mesh.Contains("Inset", StringComparison.OrdinalIgnoreCase)
+            || mesh.Contains("Wall_Window", StringComparison.OrdinalIgnoreCase)
+            || mesh.Contains("Roof_Window", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>One drawable piece of a building: a mesh plus where it sits.</summary>
+    public sealed class MeshPart
+    {
+        public string Mesh { get; init; } = "";
+        public float[] Location { get; init; } = [0, 0, 0];
+        public float[] Rotation { get; init; } = [0, 0, 0, 1];
+        public float[] Scale { get; init; } = [1, 1, 1];
+        public string? Material { get; init; }
+        /// <summary>Repeated along a spline in game; we draw one segment.</summary>
+        public bool Spline { get; init; }
+    }
+
+    /// <summary>
+    /// Every mesh a building draws, read from its blueprint.
+    ///
+    /// Two mechanisms are in play. Machines hang meshes off StaticMeshComponents.
+    /// Foundations, walls and the rest of the "lightweight" buildables instead
+    /// carry an AbstractInstanceDataObject whose Instances array names the mesh
+    /// and its offset — that covers the several hundred buildings that finding
+    /// only components misses entirely.
+    ///
+    /// Both keep their relative transforms: a foundation's mesh sits 50 cm below
+    /// its actor origin, and a window wall is a frame plus a separate glass pane.
+    /// </summary>
+    private static List<MeshPart> FindParts(DefaultFileProvider provider, string assetPath)
+    {
+        var parts = new List<MeshPart>();
+        if (!provider.TryLoadPackage(assetPath, out var package)) return parts;
 
         foreach (var export in package.GetExports())
         {
-            var candidate = MeshFromExport(export);
-            if (candidate == null) continue;
+            // --- lightweight buildables: instance data ---
+            var instancesRaw = export.Properties.FirstOrDefault(x => x.Name.Text == "Instances")?.Tag?.GenericValue;
+            if (instancesRaw is UScriptArray instances)
+            {
+                if (Verbose) Console.WriteLine($"    [dbg] {export.Name}: Instances array with {instances.Properties.Count}");
+                foreach (var entry in instances.Properties)
+                {
+                    var record = Unwrap(entry?.GenericValue);
+                    if (record == null) continue;
+                    var mesh = ResolvePath(Member(record, "StaticMesh"));
+                    if (Verbose) Console.WriteLine($"    [dbg]   instance mesh -> {mesh ?? "null"}");
+                    if (mesh == null) continue;
+                    var (loc, rot, scale) = ReadTransform(Member(record, "RelativeTransform"));
+                    parts.Add(new MeshPart { Mesh = mesh, Location = loc, Rotation = rot, Scale = scale });
+                }
+                continue;
+            }
 
-            var owner = export.Class?.Name.Text ?? string.Empty;
-            if (owner.Contains("ColoredInstanceMeshProxy", StringComparison.OrdinalIgnoreCase))
-                body ??= candidate;
-            else if (!export.Name.Contains("Indicator", StringComparison.OrdinalIgnoreCase))
-                fallback ??= candidate;
+            // --- splines: belts, lifts, pipes and power lines ---
+            // These have no placed mesh component; the class default names a
+            // segment mesh that the game repeats along the spline. One segment
+            // is far better than nothing, though the run itself isn't traced.
+            foreach (var field in new[] { "mMesh", "mMeshBody", "mConveyorMesh" })
+            {
+                var splineMesh = ResolvePath(export.GetOrDefault<FPackageIndex?>(field, null));
+                if (splineMesh == null || IsPlaceholder(splineMesh)) continue;
+                parts.Add(new MeshPart { Mesh = splineMesh, Spline = true });
+                break;
+            }
+
+            // --- machines and other component-based buildings ---
+            if (export is not UStaticMeshComponent) continue;
+            if (export.Name.Contains("Indicator", StringComparison.OrdinalIgnoreCase)) continue;
+            var componentMesh = ResolvePath(export.GetOrDefault<FPackageIndex?>("StaticMesh", null));
+            if (Verbose) Console.WriteLine($"    [dbg] {export.Name}: StaticMesh -> {componentMesh ?? "null"}");
+            if (componentMesh == null) continue;
+
+            parts.Add(new MeshPart
+            {
+                Mesh = componentMesh,
+                Location = ReadVector(export.GetOrDefault<object?>("RelativeLocation", null), 0f),
+                Rotation = ReadRotator(export.GetOrDefault<object?>("RelativeRotation", null)),
+                Scale = ReadVector(export.GetOrDefault<object?>("RelativeScale3D", null), 1f),
+            });
         }
-        return body ?? fallback;
+
+        return parts;
     }
 
-    private static string? MeshFromExport(UObject export)
+    private static object? Unwrap(object? value)
     {
-        // A static mesh component names its mesh directly.
-        if (export is UStaticMeshComponent smc)
-        {
-            var resolved = ResolvePath(smc.GetOrDefault<FPackageIndex?>("StaticMesh"));
-            if (resolved != null) return resolved;
-        }
-
-        // Some buildings hold the mesh on a plain property instead.
-        foreach (var name in new[] { "StaticMesh", "mMesh", "mBuildingMesh" })
-        {
-            if (export.Properties.All(p => p.Name.Text != name)) continue;
-            var resolved = ResolvePath(export.GetOrDefault<FPackageIndex?>(name));
-            if (resolved != null) return resolved;
-        }
-        return null;
+        var inner = Member(value, "StructType");
+        return inner ?? value;
     }
 
-    private static string? ResolvePath(FPackageIndex? index)
+    /// <summary>Property or field by name, ignoring access.</summary>
+    private static object? Reflect(object? target, string name)
     {
-        var name = index?.ResolvedObject?.GetPathName();
+        if (target == null) return null;
+        var type = target.GetType();
+        return type.GetProperty(name)?.GetValue(target) ?? type.GetField(name)?.GetValue(target);
+    }
+
+    /// <summary>
+    /// Read a named member from an Unreal value.
+    ///
+    /// Structs don't expose their fields as C# members: they carry a Properties
+    /// list keyed by name, each entry wrapping the value in a tag. Anything else
+    /// falls back to ordinary reflection.
+    /// </summary>
+    private static object? Member(object? target, string name)
+    {
+        if (target == null) return null;
+
+        if (Reflect(target, "Properties") is System.Collections.IEnumerable props && props is not string)
+        {
+            foreach (var item in props)
+            {
+                if (Reflect(item, "Name")?.ToString() != name) continue;
+                return Unwrap(Reflect(Reflect(item, "Tag"), "GenericValue"));
+            }
+            return null;
+        }
+
+        return Unwrap(Reflect(target, name));
+    }
+
+    private static float Num(object? value, float fallback = 0f)
+        => value is null ? fallback : float.TryParse(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) ? f : fallback;
+
+    private static float[] ReadVector(object? value, float fallback)
+    {
+        if (value == null) return [fallback, fallback, fallback];
+        return [Num(Member(value, "X"), fallback), Num(Member(value, "Y"), fallback), Num(Member(value, "Z"), fallback)];
+    }
+
+    private static float[] ReadQuat(object? value)
+    {
+        if (value == null) return [0, 0, 0, 1];
+        return [Num(Member(value, "X")), Num(Member(value, "Y")), Num(Member(value, "Z")), Num(Member(value, "W"), 1f)];
+    }
+
+    /// <summary>Component rotations are pitch/yaw/roll in degrees; convert to a quaternion.</summary>
+    private static float[] ReadRotator(object? value)
+    {
+        if (value == null) return [0, 0, 0, 1];
+        var pitch = Num(Member(value, "Pitch")) * MathF.PI / 180f;
+        var yaw = Num(Member(value, "Yaw")) * MathF.PI / 180f;
+        var roll = Num(Member(value, "Roll")) * MathF.PI / 180f;
+        float cy = MathF.Cos(yaw * 0.5f), sy = MathF.Sin(yaw * 0.5f);
+        float cp = MathF.Cos(pitch * 0.5f), sp = MathF.Sin(pitch * 0.5f);
+        float cr = MathF.Cos(roll * 0.5f), sr = MathF.Sin(roll * 0.5f);
+        return [
+            cr * sp * sy - sr * cp * cy,
+            -cr * sp * cy - sr * cp * sy,
+            cr * cp * sy - sr * sp * cy,
+            cr * cp * cy + sr * sp * sy,
+        ];
+    }
+
+    private static (float[] loc, float[] rot, float[] scale) ReadTransform(object? transform)
+    {
+        if (transform == null) return ([0, 0, 0], [0, 0, 0, 1], [1, 1, 1]);
+        return (
+            ReadVector(Member(transform, "Translation"), 0f),
+            ReadQuat(Member(transform, "Rotation")),
+            ReadVector(Member(transform, "Scale3D"), 1f)
+        );
+    }
+
+    /// <summary>Package path of a referenced asset, minus the object suffix.</summary>
+    private static string? ResolvePath(object? reference)
+    {
+        if (reference is not FPackageIndex index) return null;
+        var name = index.ResolvedObject?.GetPathName();
         if (string.IsNullOrEmpty(name)) return null;
-        // Strip the object suffix: "/Game/Foo/SM_Bar.SM_Bar" -> "/Game/Foo/SM_Bar"
+        // "/Game/Foo/SM_Bar.SM_Bar" -> "/Game/Foo/SM_Bar"
         var dot = name.LastIndexOf('.');
         return dot > 0 ? name[..dot] : name;
     }
@@ -345,6 +514,7 @@ public static class Program
         Console.Out.Flush();
     }
 
+    /// <summary>The writer's handle can still be closing, so retry the rename.</summary>
     private static void MoveWithRetry(string from, string to, int attempts = 6)
     {
         for (var i = 0; ; i++)
@@ -362,7 +532,40 @@ public static class Program
         }
     }
 
-    private static string Trunc(string? v) => v == null ? "null" : (v.Length > 90 ? v[..90] : v);
+    /// <summary>Recursively print a property, for --debug.</summary>
+    private static void Dump(string name, dynamic? tag, int depth)
+    {
+        var pad = new string(' ', depth * 2);
+        if (tag == null) { Console.WriteLine($"{pad}{name} = null"); return; }
+
+        object? value = tag.GenericValue;
+        var unwrapped = Member(value, "StructType");
+        if (unwrapped != null) value = unwrapped;
+
+        if (value is UScriptArray arr)
+        {
+            Console.WriteLine($"{pad}{name}: array[{arr.Properties.Count}]");
+            for (var i = 0; i < Math.Min(arr.Properties.Count, 3) && depth < 7; i++)
+                Dump($"[{i}]", arr.Properties[i], depth + 1);
+            return;
+        }
+
+        if (Member(value, "Properties") is System.Collections.IEnumerable inner && inner is not string && depth < 7)
+        {
+            Console.WriteLine($"{pad}{name}: struct");
+            foreach (var item in inner)
+            {
+                var n = item?.GetType().GetProperty("Name")?.GetValue(item)?.ToString() ?? "?";
+                var t = item?.GetType().GetProperty("Tag")?.GetValue(item);
+                Dump(n, t, depth + 1);
+            }
+            return;
+        }
+
+        var text = value?.ToString() ?? "null";
+        if (text.Length > 120) text = text[..120];
+        Console.WriteLine($"{pad}{name} = {text}");
+    }
 
     private static string? ArgValue(string[] args, string name)
     {
