@@ -110,7 +110,7 @@ export function NodeInspector({ data, settings, setSettings, onClose }: Props) {
                   type="number"
                   min={1}
                   max={250}
-                  step={5}
+                  step={1}
                   value={Math.round((settings.tuning[step.recipe.key]?.clock ?? settings.defaultClock) * 1000) / 10}
                   onChange={(e) => tune({ clock: Number(e.target.value) / 100 })}
                 />

@@ -137,7 +137,7 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
               type="number"
               min={1}
               max={250}
-              step={10}
+              step={1}
               value={Math.round(settings.extraction.minerClock * 1000) / 10}
               onChange={(e) => patchExtraction({ minerClock: Number(e.target.value) / 100 })}
             />
@@ -149,7 +149,7 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
               type="number"
               min={1}
               max={250}
-              step={10}
+              step={1}
               value={Math.round(settings.extraction.oilExtractorClock * 1000) / 10}
               onChange={(e) => patchExtraction({
                 oilExtractorClock: Number(e.target.value) / 100,
@@ -217,7 +217,7 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
             type="number"
             min={1}
             max={250}
-            step={5}
+            step={1}
             value={Math.round(settings.defaultClock * 1000) / 10}
             onChange={(e) => patch({ defaultClock: Number(e.target.value) / 100 })}
           />

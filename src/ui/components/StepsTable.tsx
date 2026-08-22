@@ -67,7 +67,7 @@ function Row({ step, settings, onTune }: { step: ProductionStep; settings: Plann
           type="number"
           min={1}
           max={250}
-          step={5}
+          step={1}
           value={Math.round((tuning?.clock ?? settings.defaultClock) * 1000) / 10}
           onChange={(e) => onTune(step.recipe.key, { clock: Number(e.target.value) / 100 })}
           style={{ width: 68 }}
