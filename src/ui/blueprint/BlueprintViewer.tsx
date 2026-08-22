@@ -358,9 +358,10 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
                 depthWrite: false,
               })
               : new THREE.MeshStandardMaterial({
-                // Tinted only until the real surface arrives, so a missing
-                // texture still reads as the right kind of thing.
-                color: part.texture ? 0xffffff : pending.colour,
+                // Stay tinted until a surface actually arrives. Going white up
+                // front means a texture that 404s leaves the building blank
+                // rather than merely untextured.
+                color: pending.colour,
                 metalness: 0.15,
                 roughness: 0.75,
               })
@@ -377,8 +378,11 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
                   map.flipY = false
                   map.wrapS = map.wrapT = THREE.RepeatWrapping
                   map.anisotropy = 4
-                  ;(material as THREE.MeshStandardMaterial).map = map
-                  material.needsUpdate = true
+                  const standard = material as THREE.MeshStandardMaterial
+                  standard.map = map
+                  // The tint was a stand-in; let the surface speak now.
+                  standard.color.set(0xffffff)
+                  standard.needsUpdate = true
                   textures.push(map)
                 },
                 undefined,

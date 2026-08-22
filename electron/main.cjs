@@ -76,9 +76,10 @@ function buildMenu() {
 
 function registerMeshProtocol() {
   protocol.handle('mesh', (request) => {
-    // mesh://model/Build_SmelterMk1_C.glb -> <userData>/meshes/Build_SmelterMk1_C.glb
+    // mesh://model/<file> -> <userData>/meshes/<file>
+    // Geometry and its base-colour maps both come through here.
     const name = path.basename(decodeURIComponent(new URL(request.url).pathname))
-    if (!name.endsWith('.glb')) return new Response('Not found', { status: 404 })
+    if (!/\.(glb|jpg|png)$/i.test(name)) return new Response('Not found', { status: 404 })
     return net.fetch(pathToFileURL(path.join(meshes.meshDir(), name)).toString())
   })
 }

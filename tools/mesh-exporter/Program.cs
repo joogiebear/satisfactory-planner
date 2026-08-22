@@ -41,6 +41,7 @@ public static class Program
         WithMaterials = !args.Contains("--no-materials");
         var limit = int.TryParse(ArgValue(args, "--limit"), out var l) ? l : int.MaxValue;
         var versionArg = ArgValue(args, "--ue");
+        var only = ArgValue(args, "--only");
 
         if (string.IsNullOrWhiteSpace(gameDir))
         {
@@ -118,14 +119,20 @@ public static class Program
 
         Directory.CreateDirectory(outDir);
         // class -> the pieces that make it up, each with its own placement.
-        var manifest = new Dictionary<string, List<object>>();
+        var manifest = new Dictionary<string, List<Dictionary<string, object?>>>();
         int resolved = 0, noMesh = 0, failed = 0, written = 0;
         var exportedMeshes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var meshTextures = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var meshSources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (className, assetPath) in buildables.OrderBy(k => k.Key))
         {
             if (resolved >= limit) break;
+            // Comma-separated, so a fix can sweep every building it affected in
+            // one pass rather than paying the mount cost per name.
+            if (!string.IsNullOrWhiteSpace(only)
+                && !only.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Any(f => className.Contains(f, StringComparison.OrdinalIgnoreCase))) continue;
 
             List<MeshPart> parts;
             try
@@ -148,7 +155,7 @@ public static class Program
                 continue;
             }
 
-            var entries = new List<object>();
+            var entries = new List<Dictionary<string, object?>>();
             foreach (var part in parts)
             {
                 if (!exportedMeshes.TryGetValue(part.Mesh, out var file))
@@ -160,20 +167,49 @@ public static class Program
                     if (LastTexture != null) meshTextures[file] = LastTexture;
                     written++;
                 }
-                entries.Add(new
+                meshSources[file] = part.Mesh;
+                entries.Add(new Dictionary<string, object?>
                 {
-                    file,
-                    loc = part.Location,
-                    rot = part.Rotation,
-                    scale = part.Scale,
-                    glass = IsSeeThrough(part.Mesh, className),
-                    spline = part.Spline,
-                    texture = meshTextures.TryGetValue(file, out var tex) ? tex : null,
+                    ["file"] = file,
+                    ["loc"] = part.Location,
+                    ["rot"] = part.Rotation,
+                    ["scale"] = part.Scale,
+                    ["glass"] = IsSeeThrough(part.Mesh, className),
+                    ["spline"] = part.Spline,
+                    ["texture"] = meshTextures.TryGetValue(file, out var tex) ? tex : null,
                 });
             }
 
             if (entries.Count > 0) manifest[className] = entries;
             Report(resolved, buildables.Count, className);
+        }
+
+        // Second pass: a mesh exported before its textures existed on disk found
+        // nothing to match. Now that everything is written, try those again.
+        if (!listOnly && WithMaterials)
+        {
+            var recovered = 0;
+            foreach (var entry in manifest.Values.SelectMany(v => v))
+            {
+                if (entry["texture"] != null) continue;
+                var file = (string)entry["file"]!;
+                if (meshTextures.TryGetValue(file, out var known)) { entry["texture"] = known; recovered++; continue; }
+                if (!meshSources.TryGetValue(file, out var source)) continue;
+
+                var folder = AssetFolder(source);
+                if (folder == null) continue;
+                var marker = Path.DirectorySeparatorChar + folder + Path.DirectorySeparatorChar;
+                var albedo = PickAlbedo(Directory.EnumerateFiles(outDir, "*.png", SearchOption.AllDirectories)
+                    .Where(f => f.Contains(marker, StringComparison.OrdinalIgnoreCase)));
+                if (albedo == null) continue;
+
+                var name = ShrinkTexture(albedo, outDir, Path.GetFileNameWithoutExtension(file));
+                if (name == null) continue;
+                meshTextures[file] = name;
+                entry["texture"] = name;
+                recovered++;
+            }
+            if (recovered > 0) Console.WriteLine($"Matched {recovered} more textures on a second pass");
         }
 
         if (!listOnly)
@@ -285,11 +321,42 @@ public static class Program
     /// </summary>
     private static string? ExportMesh(DefaultFileProvider provider, string meshPath, string outDir)
     {
+        try
+        {
+            return ExportMeshCore(provider, meshPath, outDir, WithMaterials);
+        }
+        catch (Exception ex)
+        {
+            // Some textures fail to decompress, and taking the mesh down with
+            // them costs the geometry too -- which lost every plain foundation.
+            // Retry bare: an untextured building beats a missing one.
+            if (WithMaterials)
+            {
+                try
+                {
+                    var bare = ExportMeshCore(provider, meshPath, outDir, false);
+                    if (bare != null)
+                    {
+                        Console.Error.WriteLine($"  {Path.GetFileName(meshPath)}: textures failed, exported untextured");
+                        LastTexture = null;
+                        return bare;
+                    }
+                }
+                catch { /* fall through to the skip below */ }
+            }
+            Console.Error.WriteLine($"  skipped {Path.GetFileName(meshPath)}: {ex.GetType().Name}: {ex.Message}");
+            LastTexture = null;
+            return null;
+        }
+    }
+
+    private static string? ExportMeshCore(DefaultFileProvider provider, string meshPath, string outDir, bool withMaterials)
+    {
         var options = new ExporterOptions
         {
             MeshFormat = EMeshFormat.Gltf2,
             LodFormat = ELodFormat.FirstLod,
-            ExportMaterials = WithMaterials,
+            ExportMaterials = withMaterials,
             MaterialFormat = CUE4Parse.UE4.Assets.Exports.Material.EMaterialFormat.FirstLayer,
             TextureFormat = CUE4Parse_Conversion.Textures.ETextureFormat.Png,
             Platform = CUE4Parse.UE4.Assets.Exports.Texture.ETexturePlatform.DesktopMobile,
@@ -305,7 +372,7 @@ public static class Program
         // Textures are written as loose files beside the mesh rather than into
         // the glTF, and the material instances declare no bindings, so the only
         // reliable link is which files appear while this mesh is exported.
-        var before = WithMaterials
+        var before = withMaterials
             ? new HashSet<string>(Directory.EnumerateFiles(outDir, "*.png", SearchOption.AllDirectories), StringComparer.OrdinalIgnoreCase)
             : null;
 
@@ -320,11 +387,49 @@ public static class Program
             var fresh = Directory.EnumerateFiles(outDir, "*.png", SearchOption.AllDirectories)
                 .Where(f => !before.Contains(f))
                 .ToList();
+
             var albedo = PickAlbedo(fresh);
+
+            // A texture is only written once, so a mesh sharing one with an
+            // earlier building sees nothing new — and a mesh whose fresh files
+            // are all normals and masks yields no base colour either. Either
+            // way, fall back to that building's own asset folder, which is
+            // where its maps live.
+            if (albedo == null)
+            {
+                var folder = AssetFolder(meshPath);
+                if (folder != null)
+                {
+                    var marker = Path.DirectorySeparatorChar + folder + Path.DirectorySeparatorChar;
+                    albedo = PickAlbedo(Directory.EnumerateFiles(outDir, "*.png", SearchOption.AllDirectories)
+                        .Where(f => f.Contains(marker, StringComparison.OrdinalIgnoreCase)));
+                }
+            }
             LastTexture = albedo == null ? null : ShrinkTexture(albedo, outDir, Path.GetFileNameWithoutExtension(safe));
         }
 
         return safe;
+    }
+
+    /// <summary>
+    /// The building folder an asset belongs to, e.g. "ConstructorMk1" from
+    /// /Game/FactoryGame/Buildable/Factory/ConstructorMk1/Mesh/ConstructorMk1_static.
+    /// Leaf folders like Mesh or Texture are skipped in favour of the one that
+    /// names the building.
+    /// </summary>
+    private static string? AssetFolder(string meshPath)
+    {
+        var parts = meshPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        for (var i = parts.Length - 2; i >= 0; i--)
+        {
+            var name = parts[i];
+            if (name.Equals("Mesh", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("Meshes", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("Texture", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("Textures", StringComparison.OrdinalIgnoreCase)) continue;
+            return name;
+        }
+        return null;
     }
 
     /// <summary>Filename of the base-colour texture written for the last mesh, if any.</summary>
