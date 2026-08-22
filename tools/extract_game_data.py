@@ -74,6 +74,17 @@ ITEM_AMOUNT_RE = re.compile(
 # Matches a trailing class name inside a quoted object path.
 CLASS_PATH_RE = re.compile(r'(?:/[\w\-/]+\.)?(\w+_C)')
 
+# Matches: Texture2D /Game/.../UI/IconDesc_IronPlates_256.IconDesc_IronPlates_256
+ICON_RE = re.compile(r'(?:Texture2D\s+)?/[\w\-/]+/(?P<asset>[\w\-]+)\.(?P=asset)\s*$')
+
+
+def parse_icon(raw: str | None) -> str:
+    """Asset name of an icon texture, which is what an FModel export is named."""
+    if not raw:
+        return ""
+    m = ICON_RE.search(raw.strip())
+    return m.group("asset") if m else ""
+
 
 def parse_item_amounts(raw: str | None) -> list[dict]:
     """Parse an mIngredients / mProduct field into [{item, amount}]."""
@@ -191,12 +202,19 @@ def extract_items(groups: dict) -> dict[str, dict]:
                 "stackSize": c.get("mStackSize", "SS_MEDIUM"),
                 "energyMJ": round(energy, 4),
                 "sinkPoints": int(fnum(c.get("mResourceSinkPoints"))),
+                "icon": parse_icon(c.get("mSmallIcon") or c.get("mPersistentBigIcon")),
                 "category": group,
             }
     return items
 
 
 def extract_buildings(groups: dict) -> dict[str, dict]:
+    # A buildable's icon lives on its matching descriptor, e.g. the icon for
+    # Build_ConstructorMk1_C is on Desc_ConstructorMk1_C.
+    descriptor_icons = {
+        c["ClassName"]: parse_icon(c.get("mSmallIcon") or c.get("mPersistentBigIcon"))
+        for c in groups.get("FGBuildingDescriptor", [])
+    }
     buildings: dict[str, dict] = {}
     for group in MANUFACTURER_GROUPS:
         for c in groups.get(group, []):
@@ -220,6 +238,7 @@ def extract_buildings(groups: dict) -> dict[str, dict]:
                 "sloopBoostPerSlot": round(boost_per, 6),
                 "canOverclock": str(c.get("mCanChangePotential", "True")) == "True",
                 "maxPotential": fnum(c.get("mMaxPotential"), 1.0),
+                "icon": descriptor_icons.get(key.replace("Build_", "Desc_", 1), ""),
                 "variablePower": group == "FGBuildableManufacturerVariablePower",
             }
     return buildings

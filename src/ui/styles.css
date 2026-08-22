@@ -516,3 +516,11 @@ tbody tr:hover { background: var(--plate-hi); }
   border-radius: 2px;
   color: var(--ink-dim);
 }
+
+/* Extracted game art replaces the lettered tile when available. */
+.chip-img {
+  object-fit: contain;
+  background: none;
+  border-radius: 2px;
+  image-rendering: auto;
+}

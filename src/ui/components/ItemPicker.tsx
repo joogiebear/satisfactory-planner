@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GameItem } from '../../core/types'
 import { initials } from '../format'
+import { iconFor } from '../icons'
 
 export function ItemChip({ item }: { item: GameItem }) {
+  const icon = iconFor(item.key)
+  if (icon) {
+    return <img className="chip chip-img" src={icon} alt="" title={item.name} loading="lazy" />
+  }
+  // No extracted artwork: a lettered tile, tinted by how the item travels.
   return (
     <span
       className="chip"
