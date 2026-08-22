@@ -758,7 +758,9 @@ def main() -> int:
 
     data = {
         "gameVersion": args.version,
-        "source": str(docs),
+        # The file's name, not its path: this ships publicly and nobody needs
+        # to know which drive the game is installed on.
+        "source": docs.name,
         "items": items,
         "recipes": recipes,
         "buildings": buildings,

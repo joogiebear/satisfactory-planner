@@ -293,6 +293,16 @@ equals demand for every item, so that split conserves flow exactly.
 
 ## Licence
 
-MIT, for the code. Satisfactory and its data and artwork belong to Coffee Stain
-Studios; nothing of theirs is redistributed here — the extraction scripts read
-from your own installed copy.
+MIT, for the code — see [LICENSE](LICENSE).
+
+Satisfactory belongs to Coffee Stain Studios. Two things of theirs travel with
+this repository: `src/data/game-data.json`, the item, recipe and building
+figures read out of the game's own published docs, and
+`tools/space-elevator-phases.json`, the phase costs read out of its assets.
+Every Satisfactory calculator ships that data and it is what makes the planner
+work offline.
+
+**No artwork does.** Icons and building models are extracted on your machine
+from your own installed copy, into your own app data folder, and are gitignored
+here and absent from the installers. If you don't own the game, the planner
+still calculates — it just draws boxes.

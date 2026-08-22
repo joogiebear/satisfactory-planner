@@ -15,3 +15,8 @@ tools/mesh-exporter/bin/
 tools/mesh-exporter/obj/
 tools/mesh-exporter/publish/
 tools/mesh-exporter/meshes/
+
+# The exporter's default --out is a folder called "meshes"; a stray diagnostic
+# run once wrote the game's models to the repo root and a `git add -A` took
+# them with it. Nothing extracted from the game belongs in here.
+/meshes/

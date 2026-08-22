@@ -37,7 +37,11 @@ public static class Program
     public static int Main(string[] args)
     {
         var gameDir = ArgValue(args, "--game");
-        var outDir = ArgValue(args, "--out") ?? "meshes";
+        // Default into the temp folder rather than the working directory: a
+        // bare "meshes" once landed the game's models in a git checkout, and
+        // from there into a commit.
+        var outDir = ArgValue(args, "--out")
+                     ?? Path.Combine(Path.GetTempPath(), "satisfactory-meshes");
         var listOnly = args.Contains("--list");
         Verbose = args.Contains("--verbose");
         WithMaterials = !args.Contains("--no-materials");
