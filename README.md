@@ -73,6 +73,27 @@ Produces two files in `release/`:
 Both are unsigned, so Windows SmartScreen shows a warning the first time; pick
 **More info → Run anyway**. Signing them needs a code-signing certificate.
 
+### Installer vs portable
+
+Same 136 MB app either way, with the same bundled mesh extractor. The installer
+registers in Add/Remove Programs and gets shortcuts and a real uninstaller; the
+portable is a self-extracting archive that unpacks to Temp on every launch, so
+it starts slower and leaves nothing behind.
+
+The uninstaller asks whether to delete the extracted building models along with
+your plan and settings, and defaults to keeping them. That default matters:
+electron-builder runs the **old** uninstaller as part of installing a new
+version, so a blunt `deleteAppDataOnUninstall` would wipe ~64 MB of models on
+every upgrade and make you sit through a twelve-minute re-extraction. The
+checkbox lives in `build/installer.nsh` and is guarded three ways — it cannot
+run during an update, cannot run silently, and defaults to unticked.
+
+Two things to know if you touch that file. It is compiled twice, once for the
+uninstaller and once for the installer that embeds it, so uninstaller-only code
+has to sit behind `!ifdef BUILD_UNINSTALLER` or the build fails on warnings it
+treats as errors. And it is included before MUI2, so `MUI_HEADER_TEXT` and
+friends do not exist yet.
+
 The build skips electron-builder's `signAndEditExecutable` step. That step pulls
 in a toolchain archive containing macOS symlinks, and Windows refuses to extract
 those unless Developer Mode is on, which fails the build outright. Nothing is

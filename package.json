@@ -85,7 +85,8 @@
       "shortcutName": "Satisfactory Planner",
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
-      "artifactName": "${productName} Setup ${version}.${ext}"
+      "artifactName": "${productName} Setup ${version}.${ext}",
+   "include": "build/installer.nsh"
     },
     "portable": {
       "artifactName": "${productName} ${version} portable.${ext}"
