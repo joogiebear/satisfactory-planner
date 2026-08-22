@@ -13,3 +13,4 @@ src/data/icons/
 src/data/meshes/
 tools/mesh-exporter/bin/
 tools/mesh-exporter/obj/
+tools/mesh-exporter/publish/

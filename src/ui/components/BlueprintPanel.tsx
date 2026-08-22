@@ -1,10 +1,12 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { parseBlueprint, type BlueprintInfo } from '../../core/blueprint'
 import type { Plan } from '../../core/types'
 import { fmt } from '../format'
 import { ItemChip } from './ItemPicker'
 import { Icon } from '../graph/FactoryNode'
 import { BlueprintViewer } from '../blueprint/BlueprintViewer'
+import { MeshSetup } from '../blueprint/MeshSetup'
+import { refreshMeshManifest } from '../blueprint/meshes'
 
 const CATEGORY_LABELS: Record<string, string> = {
   machine: 'Machines',
@@ -29,12 +31,19 @@ const CATEGORY_SWATCH: Record<string, string> = {
 }
 
 export function BlueprintPanel({ plan }: { plan: Plan }) {
+  // Bumped when geometry is extracted, to force the viewer to rebuild.
+  const [meshGeneration, setMeshGeneration] = useState(0)
   const [blueprint, setBlueprint] = useState<BlueprintInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const [busy, setBusy] = useState(false)
   const [hidden, setHidden] = useState<Set<string>>(new Set())
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Pick up meshes extracted on a previous run.
+  useEffect(() => {
+    void refreshMeshManifest().then((n) => { if (n) setMeshGeneration((g) => g + 1) })
+  }, [])
 
   const open = async (file: File) => {
     setError(null)
@@ -57,8 +66,12 @@ export function BlueprintPanel({ plan }: { plan: Plan }) {
 
   const onFile = (file: File | undefined) => { if (file) void open(file) }
 
+  const meshSetup = <MeshSetup onReady={() => setMeshGeneration((g) => g + 1)} />
+
   return (
     <>
+      {!blueprint && meshSetup}
+
       {!blueprint && (
         <div
           className="dropzone"
@@ -90,11 +103,13 @@ export function BlueprintPanel({ plan }: { plan: Plan }) {
 
       {blueprint && (
         <Details
+          key={meshGeneration}
           blueprint={blueprint}
           plan={plan}
           hidden={hidden}
           setHidden={setHidden}
           onReplace={() => inputRef.current?.click()}
+          meshSetup={meshSetup}
         />
       )}
     </>
@@ -107,9 +122,10 @@ interface DetailsProps {
   hidden: Set<string>
   setHidden: (next: Set<string>) => void
   onReplace: () => void
+  meshSetup: React.ReactNode
 }
 
-function Details({ blueprint, plan, hidden, setHidden, onReplace }: DetailsProps) {
+function Details({ blueprint, plan, hidden, setHidden, onReplace, meshSetup }: DetailsProps) {
   // Machines the current plan calls for, so a blueprint can be checked against it.
   const planned = useMemo(() => {
     const map = new Map<string, number>()
@@ -151,6 +167,8 @@ function Details({ blueprint, plan, hidden, setHidden, onReplace }: DetailsProps
         </div>
         <button type="button" className="btn" onClick={onReplace}>Open another</button>
       </div>
+
+      {meshSetup}
 
       {blueprint.placements.length > 0 && (
         <div className="bp-stage">

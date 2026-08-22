@@ -842,3 +842,57 @@ table.mini .num { font-family: var(--mono); }
 .bp-note { padding: 0 11px 10px; margin: 0; }
 
 .bp-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; align-items: start; }
+
+/* --- first-run mesh extraction -------------------------------------------- */
+
+.mesh-setup {
+  border: 1px solid var(--rivet-hi);
+  border-left: 3px solid var(--ficsit);
+  border-radius: var(--r);
+  background: var(--plate);
+  margin-bottom: 16px;
+}
+.mesh-setup-body { padding: 13px 15px; display: grid; gap: 9px; }
+.mesh-setup-title {
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.mesh-setup .hint { max-width: 660px; margin: 0; }
+.mesh-setup-path { font-size: 12px; color: var(--ink-dim); margin: 0; }
+.mesh-setup-path code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--void);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.mesh-progress { display: grid; gap: 6px; }
+.mesh-progress-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--void);
+  overflow: hidden;
+  border: 1px solid var(--rivet);
+}
+.mesh-progress-bar span {
+  display: block;
+  height: 100%;
+  background: var(--ficsit);
+  transition: width 200ms ease;
+}
+.mesh-progress-bar span[data-indeterminate='true'] { animation: mesh-slide 1.3s ease-in-out infinite; }
+.mesh-progress-text { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); }
+
+@keyframes mesh-slide {
+  0% { margin-left: 0; }
+  50% { margin-left: 65%; }
+  100% { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh-progress-bar span { animation: none; }
+}

@@ -1,8 +1,17 @@
 // Electron entry point. Plain CommonJS so it runs without a build step.
-const { app, BrowserWindow, shell, Menu } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, shell } = require('electron')
 const path = require('node:path')
+const { pathToFileURL } = require('node:url')
+const meshes = require('./meshes.cjs')
 
 const isDev = process.env.NODE_ENV === 'development'
+
+// Meshes are extracted per-user into the app's data folder, so they can't be
+// bundled by the renderer. A privileged scheme lets the page fetch them without
+// relaxing file:// security.
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'mesh', privileges: { standard: true, secure: true, supportFetchAPI: true, bypassCSP: true } },
+])
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -35,6 +44,7 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
   }
+  return win
 }
 
 // A minimal menu keeps the standard shortcuts (reload, devtools, zoom, quit)
@@ -64,8 +74,49 @@ function buildMenu() {
   )
 }
 
+function registerMeshProtocol() {
+  protocol.handle('mesh', (request) => {
+    // mesh://model/Build_SmelterMk1_C.glb -> <userData>/meshes/Build_SmelterMk1_C.glb
+    const name = path.basename(decodeURIComponent(new URL(request.url).pathname))
+    if (!name.endsWith('.glb')) return new Response('Not found', { status: 404 })
+    return net.fetch(pathToFileURL(path.join(meshes.meshDir(), name)).toString())
+  })
+}
+
+function registerIpc() {
+  ipcMain.handle('meshes:status', () => meshes.status())
+  ipcMain.handle('meshes:manifest', () => meshes.manifest())
+  ipcMain.handle('meshes:clear', () => meshes.clear())
+
+  ipcMain.handle('meshes:browse', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const result = await dialog.showOpenDialog(win, {
+      title: 'Select your Satisfactory folder',
+      properties: ['openDirectory'],
+      message: 'Pick the folder containing FactoryGameSteam.exe',
+    })
+    if (result.canceled || !result.filePaths.length) return null
+    const dir = result.filePaths[0]
+    return { dir, valid: meshes.isGameDir(dir) }
+  })
+
+  ipcMain.handle('meshes:extract', async (event, gameDir) => {
+    const sender = event.sender
+    const send = (progress) => {
+      if (!sender.isDestroyed()) sender.send('meshes:progress', progress)
+    }
+    try {
+      return { ok: true, ...(await meshes.extract(gameDir, send)) }
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) }
+    }
+  })
+}
+
 app.whenReady().then(() => {
   buildMenu()
+  registerMeshProtocol()
+  registerIpc()
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

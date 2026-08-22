@@ -32,8 +32,8 @@ build you have installed rather than a wiki snapshot.
 - **Extraction settings** — miner mark, node purity per resource, and pump
   clock, feeding exact extractor counts.
 - **Blueprint viewer** — drop in a `.sbp` and see the build itself in 3D, using
-  the game's own building meshes read from your installed copy
-  ([docs/MESHES.md](docs/MESHES.md)). Anything without an exported mesh falls
+  the game's own building meshes, extracted from your installed copy on first
+  run ([docs/MESHES.md](docs/MESHES.md)). Anything without an exported mesh falls
   back to the footprint the game reserves for it, with its icon on top. Hide foundations or walls to see
   the machines inside, hover to name anything, and read the exact build cost and
   how its machines line up with your current plan.
@@ -123,11 +123,13 @@ this machine.
 
 ## What the blueprint viewer draws
 
-A `.sbp` records a transform per building but no geometry. Run
-`npm run fetch-meshes` once and the viewer draws the game's real building
-meshes, read straight out of your installed copy — see
-[docs/MESHES.md](docs/MESHES.md) for how that works and what to do when a game
-update moves the engine version.
+A `.sbp` records a transform per building but no geometry. The first time you
+open the Blueprints tab the app offers to read the game's real building meshes
+from your installed copy; it finds Satisfactory through Steam by itself and the
+extractor is bundled, so there is nothing to install. Meshes are cached per-user
+in `%APPDATA%\Satisfactory Planner\meshes` — never in the installer or the
+repo. See [docs/MESHES.md](docs/MESHES.md) for how it works and what to do when
+a game update moves the engine version.
 
 Without that step, or for the buildings that resolve no mesh, each one is drawn
 at its **clearance box** — the volume the build gun reserves, taken from the

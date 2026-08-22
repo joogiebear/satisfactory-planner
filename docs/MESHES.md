@@ -1,31 +1,46 @@
 # Real building geometry
 
-The blueprint viewer can draw Satisfactory's actual building meshes instead of
+The blueprint viewer draws Satisfactory's actual building meshes instead of
 sized boxes. It reads them from the copy of the game already on your machine —
-nothing is downloaded and nothing is redistributed.
+nothing is downloaded, nothing is bundled, and nothing is redistributed.
+
+## In the app
+
+Open the **Blueprints** tab and the planner offers to do it. It finds
+Satisfactory through Steam on its own, or you can point it at the folder
+containing `FactoryGameSteam.exe`. The extractor is bundled, so there is nothing
+to install — not even .NET.
+
+The first run takes a couple of minutes and caches the result in the app's own
+data folder:
+
+```
+%APPDATA%\Satisfactory Planner\meshes
+```
+
+Re-run it after a game update; "Not now" keeps the sized boxes.
+
+## From the command line
+
+For browser development, where there is no desktop shell to do it:
 
 ```bash
 npm run fetch-meshes
-```
-
-That's it, if Satisfactory is installed through Steam. Otherwise point it at the
-folder containing `FactoryGameSteam.exe`:
-
-```bash
 npm run fetch-meshes -- --game "D:/SteamLibrary/steamapps/common/Satisfactory"
 ```
 
-It builds the extractor, reads the game, and simplifies the result — currently
-143 buildings, 226 MB of source geometry down to about 20 MB. Reload the app
-afterwards.
-
-## What you need
-
-The extractor is a small C# program, so it needs the **.NET SDK** (8 or newer)
-to build. If `dotnet` isn't on your machine, install it without admin rights:
+That route builds the extractor from source, so it needs the **.NET SDK** (8 or
+newer). If `dotnet` isn't on your machine, install it without admin rights:
 
 ```bash
 powershell -c "& { iwr https://dot.net/v1/dotnet-install.ps1 -OutFile $env:TEMP\dotnet-install.ps1; & $env:TEMP\dotnet-install.ps1 -Channel 10.0 -InstallDir $env:LOCALAPPDATA\Microsoft\dotnet }"
+```
+
+Building the installer needs the extractor published first, which
+`npm run dist` does not do for you:
+
+```bash
+dotnet publish tools/mesh-exporter -c Release -r win-x64 --self-contained true -o tools/mesh-exporter/publish
 ```
 
 ## Why it takes a C# program

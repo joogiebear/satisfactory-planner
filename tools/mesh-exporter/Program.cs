@@ -131,6 +131,7 @@ public static class Program
             {
                 manifest[className] = already;
                 exported++;
+                Report(exported, buildables.Count, className);
                 continue;
             }
 
@@ -161,7 +162,7 @@ public static class Program
                     manifest[className] = fileName;
                     seenMesh[meshPath] = fileName;
                     exported++;
-                    if (exported % 25 == 0) Console.WriteLine($"  {exported} exported…");
+                    Report(exported, buildables.Count, className);
                 }
                 else failed++;
             }
@@ -226,7 +227,6 @@ public static class Program
         int U32() { var v = (int)BitConverter.ToUInt32(raw, p); p += 4; return v; }
 
         var nameCount = U32();
-        Console.WriteLine($"  [usmap] bodyStart={bodyStart} nameCount={nameCount}");
         // Written out rather than `p += U8()`: compound assignment loads p
         // before the call runs, so the read's own increment gets discarded.
         for (var i = 0; i < nameCount; i++)
@@ -234,7 +234,6 @@ public static class Program
             var nameLength = U8();
             p += nameLength;
         }
-        Console.WriteLine($"  [usmap] after names rel={p - bodyStart}");
 
         var enumCount = U32();
         for (var i = 0; i < enumCount; i++)
@@ -259,9 +258,7 @@ public static class Program
             }
         }
 
-        Console.WriteLine($"  [usmap] after enums rel={p - bodyStart} enumCount={enumCount}");
         var structCount = U32();
-        Console.WriteLine($"  [usmap] structCount={structCount} rel={p - bodyStart} rawLen={raw.Length}");
         for (var i = 0; i < structCount; i++)
         {
             U32(); U32(); U16();
@@ -336,6 +333,16 @@ public static class Program
         // Strip the object suffix: "/Game/Foo/SM_Bar.SM_Bar" -> "/Game/Foo/SM_Bar"
         var dot = name.LastIndexOf('.');
         return dot > 0 ? name[..dot] : name;
+    }
+
+    /// <summary>
+    /// A line the host can parse for progress. Kept to one flat line so a
+    /// caller can read it straight off stdout without buffering.
+    /// </summary>
+    private static void Report(int done, int total, string what)
+    {
+        Console.WriteLine($"PROGRESS {done} {total} {what}");
+        Console.Out.Flush();
     }
 
     private static void MoveWithRetry(string from, string to, int attempts = 6)
