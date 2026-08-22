@@ -510,6 +510,198 @@ def extract_buildable_names(groups: dict) -> dict[str, str]:
     return names
 
 
+# The MAM's research trees, keyed by the prefix its class names carry. The
+# game groups these visually and nothing in the docs names the grouping, so the
+# class name is the only handle there is.
+MAM_TREES = {
+    "Quartz": "Quartz",
+    "Caterium": "Caterium",
+    "Sulfur": "Sulfur",
+    "Mycelia": "Mycelia",
+    "Nutrients": "Nutrients",
+    "PowerSlugs": "Power Slugs",
+    "Alien": "Alien Technology",
+    "ACarapace": "Alien Technology",
+    "AOrgans": "Alien Technology",
+    "AOrganisms": "Alien Technology",
+    "AO": "Alien Technology",
+    "XMas": "FICSMAS",
+}
+
+
+def schematic_goals(groups: dict, items: dict, recipes: dict, types: set[str], track: str) -> list[dict]:
+    """Things you complete to unlock more of the game, in a shape the planner
+    can act on: what it costs, and which recipes it hands you.
+
+    An unlock can also be a map marker, an inventory slot or pure information.
+    Those are counted rather than listed — the planner has nothing to say about
+    them, but "and 2 other unlocks" is worth knowing before you commit to a
+    build.
+    """
+    out: list[dict] = []
+    for c in groups.get("FGSchematic", []):
+        if c.get("mType") not in types:
+            continue
+
+        unlocked: list[str] = []
+        other = 0
+        for unlock in c.get("mUnlocks", []) or []:
+            if unlock.get("Class") == "BP_UnlockRecipe_C":
+                unlocked.extend(parse_class_list(unlock.get("mRecipes")))
+            else:
+                other += 1
+
+        key = c.get("ClassName", "")
+        group = ""
+        if track == "mam":
+            m = re.match(r"Research_([A-Za-z]+)_", key)
+            group = MAM_TREES.get(m.group(1), "Other") if m else "Other"
+
+        out.append({
+            "key": key,
+            "name": clean_text(c.get("mDisplayName")),
+            "track": track,
+            "tier": int(fnum(c.get("mTechTier"), 0)),
+            "group": group,
+            # A cost can name an item no recipe produces (raw ore, alien parts),
+            # and those are dropped rather than left as keys resolving to nothing.
+            "cost": [e for e in parse_item_amounts(c.get("mCost")) if e["item"] in items],
+            "unlocksRecipes": [r for r in unlocked if r in recipes],
+            "otherUnlocks": other,
+            "note": "",
+        })
+    return out
+
+
+def extract_milestones(groups: dict, items: dict, recipes: dict) -> list[dict]:
+    """The HUB milestones, in the order the game presents them.
+
+    Tutorial schematics are the Tier 0 HUB upgrades and milestones proper start
+    at Tier 1, so both are kept: they are one continuous progression to a player
+    and splitting them would leave the first six steps missing.
+    """
+    out = schematic_goals(groups, items, recipes, {"EST_Milestone", "EST_Tutorial"}, "milestone")
+    out.sort(key=lambda m: (m["tier"], m["key"]))
+    return out
+
+
+def extract_mam(groups: dict, items: dict, recipes: dict) -> list[dict]:
+    """MAM research nodes, grouped by tree.
+
+    Their `mTechTier` is meaningless — every node reports 3 — so it is left in
+    the record but the grouping is what the UI should sort on.
+    """
+    out = schematic_goals(groups, items, recipes, {"EST_MAM"}, "mam")
+    out.sort(key=lambda m: (m["group"], m["name"]))
+    return out
+
+
+def extract_hard_drives(groups: dict, items: dict, recipes: dict) -> list[dict]:
+    """Hard-drive alternates.
+
+    These cost nothing to unlock — you find the drive — so there is nothing to
+    plan. What matters is which recipe each one gives you, so it can be switched
+    on once you have it.
+    """
+    out = schematic_goals(groups, items, recipes, {"EST_Alternate"}, "harddrive")
+    out.sort(key=lambda m: m["name"])
+    return out
+
+
+def load_game_phases(path: Path | None, items: dict) -> list[dict]:
+    """Space Elevator phases, read from the game's own assets by the mesh
+    exporter (`--phases`), because they are absent from the exported docs.
+
+    A phase records the last tier it *unlocks*, not the tech you build it with:
+    Phase 1 opens Tiers 3 and 4, and you deliver it holding Tier 2. So the tier
+    a phase is planned at is the previous phase's last — which is why the
+    exporter emits the cost-less phases too, to keep that chain unbroken.
+    """
+    if not path or not path.exists():
+        return []
+
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    out = []
+    previous = 0
+
+    for entry in raw:
+        cost = [e for e in entry.get("cost", []) if e["item"] in items]
+        last = int(entry.get("lastTier", 0))
+        if cost:
+            number = re.search(r"(\d+)$", entry.get("key", ""))
+            opened = [t for t in range(previous + 1, last + 1)]
+            out.append({
+                "key": entry.get("key", ""),
+                "name": clean_text(entry.get("name")) or f"Phase {number.group(1) if number else len(out) + 1}",
+                "track": "spaceelevator",
+                "tier": previous,
+                "group": "",
+                "cost": cost,
+                "unlocksRecipes": [],
+                "otherUnlocks": 0,
+                # A phase unlocks tiers rather than recipes, which is the whole
+                # reason to build one; saying "no new recipes" would be true and
+                # useless.
+                "note": ("Opens Tier " + " and ".join(str(t) for t in opened)) if opened
+                        else "Completes Project Assembly",
+            })
+        previous = max(previous, last)
+    return out
+
+
+def recipe_tiers(groups: dict, recipes: dict) -> dict[str, int]:
+    """The tier at which each recipe is handed to you by the HUB.
+
+    Only milestones and the Tier 0 tutorial steps count. Every schematic
+    carries an `mTechTier`, but it only means something for those two: MAM
+    research reports tier 3 for all hundred of its nodes, the AWESOME shop
+    reports tier 1, and the customiser reports 0 -- reading those as gospel
+    puts a Blender recipe in Tier 0 and makes the whole limit meaningless.
+
+    A recipe no milestone grants gets no entry rather than a zero. That is the
+    honest answer: MAM research and hard drives are not tier-gated, so the
+    limit has nothing to say about them and the machine check below carries the
+    weight instead.
+    """
+    tiers: dict[str, int] = {}
+    for c in groups.get("FGSchematic", []):
+        if c.get("mType") not in ("EST_Milestone", "EST_Tutorial"):
+            continue
+        tier = int(fnum(c.get("mTechTier"), 0))
+        for unlock in c.get("mUnlocks", []) or []:
+            if unlock.get("Class") != "BP_UnlockRecipe_C":
+                continue
+            for key in parse_class_list(unlock.get("mRecipes")):
+                if key in recipes and (key not in tiers or tier < tiers[key]):
+                    tiers[key] = tier
+    return tiers
+
+
+def machine_tiers(recipes: dict, tiers: dict[str, int]) -> dict[str, int]:
+    """The earliest tier each production building can exist at.
+
+    Derived from the standard recipes rather than the building's own unlock,
+    because a building's recipe is not in this database -- only the things
+    buildings make are. The first standard recipe a machine runs arrives with
+    the machine, so the two tiers are the same.
+
+    Alternates are excluded on purpose: a hard drive can hand you a Blender
+    recipe long before Tier 7, and taking that as evidence the Blender exists
+    would defeat the point of the limit.
+    """
+    out: dict[str, int] = {}
+    for key, r in recipes.items():
+        machine = r.get("machine")
+        if not machine or r["isAlternate"]:
+            continue
+        tier = tiers.get(key)
+        if tier is None:
+            continue  # MAM-granted: says nothing about when the machine arrives
+        if machine not in out or tier < out[machine]:
+            out[machine] = tier
+    return out
+
+
 def prune_unreachable(items: dict, recipes: dict) -> dict:
     """Keep only items that participate in an automatable recipe."""
     used = set()
@@ -525,6 +717,9 @@ def main() -> int:
     ap.add_argument("--out", type=Path,
                     default=Path(__file__).resolve().parents[1] / "src" / "data" / "game-data.json")
     ap.add_argument("--version", default="unknown", help="Game version label to embed")
+    ap.add_argument("--phases", type=Path,
+                    default=Path(__file__).resolve().parent / "space-elevator-phases.json",
+                    help="Space Elevator phases, from satisfactory-mesh-exporter --phases")
     args = ap.parse_args()
 
     docs = args.docs or find_docs()
@@ -541,6 +736,9 @@ def main() -> int:
     buildings = extract_buildings(groups)
     recipes = extract_recipes(groups, items, buildings)
     items = prune_unreachable(items, recipes)
+    milestones = extract_milestones(groups, items, recipes)
+    phases = load_game_phases(args.phases, items)
+    tiers = recipe_tiers(groups, recipes)
 
     data = {
         "gameVersion": args.version,
@@ -554,6 +752,12 @@ def main() -> int:
         "generators": extract_generators(groups, items),
         "buildableNames": extract_buildable_names(groups),
         "footprints": extract_footprints(groups),
+        "milestones": milestones,
+        "spaceElevator": phases,
+        "mamResearch": extract_mam(groups, items, recipes),
+        "hardDrives": extract_hard_drives(groups, items, recipes),
+        "recipeTiers": tiers,
+        "machineTiers": machine_tiers(recipes, tiers),
     }
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -563,6 +767,8 @@ def main() -> int:
     print(f"Wrote {args.out}  ({size_kb:.0f} KB)")
     print(f"  items       {len(items)}")
     print(f"  recipes     {len(recipes)}  ({sum(1 for r in recipes.values() if r['isAlternate'])} alternate)")
+    print(f"  phases      {len(phases)} Space Elevator")
+    print(f"  milestones  {len(milestones)}  (tiers {min(m['tier'] for m in milestones)}-{max(m['tier'] for m in milestones)})")
     print(f"  buildings   {len(buildings)}")
     print(f"  extractors  {len(data['extractors'])}")
     print(f"  belts       {len(data['belts'])}")

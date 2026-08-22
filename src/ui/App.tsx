@@ -8,9 +8,10 @@ import { SummaryPanel } from './components/SummaryPanel'
 import { TreeView } from './components/TreeView'
 import { BlueprintPanel } from './components/BlueprintPanel'
 import { FactoryGraph } from './components/FactoryGraph'
+import { ProgressionPanel } from './components/ProgressionPanel'
 import { fmt, fmtPower } from './format'
 
-type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'blueprint'
+type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'progression' | 'blueprint'
 
 const STORAGE_KEY = 'satisfactory-planner/v1'
 
@@ -21,6 +22,7 @@ const TAB_LABELS: Record<Tab, string> = {
   tree: 'Tree',
   steps: 'Steps',
   summary: 'Summary',
+  progression: 'Progression',
   blueprint: 'Blueprints',
 }
 
@@ -86,7 +88,7 @@ export function App() {
           <span className="brand-sub">Production Planner</span>
         </div>
         <nav className="tabs" role="tablist">
-          {(['factory', 'tree', 'steps', 'summary', 'blueprint'] as Tab[]).map((t) => (
+          {(['factory', 'tree', 'steps', 'summary', 'progression', 'blueprint'] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
@@ -128,14 +130,23 @@ export function App() {
 
           {tab === 'blueprint' && <BlueprintPanel plan={plan} />}
 
-          {tab !== 'blueprint' && !hasPlan && plan.errors.length === 0 && (
+          {tab === 'progression' && (
+            <ProgressionPanel
+              settings={settings}
+              setSettings={setSettings}
+              setTargets={setTargets}
+              onPlanned={() => setTab('factory')}
+            />
+          )}
+
+          {tab !== 'blueprint' && tab !== 'progression' && !hasPlan && plan.errors.length === 0 && (
             <div className="empty">
               <h2>Nothing to build yet</h2>
               <p>Add an item under Output in the sidebar and set how many you want per minute.</p>
             </div>
           )}
 
-          {tab !== 'blueprint' && hasPlan && (
+          {tab !== 'blueprint' && tab !== 'progression' && hasPlan && (
             <>
               {tab !== 'factory' && <div className="rail">
                 <Stat label="Machines" value={String(plan.totals.machines)} accent="amber" />

@@ -45,6 +45,8 @@ public static class Program
         var versionArg = ArgValue(args, "--ue");
         var only = ArgValue(args, "--only");
         var findFiles = ArgValue(args, "--files");
+        var dumpAsset = ArgValue(args, "--dump");
+        var phasesOut = ArgValue(args, "--phases");
 
         if (string.IsNullOrWhiteSpace(gameDir))
         {
@@ -97,6 +99,77 @@ public static class Program
                          .Where(k => k.Contains(findFiles, StringComparison.OrdinalIgnoreCase))
                          .OrderBy(k => k).Take(120))
                 Console.WriteLine($"FILE {key}");
+            return 0;
+        }
+
+        // The Space Elevator's phases -- the deliveries that open the next tier
+        // -- are the other half of progression, and they are nowhere in the
+        // game's exported docs. They are plain assets, so read them here and
+        // hand the planner's data extractor a JSON file to merge in.
+        if (!string.IsNullOrWhiteSpace(phasesOut))
+        {
+            var phases = new List<Dictionary<string, object?>>();
+            foreach (var path in provider.Files.Keys
+                         .Where(k => k.Contains("/GamePhases/GP_", StringComparison.OrdinalIgnoreCase)
+                                     && k.EndsWith(".uasset", StringComparison.OrdinalIgnoreCase))
+                         .OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
+            {
+                if (!provider.TryLoadPackage(path, out var pkg)) continue;
+                foreach (var export in pkg.GetExports())
+                {
+                    if (export.Class?.Name != "FGGamePhase") continue;
+
+                    // Phases with no cost are still emitted: the tier a phase is
+                    // built *with* is the last tier of the one before it, so the
+                    // chain has to be unbroken to be read.
+                    var costs = export.GetOrDefault<object?>("mCosts", null) as UScriptArray;
+                    var items = new List<Dictionary<string, object?>>();
+                    foreach (var entry in costs?.Properties ?? [])
+                    {
+                        var record = Unwrap(entry?.GenericValue);
+                        var item = ResolvePath(Member(record, "ItemClass"));
+                        if (item == null) continue;
+                        items.Add(new Dictionary<string, object?>
+                        {
+                            ["item"] = Path.GetFileName(item) + "_C",
+                            ["amount"] = Convert.ToDouble(Member(record, "Amount") ?? 0),
+                        });
+                    }
+
+                    phases.Add(new Dictionary<string, object?>
+                    {
+                        ["key"] = export.Name,
+                        ["name"] = Member(export, "mDisplayName")?.ToString() ?? export.Name,
+                        ["lastTier"] = Convert.ToInt32(export.GetOrDefault<object?>("mLastTierOfPhase", 0) ?? 0),
+                        ["cost"] = items,
+                    });
+                }
+            }
+
+            File.WriteAllText(phasesOut,
+                JsonSerializer.Serialize(phases, new JsonSerializerOptions { WriteIndented = true }));
+            Console.WriteLine($"Wrote {phases.Count} game phases to {phasesOut}");
+            return 0;
+        }
+
+        // Not everything the planner wants is a building. The Space Elevator's
+        // phase costs, for one, live in their own assets and never reach the
+        // game's exported docs, so allow any asset to be printed.
+        if (!string.IsNullOrWhiteSpace(dumpAsset))
+        {
+            foreach (var path in provider.Files.Keys
+                         .Where(k => k.EndsWith(".uasset", StringComparison.OrdinalIgnoreCase)
+                                     && k.Contains(dumpAsset, StringComparison.OrdinalIgnoreCase))
+                         .OrderBy(k => k))
+            {
+                if (!provider.TryLoadPackage(path, out var pkg)) continue;
+                Console.WriteLine($"ASSET {path}");
+                foreach (var ex in pkg.GetExports())
+                {
+                    Console.WriteLine($"  export {ex.Name} class={ex.Class?.Name}");
+                    foreach (var pr in ex.Properties) Dump(pr.Name.Text, pr.Tag, 4);
+                }
+            }
             return 0;
         }
 

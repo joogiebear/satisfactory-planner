@@ -88,6 +88,29 @@ export interface GameGenerator {
   fuels: GeneratorFuel[]
 }
 
+/** Which progression track a goal belongs to. */
+export type ProgressionTrack = 'milestone' | 'spaceelevator' | 'mam' | 'harddrive'
+
+/** Something you complete to open up more of the game. */
+export interface ProgressionGoal {
+  key: string
+  name: string
+  track: ProgressionTrack
+  /**
+   * The tier you hold while working on it. Meaningful for milestones and Space
+   * Elevator phases; MAM and hard drives aren't tier-gated and report 0.
+   */
+  tier: number
+  /** MAM research tree, e.g. "Caterium". Empty on the other tracks. */
+  group: string
+  cost: RecipeEntry[]
+  unlocksRecipes: string[]
+  /** Map markers, inventory slots and the like — counted, not listed. */
+  otherUnlocks: number
+  /** What completing it opens, when that isn't a recipe. Empty on most tracks. */
+  note: string
+}
+
 export interface GameData {
   gameVersion: string
   source: string
@@ -98,6 +121,14 @@ export interface GameData {
   belts: GameBelt[]
   pipes: GamePipe[]
   generators: GameGenerator[]
+  milestones: ProgressionGoal[]
+  spaceElevator: ProgressionGoal[]
+  mamResearch: ProgressionGoal[]
+  hardDrives: ProgressionGoal[]
+  /** Tier the HUB hands you each recipe at. MAM and hard-drive recipes have no entry. */
+  recipeTiers: Record<string, number>
+  /** Earliest tier each production building can exist at. */
+  machineTiers: Record<string, number>
 }
 
 // ---------------------------------------------------------------------------
@@ -153,6 +184,13 @@ export interface PlannerSettings {
   defaultClock: number
   tuning: Record<string, MachineTuning>
   objective: Objective
+  /**
+   * Only use recipes unlocked by this tier or earlier. Null means no limit,
+   * which is the right default for someone planning a factory they will build
+   * later; setting it is how a milestone plan stays honest about what you
+   * could actually build at that point in the game.
+   */
+  maxTier: number | null
 }
 
 // ---------------------------------------------------------------------------

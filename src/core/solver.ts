@@ -1,5 +1,5 @@
 import { solveLP } from './simplex'
-import { belts, buildings, extractors, getItem, items, pipes, recipes, unproducibleItems } from './gameData'
+import { belts, buildings, extractors, getItem, items, machineTiers, pipes, recipeTiers, recipes, unproducibleItems } from './gameData'
 import type {
   GameExtractor, GameItem, GameRecipe, Plan, PlanNode, PlanTarget, PlannerSettings,
   ProductionStep, Purity, RawRequirement,
@@ -79,6 +79,21 @@ export function availableRecipes(settings: PlannerSettings): GameRecipe[] {
   return Object.values(recipes).filter((r) => {
     if (banned.has(r.key)) return false
     if (r.isAlternate && !unlocked.has(r.key)) return false
+    // A tier limit is what keeps a milestone plan buildable: without it a plan
+    // for Tier 3 will happily route through a Blender you don't see until 7.
+    if (settings.maxTier !== null) {
+      // The machine has to exist. This is the check that carries alternates and
+      // MAM research, which aren't tier-gated themselves — a hard drive can
+      // hand you a Blender recipe at any point, but not the Blender.
+      const machineTier = machineTiers[r.machine]
+      if (machineTier !== undefined && machineTier > settings.maxTier) return false
+
+      // And the recipe itself, when the HUB is what grants it. No entry means
+      // it comes from research rather than a milestone, so the tier says
+      // nothing about it and the machine check above is the whole story.
+      const tier = recipeTiers[r.key]
+      if (tier !== undefined && tier > settings.maxTier) return false
+    }
     // A pin makes that recipe the only permitted source of its item. Only the
     // recipe's primary output is constrained, so an unrelated pin can't block a
     // recipe that merely emits the item as a byproduct.
@@ -154,6 +169,8 @@ export function solvePlan(targets: PlanTarget[], settings: PlannerSettings): Pla
   // Encased Uranium Cell, so that chain would look circular and unsolvable.
   const neededItems = new Set<string>()
   const explored = new Set<string>()
+  /** Items nothing available can make; warned about only if the plan buys one. */
+  const noProducer = new Set<string>()
   const usedRecipes = new Map<string, GameRecipe>()
   const queue = active.map((t) => t.item)
   while (queue.length) {
@@ -165,7 +182,11 @@ export function solvePlan(targets: PlanTarget[], settings: PlannerSettings): Pla
     const makers = byProduct.get(key) ?? []
     if (!makers.length) {
       importable.add(key)
-      warnings.push(`No available recipe produces ${items[key]?.name ?? key}; treating it as an import.`)
+      // Not warned about here. The search reaches plenty of items the finished
+      // plan never buys, and a tier limit makes that the common case rather
+      // than the exception — warning on exploration buries the real notices
+      // under a dozen about ingredients nothing ended up needing.
+      noProducer.add(key)
       continue
     }
     for (const r of makers) {
@@ -319,7 +340,9 @@ export function solvePlan(targets: PlanTarget[], settings: PlannerSettings): Pla
   }
 
   plan.tree = buildTree(plan, active, importable)
+  addImportWarnings(plan, noProducer, warnings)
   addLogisticsWarnings(plan, settings, warnings)
+  addResearchWarnings(plan, settings, warnings)
   return plan
 }
 
@@ -371,6 +394,53 @@ export function buildRawRequirement(
     item, ratePerMin: rate, extractor: ex, purity,
     ratePerExtractor: perExtractor, extractorCount: count, powerMW: power,
   }
+}
+
+// ---------------------------------------------------------------------------
+// Progression sanity checks
+// ---------------------------------------------------------------------------
+
+/**
+ * Say which items the plan actually has to buy in.
+ *
+ * Only the ones it ends up drawing on: an item the search passed through and
+ * discarded is not something the player has to do anything about.
+ */
+function addImportWarnings(plan: Plan, noProducer: Set<string>, warnings: string[]): void {
+  const bought = plan.raw
+    .filter((r) => noProducer.has(r.item.key) && r.ratePerMin > 1e-6)
+    .map((r) => r.item.name)
+  if (bought.length === 0) return
+
+  warnings.push(
+    `Nothing available makes ${bought.sort().join(', ')}; ` +
+    `${bought.length === 1 ? 'it is' : 'they are'} counted as imported into the plan.`
+  )
+}
+
+/**
+ * Say so when a tier-limited plan leans on something the HUB never gave you.
+ *
+ * The tier limit guarantees the machines exist, but MAM research and hard-drive
+ * alternates arrive on their own schedule. A plan that quietly assumes you have
+ * researched Silica is still a good plan — it just isn't one you can read as
+ * "build this now" without checking, so it says which.
+ */
+function addResearchWarnings(plan: Plan, settings: PlannerSettings, warnings: string[]): void {
+  if (settings.maxTier === null) return
+
+  const research = new Set<string>()
+  for (const step of plan.steps) {
+    if (step.recipe.isAlternate) research.add(`${step.recipe.name} (hard drive)`)
+    else if (recipeTiers[step.recipe.key] === undefined) research.add(`${step.recipe.name} (MAM)`)
+  }
+  if (research.size === 0) return
+
+  warnings.push(
+    `This plan uses ${research.size} recipe${research.size === 1 ? '' : 's'} the HUB doesn't ` +
+    `hand you: ${[...research].sort().join(', ')}. Research them first, or ban them under ` +
+    `Recipe choice.`
+  )
 }
 
 // ---------------------------------------------------------------------------

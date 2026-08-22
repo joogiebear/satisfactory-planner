@@ -43,6 +43,17 @@ export function getItem(key: string): GameItem | undefined { return items[key] }
 export function getRecipe(key: string): GameRecipe | undefined { return recipes[key] }
 export function getBuilding(key: string): GameBuilding | undefined { return buildings[key] }
 
+/** The four ways the game opens up, and the tier each recipe arrives at. */
+export const milestones = gameData.milestones
+export const spaceElevatorPhases = gameData.spaceElevator
+export const mamResearch = gameData.mamResearch
+export const hardDrives = gameData.hardDrives
+export const recipeTiers = gameData.recipeTiers
+export const machineTiers = gameData.machineTiers
+
+/** The highest tier the game has, so the UI never hard-codes it. */
+export const maxGameTier = milestones.reduce((n, m) => Math.max(n, m.tier), 0)
+
 export const belts: GameBelt[] = gameData.belts
 export const pipes: GamePipe[] = gameData.pipes
 export const extractors: GameExtractor[] = gameData.extractors
@@ -113,6 +124,7 @@ export function defaultSettings(): PlannerSettings {
     defaultClock: 1,
     tuning: {},
     objective: 'raw',
+    maxTier: null,
   }
 }
 

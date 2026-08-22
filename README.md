@@ -86,11 +86,47 @@ npm run extract-data
 
 The script finds Satisfactory through Steam's library registry; pass
 `--docs <path>` if yours lives somewhere unusual. It reports what it found:
-items, recipes, buildings, extractors, belts, pipes and generators.
+items, recipes, buildings, extractors, belts, pipes, generators and the four
+progression tracks.
+
+One thing is not in those docs. The Space Elevator's phase costs live in the
+game's own assets, so they come from the mesh exporter instead and are checked
+into `tools/space-elevator-phases.json`. Refresh them after an update that
+changes Project Assembly:
+
+```bash
+tools/mesh-exporter/publish/satisfactory-mesh-exporter.exe --game "<Satisfactory>" --phases tools/space-elevator-phases.json
+```
+
+### A trap in the tier data
+
+Every schematic carries an `mTechTier`, and only milestones mean it. MAM
+research reports tier 3 for all hundred of its nodes and the AWESOME shop
+reports tier 1, so reading the field across all schematic types puts a Blender
+recipe in Tier 0 and quietly makes the whole tier limit meaningless. Tiers come
+from `EST_Milestone` and `EST_Tutorial` only; everything else is gated by
+whether its *machine* exists yet.
 
 Units are normalised on the way through — fluid amounts are stored ×1000 in the
 raw files, conveyor speeds are in cm/min, pipe flow is m³/s — and the results
 are checked against known in-game figures in the test suite.
+
+## Progression
+
+Four tracks, all read from the game rather than typed in: 48 HUB milestones,
+5 Space Elevator phases, 120 MAM research nodes and 109 hard-drive alternates.
+
+Picking one sets the planner's outputs to its cost — converted from a total to a
+rate by the delivery time you choose — and caps recipes to what you would hold
+at that point. The cap is what makes the answer worth having: without it a plan
+for Tier 3's Basic Steel Production will happily route through a Blender, and
+you would only find out after building it.
+
+Two things the cap deliberately does not do. It doesn't forbid MAM recipes or
+hard-drive alternates, because those aren't tier-gated — a drive can hand you a
+recipe at any point — so instead the plan says which ones it leaned on. And it
+doesn't apply to MAM research itself, which you can do whenever you find the
+resource.
 
 ## Icons
 
