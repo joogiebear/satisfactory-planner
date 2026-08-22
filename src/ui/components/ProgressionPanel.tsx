@@ -11,15 +11,11 @@ import { ItemChip } from './ItemPicker'
 /**
  * A goal costs a *total* — 50 Modular Frames — while the planner works in items
  * per minute, so the two only meet once you say how long you'll wait for the
- * delivery. These are the round numbers a player actually thinks in.
+ * delivery. An hour is a starting point, not a bucket: how long a delivery is
+ * worth waiting for depends on the goal and on how much of the map you have
+ * running, so it's a plain field to type into.
  */
-const DELIVERY_OPTIONS = [
-  { minutes: 15, label: '15 min' },
-  { minutes: 30, label: '30 min' },
-  { minutes: 60, label: '1 hour' },
-  { minutes: 120, label: '2 hours' },
-  { minutes: 240, label: '4 hours' },
-]
+const DEFAULT_MINUTES = 60
 
 /**
  * Tier names are hand-kept: the game shows them in the HUB but they appear
@@ -62,6 +58,13 @@ const TRACKS: { id: ProgressionTrack; label: string; blurb: string }[] = [
   },
 ]
 
+/** Minutes read badly past an hour or so; say the same thing in hours as well. */
+function longer(minutes: number): string {
+  if (minutes < 90) return ''
+  const hours = minutes / 60
+  return ` · ${Math.round(hours * 10) / 10} hours`
+}
+
 interface Props {
   settings: PlannerSettings
   setSettings: (s: PlannerSettings) => void
@@ -72,7 +75,7 @@ interface Props {
 
 export function ProgressionPanel({ settings, setSettings, setTargets, onPlanned }: Props) {
   const [track, setTrack] = useState<ProgressionTrack>('milestone')
-  const [minutes, setMinutes] = useState(60)
+  const [minutes, setMinutes] = useState(DEFAULT_MINUTES)
   // Off by default: a milestone plan is answering "can I build this now", and
   // a route through a hard drive you may never have found doesn't answer it.
   const [allowResearch, setAllowResearch] = useState(false)
@@ -109,16 +112,16 @@ export function ProgressionPanel({ settings, setSettings, setTargets, onPlanned 
           <>
             <span className="field-label">Deliver in</span>
             <div className="prog-times">
-              {DELIVERY_OPTIONS.map((o) => (
-                <button
-                  key={o.minutes}
-                  className="btn"
-                  aria-pressed={minutes === o.minutes}
-                  onClick={() => setMinutes(o.minutes)}
-                >
-                  {o.label}
-                </button>
-              ))}
+              <input
+                className="prog-minutes"
+                type="number"
+                min={1}
+                step={1}
+                value={minutes}
+                aria-label="Delivery time in minutes"
+                onChange={(e) => setMinutes(Math.max(1, Number(e.target.value) || 1))}
+              />
+              <span className="muted prog-minutes-unit">minutes{longer(minutes)}</span>
             </div>
 
             <span className="field-label">Recipes</span>

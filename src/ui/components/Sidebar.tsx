@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
-  alternateRecipes, belts, extractors, items, pipes, producibleItems,
+  alternateRecipes, baseRatePerMin, belts, extractors, items, pipes, producibleItems,
 } from '../../core/gameData'
 import type { Plan, PlanTarget, PlannerSettings, Purity } from '../../core/types'
 import { fmt, unit } from '../format'
@@ -29,7 +29,7 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
           placeholder="Add an item to produce…"
           onPick={(item) => {
             if (targets.some((t) => t.item === item.key)) return
-            setTargets([...targets, { item: item.key, ratePerMin: 20 }])
+            setTargets([...targets, { item: item.key, ratePerMin: baseRatePerMin(item.key) }])
           }}
         />
         {targets.map((t, i) => {
@@ -53,7 +53,9 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
                 <input
                   type="number"
                   min={0}
-                  step={10}
+                  // A rate is a real quantity, not a bucket: stepping by ten
+                  // walks straight past most of the numbers worth asking for.
+                  step={1}
                   value={t.ratePerMin}
                   aria-label={`Rate for ${item.name}`}
                   onChange={(e) => {

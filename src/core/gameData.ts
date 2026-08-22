@@ -39,6 +39,30 @@ export const producibleItems: GameItem[] = allItems
   .filter((i) => recipesByProduct[i.key]?.length)
   .sort((a, b) => a.name.localeCompare(b.name))
 
+/**
+ * What one machine makes of an item per minute, running the standard recipe at
+ * 100%.
+ *
+ * This is the number the game itself shows you on a machine, so it is the
+ * sensible thing for a new output to start at: one line, actually built. A flat
+ * default is either far too small to be a factory or far too big to be a first
+ * one, and either way it is a number nobody chose.
+ */
+export function baseRatePerMin(itemKey: string): number {
+  const made = recipesByProduct[itemKey] ?? []
+  // Prefer the standard recipe: an alternate is a choice the player makes later.
+  const recipe = made.find((r) => !r.isAlternate) ?? made[0]
+  if (!recipe) return 1
+
+  const amount = recipe.products.find((p) => p.item === itemKey)?.amount ?? 0
+  if (!amount || !recipe.timeSeconds) return 1
+
+  const speed = buildings[recipe.machine]?.manufacturingSpeed ?? 1
+  const rate = (60 / recipe.timeSeconds) * speed * amount
+  // Four decimals is what the game shows; anything longer is noise in an input.
+  return Math.round(rate * 10000) / 10000
+}
+
 export function getItem(key: string): GameItem | undefined { return items[key] }
 export function getRecipe(key: string): GameRecipe | undefined { return recipes[key] }
 export function getBuilding(key: string): GameBuilding | undefined { return buildings[key] }

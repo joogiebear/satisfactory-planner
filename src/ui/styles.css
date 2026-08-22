@@ -1040,3 +1040,15 @@ table.mini .num { font-family: var(--mono); }
 .prog-drive-name { flex: 1; color: var(--ink-dim); }
 .prog-drives input:checked + .prog-drive-name { color: var(--ink); }
 .prog-drive-out { font-size: 11px; text-align: right; }
+
+.prog-minutes {
+  width: 7ch;
+  background: var(--void);
+  border: 1px solid var(--rivet-hi);
+  border-radius: var(--r);
+  padding: 6px 8px;
+  font-family: var(--mono);
+  color: var(--ink);
+}
+.prog-minutes:focus { outline: none; border-color: var(--ficsit); }
+.prog-minutes-unit { font-size: 12px; align-self: center; }
