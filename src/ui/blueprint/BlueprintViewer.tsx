@@ -3,6 +3,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { BlueprintInfo, Placement } from '../../core/blueprint'
 import { iconFor } from '../icons'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { meshFor } from './meshes'
 
 /**
  * Draws a blueprint the way the designer holds it: every building as the box
@@ -97,6 +100,7 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
       byClass.set(p.key, list)
     }
 
+    const pendingMeshes: { classKey: string; url: string; list: Placement[]; colour: number }[] = []
     const unit = new THREE.BoxGeometry(1, 1, 1)
     const meshes: THREE.InstancedMesh[] = []
     const lookup: { mesh: THREE.InstancedMesh; items: Placement[] }[] = []
@@ -142,6 +146,11 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
       const mesh = new THREE.InstancedMesh(unit, faces, list.length)
       mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage)
 
+      // Swap in the real geometry once it arrives. Buildings without an
+      // exported mesh (belts, most wall variants) keep the sized box.
+      const meshUrl = meshFor(classKey)
+      if (meshUrl) pendingMeshes.push({ classKey, url: meshUrl, list, colour })
+
       list.forEach((p, i) => {
         const box = p.box ?? { min: [...MARKER.min], max: [...MARKER.max] }
         const inset = p.box ? INSET_CM : 0
@@ -175,6 +184,69 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
       root.add(mesh)
       meshes.push(mesh)
       lookup.push({ mesh, items: list })
+    }
+
+    // --- real geometry, loaded in the background ---
+    const loader = new GLTFLoader()
+    let disposed = false
+    const loaded: THREE.InstancedMesh[] = []
+
+    for (const pending of pendingMeshes) {
+      loader.load(
+        pending.url,
+        (gltf) => {
+          if (disposed) return
+          const parts: THREE.BufferGeometry[] = []
+          gltf.scene.updateMatrixWorld(true)
+          gltf.scene.traverse((child) => {
+            const asMesh = child as THREE.Mesh
+            if (!asMesh.isMesh || !asMesh.geometry) return
+            const geo = asMesh.geometry.clone()
+            geo.applyMatrix4(asMesh.matrixWorld)
+            // Merging needs identical attribute sets across parts.
+            for (const name of Object.keys(geo.attributes)) {
+              if (name !== 'position' && name !== 'normal') geo.deleteAttribute(name)
+            }
+            if (!geo.attributes.normal) geo.computeVertexNormals()
+            parts.push(geo)
+          })
+          if (!parts.length) return
+
+          const merged = mergeGeometries(parts, false)
+          for (const part of parts) part.dispose()
+          if (!merged) return
+
+          // glTF is authored Y-up, but the root group converts from the game's
+          // Z-up axes. Standing the geometry up here keeps every placement using
+          // the game's own coordinates.
+          merged.rotateX(Math.PI / 2)
+          merged.computeVertexNormals()
+
+          const material = new THREE.MeshPhongMaterial({
+            color: pending.colour, flatShading: false, shininess: 10, specular: 0x151a1f,
+          })
+          const inst = new THREE.InstancedMesh(merged, material, pending.list.length)
+          pending.list.forEach((p, i) => {
+            dummy.position.set(p.position[0], p.position[1], p.position[2])
+            dummy.rotation.set(0, 0, p.yaw)
+            dummy.scale.set(p.scale[0], p.scale[1], p.scale[2])
+            dummy.updateMatrix()
+            inst.setMatrixAt(i, dummy.matrix)
+          })
+          inst.instanceMatrix.needsUpdate = true
+          inst.computeBoundingSphere()
+          root.add(inst)
+          loaded.push(inst)
+
+          // Retire the placeholder boxes for this class.
+          const placeholder = lookup.find((l) => l.items === pending.list)
+          if (placeholder) placeholder.mesh.visible = false
+          meshes.push(inst)
+          lookup.push({ mesh: inst, items: pending.list })
+        },
+        undefined,
+        () => { /* a missing or broken mesh just leaves the box in place */ }
+      )
     }
 
     // --- ground grid, one line per 8 m foundation ---
@@ -241,6 +313,12 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
     tick()
 
     return () => {
+      disposed = true
+      for (const inst of loaded) {
+        inst.geometry.dispose()
+        const mats = Array.isArray(inst.material) ? inst.material : [inst.material]
+        for (const m of mats) m.dispose()
+      }
       cancelAnimationFrame(frame)
       observer.disconnect()
       renderer.domElement.removeEventListener('pointermove', onMove)

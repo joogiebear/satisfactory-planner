@@ -31,9 +31,10 @@ build you have installed rather than a wiki snapshot.
   `clock^1.321929` power curve and Somersloops doubling output at 4× draw.
 - **Extraction settings** — miner mark, node purity per resource, and pump
   clock, feeding exact extractor counts.
-- **Blueprint viewer** — drop in a `.sbp` and see the build itself in 3D: every
-  building drawn at the footprint the game reserves for it, at its recorded
-  position and rotation, with its icon on top. Hide foundations or walls to see
+- **Blueprint viewer** — drop in a `.sbp` and see the build itself in 3D, using
+  the game's own building meshes read from your installed copy
+  ([docs/MESHES.md](docs/MESHES.md)). Anything without an exported mesh falls
+  back to the footprint the game reserves for it, with its icon on top. Hide foundations or walls to see
   the machines inside, hover to name anything, and read the exact build cost and
   how its machines line up with your current plan.
 
@@ -122,15 +123,16 @@ this machine.
 
 ## What the blueprint viewer draws
 
-Each `.sbp` records a transform per building but no geometry, so the viewer
-sizes every building by its **clearance box** — the volume the build gun
-reserves, taken from the game's own docs. Those match in game: a Smelter is
-5 x 10 x 4.5 m, a Foundation 8 x 8 x 1 m. Each box carries its building's icon
-on the top face.
+A `.sbp` records a transform per building but no geometry. Run
+`npm run fetch-meshes` once and the viewer draws the game's real building
+meshes, read straight out of your installed copy — see
+[docs/MESHES.md](docs/MESHES.md) for how that works and what to do when a game
+update moves the engine version.
 
-They are labelled boxes, not the game's meshes. The real models live inside the
-UE5 IoStore containers and would need an FModel mesh export per building, which
-is a large manual step and hundreds of megabytes.
+Without that step, or for the buildings that resolve no mesh, each one is drawn
+at its **clearance box** — the volume the build gun reserves, taken from the
+game's own docs, which matches in game: a Smelter is 5 x 10 x 4.5 m, a
+Foundation 8 x 8 x 1 m. Those boxes carry the building's icon on the top face.
 
 Belts, lifts, pipes and power lines are stored as splines. Decoding those needs
 a full Unreal property-list parser, so they are drawn as small markers at their

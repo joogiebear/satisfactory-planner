@@ -8,3 +8,8 @@ release/
 
 # Extracted game art stays local; see docs/ICONS.md
 src/data/icons/
+
+# Meshes extracted from the local game install; see docs/MESHES.md
+src/data/meshes/
+tools/mesh-exporter/bin/
+tools/mesh-exporter/obj/

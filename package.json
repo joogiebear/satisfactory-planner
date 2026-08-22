@@ -18,9 +18,14 @@
     "extract-data": "python tools/extract_game_data.py",
     "test": "vitest run",
     "test:watch": "vitest",
-    "fetch-icons": "python tools/fetch_icons.py"
+    "fetch-icons": "python tools/fetch_icons.py",
+    "fetch-meshes": "node tools/fetch-meshes.mjs"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.4.2",
+    "@gltf-transform/core": "^4.4.2",
+    "@gltf-transform/extensions": "^4.4.2",
+    "@gltf-transform/functions": "^4.4.2",
     "@types/dagre": "^0.7.54",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
@@ -30,6 +35,7 @@
     "cross-env": "^7.0.3",
     "electron": "^34.2.0",
     "electron-builder": "^25.1.8",
+    "meshoptimizer": "^1.2.0",
     "typescript": "^5.7.3",
     "vite": "^6.1.0",
     "vitest": "^3.0.5",
