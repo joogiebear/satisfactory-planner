@@ -72,7 +72,7 @@ the export:
 
 ## How a building's meshes are found
 
-Three mechanisms, and a building can use more than one:
+Four mechanisms, and a building can use more than one:
 
 - **Machines** hang meshes off `UStaticMeshComponent`s. The body is on an
   `FGColoredInstanceMeshProxy`; the others are vertex-animated moving parts and
@@ -83,6 +83,19 @@ Three mechanisms, and a building can use more than one:
   versions drew every foundation as a box.
 - **Belts, lifts and pipes** name a segment mesh on the class default
   (`mMesh`) that the game repeats along a spline.
+- **Pipeline and hypertube supports** keep theirs inside a property struct
+  (`mSupportMeshInstanceData`, with the pole height variations beside it)
+  rather than on a component at all.
+
+Two more things stand between a class name and its geometry. A **variant
+blueprint** may name no mesh whatsoever, because it records only how it differs
+from its parent: `Build_Pipeline_NoIndicator_C` — the Clean Pipeline, and what
+every blueprint actually stores for a pipe run — declares nothing but the
+absence of a flow indicator. When a class yields no parts, the class it derives
+from is asked instead. And the **spelling of a path is not reliable**: the water
+extractor's blueprint asks for `.../WaterPump/Mesh/...` while the asset on disk
+is `.../Waterpump/Mesh/...`. The provider's file table is case-sensitive, so a
+miss falls back to a lowercased index of it.
 
 Every part keeps its relative transform, because they matter: a foundation's
 slab sits 50 cm below its actor origin, a splitter's 55 cm below, and a window
@@ -114,20 +127,31 @@ fail immediately.
 Every belt in the test blueprints resolves a path. Lifts, mergers, splitters and
 poles have no spline, which is correct: they are placed meshes.
 
+Segments are tiled along **local X**, which is Unreal's convention for spline
+meshes whatever the mesh's proportions. Measuring the longest side instead looks
+like it works, because a belt segment is 200 × 28 cm — but a pipe segment is
+100 × 150 cm, and picking its longest side lays a pipe run out as a stack of
+discs across the path.
+
 ## Surfaces
 
 Buildings carry the game's own base-colour maps, which is what makes an
 Assembler read as a grey chassis with red panels rather than a tinted shape.
 
 Getting there is less direct than it sounds. CUE4Parse writes textures as loose
-files beside the mesh rather than into the glTF, and a material instance's
-`Textures` map is empty because the bindings live in the parent material graph,
-which isn't flattened. So there is no material-to-texture link to read. What is
-reliable is *when* files appear: the exporter snapshots the output folder around
-each mesh and treats whatever PNGs turn up as that mesh's textures, then picks
-the base colour by the game's own suffixes — `_BC`, `_D`, `_Alb` — while
-skipping masks, noise and shared atlases, which are material-graph inputs rather
-than surfaces.
+files beside the mesh rather than into the glTF, so the first link is
+circumstantial: the exporter snapshots the output folder around each mesh and
+treats whatever PNGs turn up as that mesh's textures, picking the base colour by
+the game's own suffixes — `_BC`, `_D`, `_Alb`, `_Albedo` — while skipping masks,
+noise and shared atlases, which are material-graph inputs rather than surfaces.
+
+That only holds when a mesh's maps live beside it. The pipelines break it: their
+material is shared with the pipeline supports and its textures sit in *that*
+folder. So when the circumstantial match comes up empty, the material is asked
+directly — walk the instance's `TextureParameterValues`, then its parent's, and
+finally a base material's `ReferencedTextures`, scoring parameter and asset
+names for how much they read as a base colour. Following the material took
+coverage from 79% of parts to 92%.
 
 Each map is re-encoded to a 512 px JPEG. At source size the full set runs to
 roughly 1.9 GB; this brings it to a few tens of megabytes while staying legible
@@ -135,7 +159,10 @@ at the scale a blueprint is viewed. Meshes keep UV0 for it; the game's other
 seven UV channels drive effects we don't reproduce.
 
 Anything without a resolvable map keeps its category tint, so it still reads as
-the right kind of thing.
+the right kind of thing. Sometimes that is the only correct answer: the pipeline
+material carries no texture at all — only `UpVector` and `SplineDir` for its
+spline shader — because the game colours pipes from a swatch the player picks at
+runtime. Their tint is the default swatch's light steel.
 
 ## What still isn't right
 

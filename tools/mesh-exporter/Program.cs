@@ -12,6 +12,8 @@ using CUE4Parse.UE4.Objects.UObject;
 using CUE4Parse.UE4.Versions;
 using CUE4Parse_Conversion;
 using CUE4Parse_Conversion.Meshes;
+using CUE4Parse_Conversion.Textures;
+using CUE4Parse.UE4.Assets.Exports.Texture;
 
 namespace SatisfactoryMeshExporter;
 
@@ -42,6 +44,7 @@ public static class Program
         var limit = int.TryParse(ArgValue(args, "--limit"), out var l) ? l : int.MaxValue;
         var versionArg = ArgValue(args, "--ue");
         var only = ArgValue(args, "--only");
+        var findFiles = ArgValue(args, "--files");
 
         if (string.IsNullOrWhiteSpace(gameDir))
         {
@@ -85,6 +88,17 @@ public static class Program
         provider.SubmitKey(new FGuid(), new FAesKey(new byte[32]));
         provider.PostMount();
         Console.WriteLine($"Mounted {provider.Files.Count} files");
+
+        // Which asset actually backs a building is not always guessable from its
+        // class name, so let a path substring be searched directly.
+        if (!string.IsNullOrWhiteSpace(findFiles))
+        {
+            foreach (var key in provider.Files.Keys
+                         .Where(k => k.Contains(findFiles, StringComparison.OrdinalIgnoreCase))
+                         .OrderBy(k => k).Take(120))
+                Console.WriteLine($"FILE {key}");
+            return 0;
+        }
 
         // One entry per Build_* blueprint. Keying by class name matters: a
         // single folder holds dozens of wall or foundation variants, so keying
@@ -201,9 +215,11 @@ public static class Program
                 var marker = Path.DirectorySeparatorChar + folder + Path.DirectorySeparatorChar;
                 var albedo = PickAlbedo(Directory.EnumerateFiles(outDir, "*.png", SearchOption.AllDirectories)
                     .Where(f => f.Contains(marker, StringComparison.OrdinalIgnoreCase)));
-                if (albedo == null) continue;
 
-                var name = ShrinkTexture(albedo, outDir, Path.GetFileNameWithoutExtension(file));
+                var stem = Path.GetFileNameWithoutExtension(file);
+                var name = albedo != null
+                    ? ShrinkTexture(albedo, outDir, stem)
+                    : AlbedoFromMaterial(provider, source, outDir, stem);
                 if (name == null) continue;
                 meshTextures[file] = name;
                 entry["texture"] = name;
@@ -367,7 +383,19 @@ public static class Program
             exporter = new MeshExporter(sm, options);
         else if (provider.TryLoadPackageObject<USkeletalMesh>(meshPath, out var sk) && sk != null)
             exporter = new MeshExporter(sk, options);
-        else return null;
+        else
+        {
+            // A blueprint's spelling of a path need not match the file's: the
+            // water extractor asks for .../WaterPump/Mesh/... and the asset on
+            // disk is .../Waterpump/Mesh/... . The provider's table is
+            // case-sensitive, so try again with the file's own spelling.
+            var corrected = MatchIgnoringCase(provider, meshPath);
+            if (corrected != null && !corrected.Equals(meshPath, StringComparison.Ordinal))
+                return ExportMeshCore(provider, corrected, outDir, withMaterials);
+
+            Console.Error.WriteLine($"  skipped {Path.GetFileName(meshPath)}: no such mesh asset");
+            return null;
+        }
 
         // Textures are written as loose files beside the mesh rather than into
         // the glTF, and the material instances declare no bindings, so the only
@@ -376,7 +404,11 @@ public static class Program
             ? new HashSet<string>(Directory.EnumerateFiles(outDir, "*.png", SearchOption.AllDirectories), StringComparer.OrdinalIgnoreCase)
             : null;
 
-        if (!exporter.TryWriteToDir(new DirectoryInfo(outDir), out _, out var producedPath)) return null;
+        if (!exporter.TryWriteToDir(new DirectoryInfo(outDir), out var why, out var producedPath))
+        {
+            Console.Error.WriteLine($"  skipped {Path.GetFileName(meshPath)}: exporter wrote nothing ({why})");
+            return null;
+        }
 
         var safe = meshPath.Replace('/', '_').TrimStart('_') + ".glb";
         var target = Path.Combine(outDir, safe);
@@ -442,14 +474,155 @@ public static class Program
     /// well over a gigabyte. A 512 px JPEG keeps the surface readable at the
     /// scale a blueprint is viewed and takes the set to a few tens of megabytes.
     /// </summary>
+    /// <summary>
+    /// The base-colour map a mesh's own material points at, written out.
+    ///
+    /// The usual link is circumstantial -- whichever textures appeared on disk
+    /// while a mesh was exported -- and it only holds when a mesh's maps live
+    /// beside it. The pipelines break that: their material is shared with the
+    /// pipeline supports and its textures sit in that folder instead. The
+    /// material itself knows, so when the circumstantial match comes up empty,
+    /// ask it directly.
+    /// </summary>
+    private static string? AlbedoFromMaterial(DefaultFileProvider provider, string meshPath, string outDir, string stem)
+    {
+        if (!provider.TryLoadPackageObject<UStaticMesh>(meshPath, out var mesh) || mesh == null)
+        {
+            if (Verbose) Console.WriteLine($"    [tex] {stem}: mesh would not load");
+            return null;
+        }
+
+        foreach (var materialPath in MaterialPaths(mesh))
+        {
+            var texture = AlbedoParameter(provider, materialPath, 0);
+            if (Verbose) Console.WriteLine($"    [tex] {stem}: {materialPath} -> {texture ?? "no base colour"}");
+            if (texture == null) continue;
+            if (!provider.TryLoadPackageObject<UTexture2D>(texture, out var map) || map == null) continue;
+            try
+            {
+                using var bitmap = map.Decode(ETexturePlatform.DesktopMobile)?.ToSkBitmap();
+                var written = WriteAlbedo(bitmap, outDir, stem);
+                if (written != null) return written;
+            }
+            catch { /* an undecodable map is no worse than no map */ }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// The materials a mesh is skinned with. Newer builds keep these in
+    /// StaticMaterials as structs; older ones expose a flat array of references.
+    /// </summary>
+    private static IEnumerable<string> MaterialPaths(UStaticMesh mesh)
+    {
+        var raw = mesh.GetOrDefault<object?>("StaticMaterials", null) ?? Reflect(mesh, "Materials");
+        if (raw is not UScriptArray array)
+        {
+            if (Verbose) Console.WriteLine($"    [tex] no material array ({raw?.GetType().Name ?? "null"})");
+            yield break;
+        }
+
+        foreach (var entry in array.Properties)
+        {
+            var value = Unwrap(entry?.GenericValue);
+            var path = ResolvePath(Member(value, "MaterialInterface")) ?? ResolvePath(value);
+            if (path != null) yield return path;
+        }
+    }
+
+    /// <summary>
+    /// The best base-colour texture named by a material, following the instance
+    /// chain up to the parent that actually declares it.
+    /// </summary>
+    private static string? AlbedoParameter(DefaultFileProvider provider, string materialPath, int depth)
+    {
+        if (depth > 4) return null;
+        if (!provider.TryLoadPackageObject<UObject>(materialPath, out var material) || material == null) return null;
+
+        string? best = null;
+        var bestScore = int.MinValue;
+
+        if (material.GetOrDefault<object?>("TextureParameterValues", null) is UScriptArray values)
+        {
+            foreach (var entry in values.Properties)
+            {
+                var value = Unwrap(entry?.GenericValue);
+                var texture = ResolvePath(Member(value, "ParameterValue"));
+                if (texture == null) continue;
+
+                var score = BaseColourScore(Member(Member(value, "ParameterInfo"), "Name")?.ToString())
+                          + BaseColourScore(Path.GetFileName(texture));
+                if (score <= 0 || score <= bestScore) continue;
+                bestScore = score;
+                best = texture;
+            }
+        }
+        if (best != null) return best;
+
+        // A base material names its maps as graph expressions rather than as
+        // overridable parameters, so nothing shows up above. It still lists
+        // everything it samples, which is enough to pick a base colour out of.
+        if (material.GetOrDefault<object?>("ReferencedTextures", null) is UScriptArray referenced)
+        {
+            foreach (var entry in referenced.Properties)
+            {
+                var texture = ResolvePath(entry?.GenericValue);
+                if (texture == null) continue;
+                var score = BaseColourScore(Path.GetFileName(texture));
+                if (score <= 0 || score <= bestScore) continue;
+                bestScore = score;
+                best = texture;
+            }
+        }
+        if (best != null) return best;
+
+        var parent = ResolvePath(Member(material, "Parent"));
+        if (Verbose) Console.WriteLine($"    [tex]   {Path.GetFileName(materialPath)} -> parent {parent ?? "none"}");
+        return parent == null ? null : AlbedoParameter(provider, parent, depth + 1);
+    }
+
+    /// <summary>
+    /// How much a parameter or asset name reads as "this is the base colour".
+    /// Negative for the maps that are never a surface anyone would recognise.
+    /// </summary>
+    private static int BaseColourScore(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return 0;
+
+        foreach (var reject in new[] { "Normal", "Noise", "Mask", "Atlas", "Roughness", "Metal", "Emissive", "AO" })
+            if (name.Contains(reject, StringComparison.OrdinalIgnoreCase)) return -100;
+
+        if (name.Contains("BaseColor", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Base Color", StringComparison.OrdinalIgnoreCase)) return 40;
+        if (name.Contains("Albedo", StringComparison.OrdinalIgnoreCase)) return 35;
+        if (name.Contains("Diffuse", StringComparison.OrdinalIgnoreCase)) return 30;
+        if (name.EndsWith("_BC", StringComparison.OrdinalIgnoreCase)) return 25;
+        if (name.EndsWith("_D", StringComparison.OrdinalIgnoreCase)) return 20;
+        if (name.Contains("Color", StringComparison.OrdinalIgnoreCase)) return 10;
+        return 0;
+    }
+
     private static string? ShrinkTexture(string source, string outDir, string stem)
+    {
+        try
+        {
+            using var bitmap = SkiaSharp.SKBitmap.Decode(source);
+            return WriteAlbedo(bitmap, outDir, stem);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Resize to something a browser will happily hold, and encode.</summary>
+    private static string? WriteAlbedo(SkiaSharp.SKBitmap? bitmap, string outDir, string stem)
     {
         const int maxSide = 512;
         var name = stem + ".albedo.jpg";
         var target = Path.Combine(outDir, name);
         try
         {
-            using var bitmap = SkiaSharp.SKBitmap.Decode(source);
             if (bitmap == null) return null;
 
             var longest = Math.Max(bitmap.Width, bitmap.Height);
@@ -493,6 +666,7 @@ public static class Program
             var score = 0;
             if (name.EndsWith("_BC", StringComparison.OrdinalIgnoreCase)) score = 100;
             else if (name.EndsWith("_D", StringComparison.OrdinalIgnoreCase)) score = 90;
+            else if (name.EndsWith("_Albedo", StringComparison.OrdinalIgnoreCase)) score = 88;
             else if (name.EndsWith("_Alb", StringComparison.OrdinalIgnoreCase)) score = 85;
             else if (name.EndsWith("_BaseColor", StringComparison.OrdinalIgnoreCase)) score = 80;
             else continue;
@@ -558,8 +732,12 @@ public static class Program
     ///
     /// Both keep their relative transforms: a foundation's mesh sits 50 cm below
     /// its actor origin, and a window wall is a frame plus a separate glass pane.
+    ///
+    /// A variant blueprint may name no mesh of its own at all -- the clean
+    /// pipelines declare only that they have no flow indicator -- so when a class
+    /// yields nothing, the class it derives from is asked instead.
     /// </summary>
-    private static List<MeshPart> FindParts(DefaultFileProvider provider, string assetPath)
+    private static List<MeshPart> FindParts(DefaultFileProvider provider, string assetPath, int depth = 0)
     {
         var parts = new List<MeshPart>();
         if (!provider.TryLoadPackage(assetPath, out var package)) return parts;
@@ -612,7 +790,92 @@ public static class Program
             });
         }
 
+        // Some buildings name their geometry in a property rather than on a
+        // component: the pipeline and hypertube supports keep theirs in
+        // mSupportMeshInstanceData, with the pole height variations beside it.
+        if (parts.Count == 0)
+        {
+            foreach (var export in package.GetExports())
+            {
+                foreach (var property in export.Properties)
+                {
+                    var mesh = FindMeshInValue(property.Tag?.GenericValue, 0);
+                    if (mesh == null) continue;
+                    parts.Add(new MeshPart { Mesh = mesh });
+                    break;
+                }
+                if (parts.Count > 0) break;
+            }
+        }
+
+        // Nothing here: this is a variant that only records how it differs from
+        // its parent. Walk up until a class actually names geometry. The depth
+        // guard is for cycles, not for depth -- the chains are two or three long.
+        if (parts.Count == 0 && depth < 4)
+        {
+            foreach (var export in package.GetExports())
+            {
+                var parent = ParentClassPath(export);
+                if (parent == null) continue;
+                var inherited = FindParts(provider, parent, depth + 1);
+                if (inherited.Count > 0) return inherited;
+            }
+        }
+
         return parts;
+    }
+
+    /// <summary>
+    /// The package a blueprint class derives from, as a path the provider can
+    /// load. Different CUE4Parse versions surface this as a package index or as
+    /// an already-resolved object, so both spellings are accepted.
+    /// </summary>
+    private static string? ParentClassPath(object? export)
+    {
+        var super = Reflect(export, "SuperStruct") ?? Reflect(export, "Super");
+        if (super == null) return null;
+
+        var path = super is FPackageIndex index ? ResolvePath(index) : StripObjectName(super.ToString());
+        return path != null && path.StartsWith("/Game/", StringComparison.Ordinal) ? path : null;
+    }
+
+    /// <summary>Class'/Game/Foo/Build_Bar.Build_Bar_C' -> /Game/Foo/Build_Bar.</summary>
+    private static string? StripObjectName(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+        var tick = name.IndexOf('\'');
+        if (tick >= 0) name = name[(tick + 1)..].TrimEnd('\'');
+        var dot = name.LastIndexOf('.');
+        return dot > 0 ? name[..dot] : name;
+    }
+
+    /// <summary>
+    /// The first real mesh reference anywhere inside a property value, looking
+    /// through structs and arrays of structs. Shallow on purpose: a mesh nested
+    /// deeper than this is decoration, not the building.
+    /// </summary>
+    private static string? FindMeshInValue(object? value, int depth)
+    {
+        if (value == null || depth > 3) return null;
+
+        foreach (var field in new[] { "StaticMesh", "Mesh" })
+        {
+            var direct = ResolvePath(Member(value, field));
+            if (direct != null && !IsPlaceholder(direct)) return direct;
+        }
+
+        if (value is UScriptArray array)
+        {
+            foreach (var entry in array.Properties)
+            {
+                var found = FindMeshInValue(Unwrap(entry?.GenericValue), depth + 1);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        var inner = Member(value, "StructType");
+        return inner == null ? null : FindMeshInValue(inner, depth + 1);
     }
 
     private static object? Unwrap(object? value)
@@ -697,6 +960,39 @@ public static class Program
     }
 
     /// <summary>Package path of a referenced asset, minus the object suffix.</summary>
+    /// <summary>
+    /// An object path spelled the way the file table spells it, or null.
+    ///
+    /// Built once and kept: the table has tens of thousands of entries and a
+    /// handful of buildings need it.
+    /// </summary>
+    private static Dictionary<string, string>? PathIndex;
+
+    private static string? MatchIgnoringCase(DefaultFileProvider provider, string objectPath)
+    {
+        PathIndex ??= BuildPathIndex(provider);
+        // "/Game/Foo/SM_Bar" -> "Foo/SM_Bar", which is what the index is keyed on.
+        var tail = objectPath.TrimStart('/');
+        var slash = tail.IndexOf('/');
+        if (slash < 0) return null;
+        return PathIndex.TryGetValue(tail[(slash + 1)..].ToLowerInvariant(), out var real) ? real : null;
+    }
+
+    private static Dictionary<string, string> BuildPathIndex(DefaultFileProvider provider)
+    {
+        const string content = "/Content/";
+        var index = new Dictionary<string, string>();
+        foreach (var key in provider.Files.Keys)
+        {
+            if (!key.EndsWith(".uasset", StringComparison.OrdinalIgnoreCase)) continue;
+            var marker = key.IndexOf(content, StringComparison.OrdinalIgnoreCase);
+            if (marker < 0) continue;
+            var tail = key[(marker + content.Length)..^".uasset".Length];
+            index[tail.ToLowerInvariant()] = "/Game/" + tail;
+        }
+        return index;
+    }
+
     private static string? ResolvePath(object? reference)
     {
         if (reference is not FPackageIndex index) return null;

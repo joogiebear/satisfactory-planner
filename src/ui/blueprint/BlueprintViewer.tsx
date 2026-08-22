@@ -24,10 +24,12 @@ function layOutAlongSplines(geometry: THREE.BufferGeometry, placements: Placemen
 
   const size = new THREE.Vector3()
   box.getSize(size)
-  // The segment runs along whichever horizontal axis is longest.
-  const alongX = size.x >= size.y
-  const segmentLength = Math.max(1, alongX ? size.x : size.y)
-  const axis = alongX ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0)
+  // Unreal's spline meshes are authored along local X, whatever their
+  // proportions: a belt segment is 200 cm long and 28 cm tall, but a pipe
+  // segment is 100 cm long and 150 cm across. Measuring the longest side
+  // instead gets belts right by accident and lays pipes out as stacked discs.
+  const segmentLength = Math.max(1, size.x)
+  const axis = new THREE.Vector3(1, 0, 0)
 
   const matrices: THREE.Matrix4[] = []
   const actor = new THREE.Matrix4()
@@ -66,7 +68,7 @@ function layOutAlongSplines(geometry: THREE.BufferGeometry, placements: Placemen
       const point = curve.getPointAt(t)
       curve.getTangentAt(t, tangent)
       quaternion.setFromUnitVectors(axis, tangent.normalize())
-      scale.set(alongX ? stretch : 1, alongX ? 1 : stretch, 1)
+      scale.set(stretch, 1, 1)
       local.compose(point, quaternion, scale)
       matrices.push(actor.clone().multiply(local))
     }
@@ -145,7 +147,9 @@ const COLOURS: Record<string, number> = {
   foundation: 0x39424c,
   wall: 0x4d5763,
   conveyor: 0xd8853a,
-  pipe: 0x4fb8c9,
+  // Pipes carry no base-colour map: the game shades them from a swatch the
+  // player picks, so the default swatch's light steel is the honest stand-in.
+  pipe: 0xb4bcc4,
   power: 0x8e7cc3,
   storage: 0x6fbf73,
   other: 0x5a646f,
