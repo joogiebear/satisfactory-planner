@@ -121,6 +121,9 @@ async function extract(gameDir, onProgress) {
     onProgress({ phase: 'reading', done: 0, total: 0, message: 'Opening the game files…' })
     await runExporter(exporter, gameDir, raw, onProgress)
 
+    onProgress({ phase: 'reading', done: 0, total: 0, message: 'Reading the icons…' })
+    await runIcons(exporter, gameDir, raw, onProgress)
+
     onProgress({ phase: 'optimising', done: 0, total: 0, message: 'Simplifying for display…' })
     const out = meshDir()
     await fsp.rm(out, { recursive: true, force: true })
@@ -134,9 +137,31 @@ async function extract(gameDir, onProgress) {
   }
 }
 
-function runExporter(exporter, gameDir, outDir, onProgress) {
+/**
+ * Pull the game's own icons, using the class-to-texture map in the planner's
+ * data. They used to come off the wiki and get baked into the installer, which
+ * meant shipping Coffee Stain's artwork; this reads the copy already on the
+ * machine, like the models.
+ */
+async function runIcons(exporter, gameDir, outDir, onProgress) {
+  const { icons } = require('../src/data/game-data.json')
+  if (!icons || Object.keys(icons).length === 0) return
+
+  const list = path.join(outDir, 'icon-map.json')
+  await fsp.writeFile(list, JSON.stringify(icons), 'utf8')
+  try {
+    await runExporter(exporter, gameDir, outDir, onProgress, ['--icons', list])
+  } catch {
+    // Icons are a nicety: without them chips fall back to lettered tiles, and
+    // failing the whole extraction over that would cost the models too.
+  } finally {
+    await fsp.rm(list, { force: true }).catch(() => {})
+  }
+}
+
+function runExporter(exporter, gameDir, outDir, onProgress, extra = []) {
   return new Promise((resolve, reject) => {
-    const child = spawn(exporter, ['--game', gameDir, '--out', outDir], { windowsHide: true })
+    const child = spawn(exporter, ['--game', gameDir, '--out', outDir, ...extra], { windowsHide: true })
     let tail = ''
     let stderr = ''
 
@@ -217,12 +242,22 @@ async function optimise(rawDir, outDir, onProgress) {
     /* no manifest means no real geometry, and the boxes stand in */
   }
 
-  // Base-colour maps are already sized for display; copy them as they are.
+  // Base-colour maps and icons are already sized for display; copy as they are.
   for (const file of await fsp.readdir(rawDir)) {
-    if (!file.endsWith('.albedo.jpg')) continue
+    if (!file.endsWith('.albedo.jpg') && !file.endsWith('.png')) continue
     await fsp.copyFile(path.join(rawDir, file), path.join(outDir, file)).catch(() => {})
   }
   return written
+}
+
+/** Class names that have an extracted icon, for the interface to look up. */
+async function icons() {
+  try {
+    const files = await fsp.readdir(meshDir())
+    return files.filter((f) => f.endsWith('.png')).map((f) => f.slice(0, -4))
+  } catch {
+    return []
+  }
 }
 
 async function clear() {
@@ -230,4 +265,4 @@ async function clear() {
   return status()
 }
 
-module.exports = { meshDir, findGame, isGameDir, status, manifest, extract, clear }
+module.exports = { meshDir, findGame, isGameDir, status, manifest, icons, extract, clear }

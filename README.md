@@ -16,8 +16,8 @@ build you have installed rather than a wiki snapshot.
   its clock or fit Somersloops, and everything it isn't wired to dims so you can
   follow one chain through a large build. Drag to rearrange, and save the whole
   thing as a PNG.
-- **Real icons** — every item and machine, fetched once with
-  `npm run fetch-icons`.
+- **Real icons** — every item and machine, read from your own copy of the game
+  on first run along with the models.
 - **Production tree** — the same plan as a compact outline, with per-branch
   machine counts and power. Connectors are drawn as the logistics: amber for
   belts, teal for pipes, and hazard stripes on any link that exceeds the tier
@@ -194,14 +194,10 @@ impossible fuel look like the cheapest thing on the board:
 
 ## Icons
 
-```bash
-npm run fetch-icons
-```
-
-Downloads an icon for every item, machine and placeable building from the
-Satisfactory wiki into `src/data/icons/` — 389 in total, about 9 MB. Re-run it
-after a game update adds new content. Some wall and ramp variants have no wiki
-page and fall back to a plain coloured box, which is all a wall needs to be.
+Nothing to run: icons come out of the game on first run, alongside the building
+models, and land in the same folder. 675 of them — every item and all but 32 of
+the buildables, those being wall and ramp variants whose descriptors name no
+icon. See [docs/ICONS.md](docs/ICONS.md).
 
 The folder is gitignored, so each machine fetches its own copy rather than the
 repo redistributing the artwork. Without it the app falls back to lettered
@@ -302,7 +298,7 @@ figures read out of the game's own published docs, and
 Every Satisfactory calculator ships that data and it is what makes the planner
 work offline.
 
-**No artwork does.** Icons and building models are extracted on your machine
-from your own installed copy, into your own app data folder, and are gitignored
-here and absent from the installers. If you don't own the game, the planner
-still calculates — it just draws boxes.
+**No artwork does.** Icons and building models are read on your machine from
+your own installed copy, into your own app data folder — gitignored here and
+absent from the installers. If you don't own the game, the planner still
+calculates; it just draws boxes and lettered tiles.

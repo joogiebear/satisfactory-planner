@@ -139,10 +139,13 @@ function stackAlongLifts(
     if (part.atTop) {
       at(height)
     } else if (part.stackEvery && part.stackEvery > 0) {
-      // One section per storey, laid from the base towards the head. The last
-      // one stops short rather than overshooting past the head.
-      const sections = Math.max(0, Math.floor(reach / part.stackEvery + 1e-6))
-      for (let i = 0; i < sections; i++) at(direction * i * part.stackEvery)
+      // One section per storey, laid from the base towards the head, and spaced
+      // to divide the run exactly. Stepping by the section's own height instead
+      // leaves a gap under the head whenever the lift isn't a whole number of
+      // storeys, which is most of the odd ones.
+      const sections = Math.max(1, Math.round(reach / part.stackEvery))
+      const spacing = reach / sections
+      for (let i = 0; i < sections; i++) at(direction * i * spacing)
     }
   }
 

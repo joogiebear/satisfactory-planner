@@ -87,6 +87,7 @@ function registerMeshProtocol() {
 function registerIpc() {
   ipcMain.handle('meshes:status', () => meshes.status())
   ipcMain.handle('meshes:manifest', () => meshes.manifest())
+  ipcMain.handle('meshes:icons', () => meshes.icons())
   ipcMain.handle('meshes:clear', () => meshes.clear())
 
   ipcMain.handle('meshes:browse', async (event) => {

@@ -37,6 +37,8 @@ export interface MeshPart {
   texture?: string | null
 }
 
+import { refreshIcons } from '../icons'
+
 const bundledMeshes = import.meta.glob('../../data/meshes/*.glb', {
   eager: true,
   query: '?url',
@@ -76,6 +78,8 @@ export interface MeshProgress {
 interface MeshApi {
   status(): Promise<MeshStatus>
   manifest(): Promise<Record<string, MeshPart[]>>
+  /** Class names that have an extracted icon. */
+  icons(): Promise<string[]>
   browse(): Promise<{ dir: string; valid: boolean } | null>
   extract(gameDir: string): Promise<{ ok: boolean; count?: number; dir?: string; error?: string }>
   clear(): Promise<MeshStatus>
@@ -103,6 +107,8 @@ export async function refreshMeshManifest(): Promise<number> {
   } catch {
     extracted = {}
   }
+  // Icons come out of the same extraction, so they refresh with it.
+  await refreshIcons()
   return Object.keys(extracted).length
 }
 

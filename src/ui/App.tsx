@@ -10,6 +10,7 @@ import { BlueprintPanel } from './components/BlueprintPanel'
 import { FactoryGraph } from './components/FactoryGraph'
 import { ProgressionPanel } from './components/ProgressionPanel'
 import { PowerPanel } from './components/PowerPanel'
+import { refreshIcons } from './icons'
 import { fmt, fmtPower } from './format'
 
 type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'power' | 'progression' | 'blueprint'
@@ -54,6 +55,14 @@ function load(): Saved {
 }
 
 export function App() {
+  // Icons are extracted, not bundled, so they arrive after the first paint.
+  // Every chip in the app reads them, not just the blueprint viewer, so the
+  // load happens here and a bump re-renders the tree once they land.
+  const [, setIconGeneration] = useState(0)
+  useEffect(() => {
+    void refreshIcons().then((n) => { if (n) setIconGeneration((g) => g + 1) })
+  }, [])
+
   const initial = useMemo(load, [])
   const [settings, setSettings] = useState<PlannerSettings>(initial.settings)
   const [targets, setTargets] = useState<PlanTarget[]>(initial.targets)

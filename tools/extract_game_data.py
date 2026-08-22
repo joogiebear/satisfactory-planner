@@ -718,6 +718,36 @@ def machine_tiers(recipes: dict, tiers: dict[str, int]) -> dict[str, int]:
     return out
 
 
+def extract_icons(groups: dict, items: dict, buildables: dict) -> dict[str, str]:
+    """Class name -> the game's own icon texture for it.
+
+    The icons used to come off the wiki, which meant downloading Coffee Stain's
+    artwork and baking it into the installer. The game ships the same icons and
+    every descriptor names one, so they can be read from the player's own copy
+    like the building models are -- nothing redistributed, and better coverage
+    besides.
+
+    A buildable carries no icon itself; its descriptor does, under the matching
+    Desc_ name.
+    """
+    by_descriptor: dict[str, str] = {}
+    for classes in groups.values():
+        for c in classes:
+            asset = parse_icon(c.get("mSmallIcon")) or parse_icon(c.get("mPersistentBigIcon"))
+            if asset:
+                by_descriptor[c.get("ClassName", "")] = asset
+
+    out: dict[str, str] = {}
+    for key in items:
+        if key in by_descriptor:
+            out[key] = by_descriptor[key]
+    for key in buildables:
+        descriptor = "Desc_" + key[len("Build_"):] if key.startswith("Build_") else key
+        if descriptor in by_descriptor:
+            out[key] = by_descriptor[descriptor]
+    return out
+
+
 def prune_unreachable(items: dict, recipes: dict) -> dict:
     """Keep only items that participate in an automatable recipe."""
     used = set()
@@ -755,6 +785,8 @@ def main() -> int:
     milestones = extract_milestones(groups, items, recipes)
     phases = load_game_phases(args.phases, items)
     tiers = recipe_tiers(groups, recipes)
+    buildable_names = extract_buildable_names(groups)
+    icons = extract_icons(groups, items, buildable_names)
 
     data = {
         "gameVersion": args.version,
@@ -768,7 +800,8 @@ def main() -> int:
         "belts": extract_belts(groups),
         "pipes": extract_pipes(groups),
         "generators": extract_generators(groups, items),
-        "buildableNames": extract_buildable_names(groups),
+        "buildableNames": buildable_names,
+        "icons": icons,
         "footprints": extract_footprints(groups),
         "milestones": milestones,
         "spaceElevator": phases,
@@ -793,6 +826,7 @@ def main() -> int:
     print(f"  pipes       {len(data['pipes'])}")
     print(f"  generators  {len(data['generators'])}")
     print(f"  buildables  {len(data['buildableNames'])}")
+    print(f"  icons       {len(icons)}")
     boxed = sum(1 for v in data['footprints'].values() if v['box'])
     print(f"  footprints  {boxed}/{len(data['footprints'])} with a box")
     return 0

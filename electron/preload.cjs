@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('appInfo', {
 contextBridge.exposeInMainWorld('meshApi', {
   status: () => ipcRenderer.invoke('meshes:status'),
   manifest: () => ipcRenderer.invoke('meshes:manifest'),
+  icons: () => ipcRenderer.invoke('meshes:icons'),
   browse: () => ipcRenderer.invoke('meshes:browse'),
   extract: (gameDir) => ipcRenderer.invoke('meshes:extract', gameDir),
   clear: () => ipcRenderer.invoke('meshes:clear'),

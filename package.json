@@ -18,8 +18,7 @@
     "extract-data": "python tools/extract_game_data.py",
     "test": "vitest run",
     "test:watch": "vitest",
-    "fetch-icons": "python tools/fetch_icons.py",
-    "fetch-meshes": "node tools/fetch-meshes.mjs"
+      "fetch-meshes": "node tools/fetch-meshes.mjs"
   },
   "devDependencies": {
     "@gltf-transform/cli": "^4.4.2",

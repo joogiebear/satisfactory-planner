@@ -6,7 +6,7 @@ release/
 .DS_Store
 .vite/
 
-# Extracted game art stays local; see docs/ICONS.md
+# Icons and models are extracted per-machine at first run, never bundled.
 src/data/icons/
 
 # Meshes extracted from the local game install; see docs/MESHES.md

@@ -51,6 +51,7 @@ public static class Program
         var findFiles = ArgValue(args, "--files");
         var dumpAsset = ArgValue(args, "--dump");
         var phasesOut = ArgValue(args, "--phases");
+        var iconsFrom = ArgValue(args, "--icons");
 
         if (string.IsNullOrWhiteSpace(gameDir))
         {
@@ -103,6 +104,58 @@ public static class Program
                          .Where(k => k.Contains(findFiles, StringComparison.OrdinalIgnoreCase))
                          .OrderBy(k => k).Take(120))
                 Console.WriteLine($"FILE {key}");
+            return 0;
+        }
+
+        // Icons come out of the game too, rather than off the wiki and into the
+        // installer. The planner hands over a class-name to texture map read
+        // from the game's own docs; this turns it into files named the way the
+        // interface looks them up.
+        if (!string.IsNullOrWhiteSpace(iconsFrom))
+        {
+            Directory.CreateDirectory(outDir);
+            var wanted = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                File.ReadAllText(iconsFrom)) ?? new Dictionary<string, string>();
+
+            // Asset name -> where it lives, so each icon is a lookup rather than
+            // a scan of fifty thousand paths.
+            var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var path in provider.Files.Keys)
+            {
+                if (!path.EndsWith(".uasset", StringComparison.OrdinalIgnoreCase)) continue;
+                byName.TryAdd(Path.GetFileNameWithoutExtension(path), path);
+            }
+
+            int wrote = 0, missing = 0, done = 0;
+            foreach (var (className, asset) in wanted)
+            {
+                Report(++done, wanted.Count, className);
+                // Load the package and take the texture out of it: the file
+                // table stores paths with a .uasset extension, which is not an
+                // object path, and the object inside need not share its name.
+                if (!byName.TryGetValue(asset, out var path)
+                    || !provider.TryLoadPackage(path, out var package))
+                {
+                    missing++;
+                    continue;
+                }
+
+                var texture = package.GetExports().OfType<UTexture2D>().FirstOrDefault();
+                if (texture == null)
+                {
+                    missing++;
+                    continue;
+                }
+                try
+                {
+                    using var bitmap = texture.Decode(ETexturePlatform.DesktopMobile)?.ToSkBitmap();
+                    if (WriteIcon(bitmap, outDir, className) != null) wrote++;
+                    else missing++;
+                }
+                catch { missing++; }
+            }
+
+            Console.WriteLine($"Wrote {wrote} icons, {missing} unavailable");
             return 0;
         }
 
@@ -697,6 +750,39 @@ public static class Program
         {
             using var bitmap = SkiaSharp.SKBitmap.Decode(source);
             return WriteAlbedo(bitmap, outDir, stem);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// An icon, small and lossless.
+    ///
+    /// 128 px is more than a chip ever shows, and PNG rather than JPEG because
+    /// these have transparent surrounds that JPEG would turn into grey haloes.
+    /// </summary>
+    private static string? WriteIcon(SkiaSharp.SKBitmap? bitmap, string outDir, string className)
+    {
+        const int side = 128;
+        if (bitmap == null) return null;
+        var name = className + ".png";
+        try
+        {
+            var scale = Math.Max(bitmap.Width, bitmap.Height) > side
+                ? (double)side / Math.Max(bitmap.Width, bitmap.Height)
+                : 1.0;
+            var w = Math.Max(1, (int)(bitmap.Width * scale));
+            var h = Math.Max(1, (int)(bitmap.Height * scale));
+
+            using var resized = bitmap.Resize(new SkiaSharp.SKImageInfo(w, h), SkiaSharp.SKFilterQuality.High);
+            if (resized == null) return null;
+            using var image = SkiaSharp.SKImage.FromBitmap(resized);
+            using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+            using var file = File.Create(Path.Combine(outDir, name));
+            data.SaveTo(file);
+            return name;
         }
         catch
         {

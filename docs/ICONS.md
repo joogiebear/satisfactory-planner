@@ -1,44 +1,41 @@
-# Adding the game's icons
+# Icons
 
-The planner works fine without icons — it falls back to lettered tiles, amber
-for solids and teal for fluids. This adds the real artwork.
+Every item and building shows the game's own icon, read from the copy of
+Satisfactory on the machine running the planner. There is nothing to fetch and
+nothing to install — icons come out of the same first-run extraction as the
+building models, into the same folder, and are served over the `mesh://` scheme.
 
-Satisfactory keeps its textures inside UE5 IoStore containers
-(`FactoryGame-Windows.utoc` / `.ucas`, about 7.9 GB), which the planner can't
-open by itself. FModel does it in a few clicks, and afterwards a script matches
-each PNG to the right item using the icon names already in `game-data.json`.
+## Where they come from
 
-You only need to do this once per game update.
+`src/data/game-data.json` carries an `icons` map of class name to icon texture,
+built by `tools/extract_game_data.py` from the game's published docs. A
+descriptor names its own icon in `mSmallIcon`; a *buildable* does not, so
+`Build_X_C` is matched to `Desc_X_C` to find one. That covers 675 classes — all
+168 items and 507 of the 539 buildables. The remainder are wall and ramp
+variants whose descriptors name no icon; those fall back to a lettered tile.
 
-## 1. Export the textures with FModel
-
-1. Install [FModel](https://fmodel.app).
-2. **Directory selector** → point it at:
-   `<Satisfactory>\FactoryGame\Content\Paks`
-   Leave the AES key blank; Satisfactory's paks aren't encrypted.
-3. Set **UE Version** to the one FModel suggests for the game build, then Load.
-4. In the folder tree, right-click `FactoryGame/Content/FactoryGame` and choose
-   **Export Folder Packages Textures** (or select `Save Textures` from the
-   context menu). This writes PNGs under FModel's `Output/Exports` folder.
-
-Exporting the whole `FactoryGame` folder is the simplest route. If you'd rather
-keep it small, the icons live in `UI` subfolders beneath `Resource/Parts`,
-`Resource/RawResources` and `Buildable/Factory`.
-
-## 2. Bring them into the planner
+The mesh exporter turns that map into files:
 
 ```bash
-python tools/extract_icons.py --from "C:/Users/<you>/Documents/FModel/Output/Exports"
+satisfactory-mesh-exporter.exe --game "<Satisfactory>" --out <dir> --icons <map.json>
 ```
 
-It reports how many matched and names anything it couldn't find. Icons land in
-`src/data/icons/` and are picked up the next time the app builds or reloads.
+Each is written as `<ClassName>.png` at 128 px — more than a chip ever shows.
+PNG rather than JPEG because the icons have transparent surrounds that JPEG
+would turn into grey haloes.
 
-`pip install Pillow` first if you want them downscaled — otherwise they're
-copied at full size, which still works but makes a larger app.
+## Why not the wiki
 
-## Why they aren't in the repo
+They used to be downloaded from the Satisfactory wiki into `src/data/icons/`,
+which Vite then inlined into the bundle. That was a mistake worth recording: the
+folder was gitignored, so the repository looked clean, but the build baked 371
+PNGs of Coffee Stain's artwork straight into the published installers — while
+the README claimed no artwork travelled with the app. Reading them from the
+player's own copy removes the redistribution, needs no network, and covers 675
+classes instead of 389.
 
-`src/data/icons/` is gitignored. The artwork belongs to Coffee Stain, so each
-machine extracts its own copy from the game it already owns rather than the
-repo redistributing it.
+## Without an extraction
+
+Chips fall back to a lettered tile, tinted by how the item travels — solid,
+fluid or raw. The planner works exactly the same; it is only less pretty. That
+is also what the web build shows, since it has no game to read from.
