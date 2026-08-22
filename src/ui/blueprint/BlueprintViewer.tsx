@@ -105,6 +105,17 @@ function prepareGeometry(
   geo.setAttribute('position', expand(position))
   const normal = source.getAttribute('normal')
   if (normal) geo.setAttribute('normal', expand(normal))
+  // UV0 carries the base-colour map; the game's other seven channels drive
+  // material-graph effects we don't reproduce.
+  const uv = source.getAttribute('uv')
+  if (uv) {
+    const out = new Float32Array(uv.count * 2)
+    for (let i = 0; i < uv.count; i++) {
+      out[i * 2] = uv.getX(i)
+      out[i * 2 + 1] = uv.getY(i)
+    }
+    geo.setAttribute('uv', new THREE.BufferAttribute(out, 2))
+  }
   if (source.index) geo.setIndex(source.index.clone())
 
   geo.applyMatrix4(worldMatrix)
@@ -301,6 +312,7 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
 
     // --- real geometry, loaded in the background ---
     const loader = new GLTFLoader()
+    const textureLoader = new THREE.TextureLoader()
     let disposed = false
     const loaded: THREE.InstancedMesh[] = []
 
@@ -345,9 +357,34 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
                 side: THREE.DoubleSide,
                 depthWrite: false,
               })
-              : new THREE.MeshPhongMaterial({
-                color: pending.colour, shininess: 10, specular: 0x151a1f,
+              : new THREE.MeshStandardMaterial({
+                // Tinted only until the real surface arrives, so a missing
+                // texture still reads as the right kind of thing.
+                color: part.texture ? 0xffffff : pending.colour,
+                metalness: 0.15,
+                roughness: 0.75,
               })
+
+            // The game's base-colour map, applied on UV0.
+            const textureUrl = part.texture ? urlForFile(part.texture) : undefined
+            if (textureUrl && !part.glass) {
+              textureLoader.load(
+                textureUrl,
+                (map) => {
+                  if (disposed) { map.dispose(); return }
+                  map.colorSpace = THREE.SRGBColorSpace
+                  // glTF UVs are stored unflipped, unlike three's default.
+                  map.flipY = false
+                  map.wrapS = map.wrapT = THREE.RepeatWrapping
+                  map.anisotropy = 4
+                  ;(material as THREE.MeshStandardMaterial).map = map
+                  material.needsUpdate = true
+                  textures.push(map)
+                },
+                undefined,
+                () => { /* no surface: the tinted material stands in */ }
+              )
+            }
 
             gltf.scene.traverse((child) => {
               const asMesh = child as THREE.Mesh

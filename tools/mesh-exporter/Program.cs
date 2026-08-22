@@ -30,6 +30,7 @@ namespace SatisfactoryMeshExporter;
 public static class Program
 {
     private static bool Verbose;
+    private static bool WithMaterials;
 
     public static int Main(string[] args)
     {
@@ -37,6 +38,7 @@ public static class Program
         var outDir = ArgValue(args, "--out") ?? "meshes";
         var listOnly = args.Contains("--list");
         Verbose = args.Contains("--verbose");
+        WithMaterials = !args.Contains("--no-materials");
         var limit = int.TryParse(ArgValue(args, "--limit"), out var l) ? l : int.MaxValue;
         var versionArg = ArgValue(args, "--ue");
 
@@ -119,6 +121,7 @@ public static class Program
         var manifest = new Dictionary<string, List<object>>();
         int resolved = 0, noMesh = 0, failed = 0, written = 0;
         var exportedMeshes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var meshTextures = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (className, assetPath) in buildables.OrderBy(k => k.Key))
         {
@@ -150,9 +153,11 @@ public static class Program
             {
                 if (!exportedMeshes.TryGetValue(part.Mesh, out var file))
                 {
+                    LastTexture = null;
                     file = ExportMesh(provider, part.Mesh, outDir);
                     if (file == null) { failed++; continue; }
                     exportedMeshes[part.Mesh] = file;
+                    if (LastTexture != null) meshTextures[file] = LastTexture;
                     written++;
                 }
                 entries.Add(new
@@ -163,6 +168,7 @@ public static class Program
                     scale = part.Scale,
                     glass = IsSeeThrough(part.Mesh, className),
                     spline = part.Spline,
+                    texture = meshTextures.TryGetValue(file, out var tex) ? tex : null,
                 });
             }
 
@@ -283,7 +289,10 @@ public static class Program
         {
             MeshFormat = EMeshFormat.Gltf2,
             LodFormat = ELodFormat.FirstLod,
-            ExportMaterials = false,
+            ExportMaterials = WithMaterials,
+            MaterialFormat = CUE4Parse.UE4.Assets.Exports.Material.EMaterialFormat.FirstLayer,
+            TextureFormat = CUE4Parse_Conversion.Textures.ETextureFormat.Png,
+            Platform = CUE4Parse.UE4.Assets.Exports.Texture.ETexturePlatform.DesktopMobile,
         };
 
         MeshExporter exporter;
@@ -293,12 +302,101 @@ public static class Program
             exporter = new MeshExporter(sk, options);
         else return null;
 
+        // Textures are written as loose files beside the mesh rather than into
+        // the glTF, and the material instances declare no bindings, so the only
+        // reliable link is which files appear while this mesh is exported.
+        var before = WithMaterials
+            ? new HashSet<string>(Directory.EnumerateFiles(outDir, "*.png", SearchOption.AllDirectories), StringComparer.OrdinalIgnoreCase)
+            : null;
+
         if (!exporter.TryWriteToDir(new DirectoryInfo(outDir), out _, out var producedPath)) return null;
 
         var safe = meshPath.Replace('/', '_').TrimStart('_') + ".glb";
         var target = Path.Combine(outDir, safe);
         MoveWithRetry(producedPath, target);
+
+        if (before != null)
+        {
+            var fresh = Directory.EnumerateFiles(outDir, "*.png", SearchOption.AllDirectories)
+                .Where(f => !before.Contains(f))
+                .ToList();
+            var albedo = PickAlbedo(fresh);
+            LastTexture = albedo == null ? null : ShrinkTexture(albedo, outDir, Path.GetFileNameWithoutExtension(safe));
+        }
+
         return safe;
+    }
+
+    /// <summary>Filename of the base-colour texture written for the last mesh, if any.</summary>
+    private static string? LastTexture;
+
+    /// <summary>
+    /// Re-encode a base-colour map at a size a browser can hold.
+    ///
+    /// Source textures run to several megabytes each and the full set would be
+    /// well over a gigabyte. A 512 px JPEG keeps the surface readable at the
+    /// scale a blueprint is viewed and takes the set to a few tens of megabytes.
+    /// </summary>
+    private static string? ShrinkTexture(string source, string outDir, string stem)
+    {
+        const int maxSide = 512;
+        var name = stem + ".albedo.jpg";
+        var target = Path.Combine(outDir, name);
+        try
+        {
+            using var bitmap = SkiaSharp.SKBitmap.Decode(source);
+            if (bitmap == null) return null;
+
+            var longest = Math.Max(bitmap.Width, bitmap.Height);
+            var scale = longest > maxSide ? (double)maxSide / longest : 1.0;
+            var width = Math.Max(1, (int)(bitmap.Width * scale));
+            var height = Math.Max(1, (int)(bitmap.Height * scale));
+
+            using var resized = bitmap.Resize(new SkiaSharp.SKImageInfo(width, height), SkiaSharp.SKFilterQuality.High);
+            if (resized == null) return null;
+            using var image = SkiaSharp.SKImage.FromBitmap(resized);
+            using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 82);
+            using var file = File.Create(target);
+            data.SaveTo(file);
+            return name;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Pick the base-colour map out of a mesh's textures.
+    ///
+    /// The game's suffixes are consistent: _BC or _D is base colour, _N is a
+    /// normal map, and masks, noise and shared atlases are inputs to the
+    /// material graph rather than a surface anyone would recognise.
+    /// </summary>
+    private static string? PickAlbedo(IEnumerable<string> candidates)
+    {
+        string? best = null;
+        var bestScore = int.MinValue;
+
+        foreach (var path in candidates)
+        {
+            var name = Path.GetFileNameWithoutExtension(path);
+            if (name.Contains("Noise", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("Mask", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("Atlas", StringComparison.OrdinalIgnoreCase)) continue;
+
+            var score = 0;
+            if (name.EndsWith("_BC", StringComparison.OrdinalIgnoreCase)) score = 100;
+            else if (name.EndsWith("_D", StringComparison.OrdinalIgnoreCase)) score = 90;
+            else if (name.EndsWith("_Alb", StringComparison.OrdinalIgnoreCase)) score = 85;
+            else if (name.EndsWith("_BaseColor", StringComparison.OrdinalIgnoreCase)) score = 80;
+            else continue;
+
+            // Prefer the larger source, which is the main body rather than a decal.
+            try { score += (int)Math.Min(20, new FileInfo(path).Length / 262144); } catch { }
+            if (score > bestScore) { bestScore = score; best = path; }
+        }
+        return best;
     }
 
     /// <summary>

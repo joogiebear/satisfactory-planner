@@ -191,7 +191,8 @@ async function optimise(rawDir, outDir, onProgress) {
       await document.transform(
         weld(),
         simplify({ simplifier: MeshoptSimplifier, ratio: 0.12, error: 0.008 }),
-        prune({ keepAttributes: false, keepLeaves: false }),
+        // UVs must survive: without them the base-colour maps have nowhere to land.
+        prune({ keepAttributes: true, keepLeaves: false }),
         dedup(),
         quantize({ quantizePosition: 14, quantizeNormal: 8 })
       )
@@ -214,6 +215,12 @@ async function optimise(rawDir, outDir, onProgress) {
     await fsp.copyFile(path.join(rawDir, 'manifest.json'), path.join(outDir, 'manifest.json'))
   } catch {
     /* no manifest means no real geometry, and the boxes stand in */
+  }
+
+  // Base-colour maps are already sized for display; copy them as they are.
+  for (const file of await fsp.readdir(rawDir)) {
+    if (!file.endsWith('.albedo.jpg')) continue
+    await fsp.copyFile(path.join(rawDir, file), path.join(outDir, file)).catch(() => {})
   }
   return written
 }

@@ -51,7 +51,8 @@ for (const [i, file] of files.entries()) {
       weld(),
       simplify({ simplifier: MeshoptSimplifier, ratio: 0.12, error: 0.008 }),
       // Drop anything the planner never draws: materials, textures, animation.
-      prune({ keepAttributes: false, keepLeaves: false }),
+      // UVs must survive: without them the base-colour maps have nowhere to land.
+        prune({ keepAttributes: true, keepLeaves: false }),
       dedup(),
       quantize({ quantizePosition: 14, quantizeNormal: 8 })
     )
@@ -65,9 +66,18 @@ for (const [i, file] of files.entries()) {
   if ((i + 1) % 25 === 0) console.log(`  ${i + 1}/${files.length}…`)
 }
 
-// The exporter's manifest maps building classes to files; carry it across.
+// The exporter's manifest maps building classes to files; carry it across,
+// along with the base-colour maps, which are already sized for display.
 const manifest = join(rawDir, 'manifest.json')
 if (existsSync(manifest)) writeFileSync(join(outDir, 'manifest.json'), readFileSync(manifest))
+
+let textures = 0
+for (const file of readdirSync(rawDir)) {
+  if (!file.endsWith('.albedo.jpg')) continue
+  writeFileSync(join(outDir, file), readFileSync(join(rawDir, file)))
+  textures++
+}
+console.log(`Copied ${textures} textures`)
 
 const mb = (n) => (n / 1048576).toFixed(1)
 console.log(`Done: ${mb(before)} MB -> ${mb(after)} MB (${failed} failed)`)

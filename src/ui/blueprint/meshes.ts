@@ -26,6 +26,8 @@ export interface MeshPart {
    * the recorded position instead of the full run.
    */
   spline?: boolean
+  /** Base-colour map for this mesh, if the game had one. */
+  texture?: string | null
 }
 
 const bundledMeshes = import.meta.glob('../../data/meshes/*.glb', {
@@ -33,10 +35,15 @@ const bundledMeshes = import.meta.glob('../../data/meshes/*.glb', {
   query: '?url',
   import: 'default',
 })
+const bundledTextures = import.meta.glob('../../data/meshes/*.albedo.jpg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
 const bundledManifest = import.meta.glob('../../data/meshes/manifest.json', { eager: true })
 
 const bundledUrls: Record<string, string> = {}
-for (const [path, url] of Object.entries(bundledMeshes)) {
+for (const [path, url] of Object.entries({ ...bundledMeshes, ...bundledTextures })) {
   const key = path.split('/').pop()
   if (key) bundledUrls[key] = url as string
 }
@@ -100,7 +107,7 @@ export function partsFor(buildableKey: string): MeshPart[] {
   return Array.isArray(found) ? found : []
 }
 
-/** Resolve a part's file to something the page can fetch. */
+/** Resolve a mesh or texture file to something the page can fetch. */
 export function urlForFile(file: string): string | undefined {
   if (Object.keys(extracted).length > 0) return `mesh://model/${encodeURIComponent(file)}`
   return bundledUrls[file]

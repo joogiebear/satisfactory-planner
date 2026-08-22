@@ -114,11 +114,35 @@ fail immediately.
 Every belt in the test blueprints resolves a path. Lifts, mergers, splitters and
 poles have no spline, which is correct: they are placed meshes.
 
+## Surfaces
+
+Buildings carry the game's own base-colour maps, which is what makes an
+Assembler read as a grey chassis with red panels rather than a tinted shape.
+
+Getting there is less direct than it sounds. CUE4Parse writes textures as loose
+files beside the mesh rather than into the glTF, and a material instance's
+`Textures` map is empty because the bindings live in the parent material graph,
+which isn't flattened. So there is no material-to-texture link to read. What is
+reliable is *when* files appear: the exporter snapshots the output folder around
+each mesh and treats whatever PNGs turn up as that mesh's textures, then picks
+the base colour by the game's own suffixes — `_BC`, `_D`, `_Alb` — while
+skipping masks, noise and shared atlases, which are material-graph inputs rather
+than surfaces.
+
+Each map is re-encoded to a 512 px JPEG. At source size the full set runs to
+roughly 1.9 GB; this brings it to a few tens of megabytes while staying legible
+at the scale a blueprint is viewed. Meshes keep UV0 for it; the game's other
+seven UV channels drive effects we don't reproduce.
+
+Anything without a resolvable map keeps its category tint, so it still reads as
+the right kind of thing.
+
 ## What still isn't right
 
-Nothing is textured. Materials aren't exported, so parts are tinted by category
-— machines amber, structure grey, glass translucent — rather than carrying the
-game's own surfaces.
+Only base colour. The game's normal, roughness and mask maps are exported but
+unused, and Satisfactory's real look also comes from per-instance swatch tinting
+and decal layers applied by its own shader — reproducing that would mean
+reimplementing the material graph.
 
 Conveyor lifts point at a stand-in primitive in the asset, so they keep a sized
 box rather than a bare cube. A few dozen other buildables resolve no mesh at all
