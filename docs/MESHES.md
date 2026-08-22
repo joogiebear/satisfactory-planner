@@ -86,6 +86,26 @@ Four mechanisms, and a building can use more than one:
 - **Pipeline and hypertube supports** keep theirs inside a property struct
   (`mSupportMeshInstanceData`, with the pole height variations beside it)
   rather than on a component at all.
+- **Conveyor lifts** have no body mesh at all: they are a base, a repeating
+  column section and a head (`mBottomMesh`, `mMidMesh`, `mTopMesh`), stacked as
+  many times as the lift is tall. One storey is drawn, since a blueprint's lift
+  height isn't decoded. A lift declares those fields twice — once on the class
+  default and again on its sparse-data object — so taking both stacks two lifts
+  in the same place.
+- **Power lines** name theirs on `mWireMesh`, which is why they drew as markers
+  until that field was added to the list.
+
+Components are not automatically geometry. A conveyor lift carries a visibility
+helper pointing at the engine's `Cube`, and taking it drew every lift in the
+game as a literal box — so a component's mesh goes through the same placeholder
+filter as everything else.
+
+Nor is every mesh a building. Skipping the Cube finally let the HUB resolve, and
+it came back as 131 meshes: mugs, kebabs, fridge magnets, FICSMAS socks, a
+toilet cover. All genuinely in the blueprint, none of it the building, and none
+of it carrying a visibility flag to sort by. Past sixteen parts a building is
+held to the art in its own folder, which drops the crowd pulled in from
+elsewhere; the HUB lands at 49, the rest being its own build-stage variants.
 
 Two more things stand between a class name and a mesh once one is named. A
 reference in one of those fields is not always geometry: the elevator floor stop
@@ -180,9 +200,9 @@ unused, and Satisfactory's real look also comes from per-instance swatch tinting
 and decal layers applied by its own shader — reproducing that would mean
 reimplementing the material graph.
 
-Conveyor lifts point at a stand-in primitive in the asset, so they keep a sized
-box rather than a bare cube. A few dozen other buildables resolve no mesh at all
-and do the same.
+A dozen or so buildables resolve no mesh at all and keep a sized box — all
+decorative, plus a handful of cheat and debug classes that are not real
+buildings.
 
 ## Size
 

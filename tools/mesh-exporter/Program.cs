@@ -853,7 +853,7 @@ public static class Program
             // These have no placed mesh component; the class default names a
             // segment mesh that the game repeats along the spline. One segment
             // is far better than nothing, though the run itself isn't traced.
-            foreach (var field in new[] { "mMesh", "mMeshBody", "mConveyorMesh" })
+            foreach (var field in new[] { "mMesh", "mMeshBody", "mConveyorMesh", "mWireMesh" })
             {
                 var reference = export.GetOrDefault<FPackageIndex?>(field, null);
                 // Usually geometry -- a belt's mMesh is its segment -- but not
@@ -867,12 +867,37 @@ public static class Program
                 break;
             }
 
+            // --- conveyor lifts: a stack of named parts ---
+            // The lift has no single body mesh. It is a base, a repeating
+            // column section and a head, and the game stacks as many middles as
+            // the lift is tall. A blueprint's height isn't decoded here, so one
+            // storey is drawn: enough to read as a lift rather than a box.
+            var liftBottom = ResolveMesh(export, "mBottomMesh");
+            var liftTop = ResolveMesh(export, "mTopMesh");
+            if (liftBottom != null && liftTop != null)
+            {
+                var storey = (float)Convert.ToDouble(
+                    export.GetOrDefault<object?>("mMeshHeight", null) ?? 200.0);
+
+                parts.Add(new MeshPart { Mesh = liftBottom });
+                var middle = ResolveMesh(export, "mMidMesh");
+                if (middle != null) parts.Add(new MeshPart { Mesh = middle });
+                parts.Add(new MeshPart { Mesh = liftTop, Location = new[] { 0f, 0f, storey } });
+                // Break, not continue: a lift declares the same fields twice,
+                // once on the class default and again on its sparse-data
+                // object, and taking both stacks two lifts in the same place.
+                break;
+            }
+
             // --- machines and other component-based buildings ---
             if (export is not UStaticMeshComponent) continue;
             if (export.Name.Contains("Indicator", StringComparison.OrdinalIgnoreCase)) continue;
             var componentMesh = ResolvePath(export.GetOrDefault<FPackageIndex?>("StaticMesh", null));
             if (Verbose) Console.WriteLine($"    [dbg] {export.Name}: StaticMesh -> {componentMesh ?? "null"}");
-            if (componentMesh == null) continue;
+            // A component can point at one of the engine's primitives: a lift's
+            // visibility helper is the Cube, and taking it drew every conveyor
+            // lift in the game as a literal box.
+            if (componentMesh == null || IsPlaceholder(componentMesh)) continue;
 
             parts.Add(new MeshPart
             {
@@ -915,7 +940,7 @@ public static class Program
             }
         }
 
-        return parts;
+        return Trim(parts, assetPath);
     }
 
     /// <summary>
@@ -1093,6 +1118,41 @@ public static class Program
             index[tail.ToLowerInvariant()] = "/Game/" + tail;
         }
         return index;
+    }
+
+    /// <summary>
+    /// Keep a building to its own geometry when it carries a crowd of props.
+    ///
+    /// The HUB is the case: skipping the engine's Cube finally let it resolve,
+    /// and it came back as a hundred and thirty meshes -- mugs, kebabs, fridge
+    /// magnets, FICSMAS socks, a toilet cover. All genuinely in the blueprint,
+    /// none of it the building. Nothing carries a visibility flag to sort them
+    /// by, so the divide used here is where the art lives: a building's own
+    /// folder holds the building, and a crowd pulled in from elsewhere is set
+    /// dressing. Buildings with a handful of parts are left alone entirely.
+    /// </summary>
+    private static List<MeshPart> Trim(List<MeshPart> parts, string assetPath)
+    {
+        const int crowd = 16;
+        if (parts.Count <= crowd) return parts;
+
+        var folder = AssetFolder(assetPath);
+        if (folder == null) return parts;
+
+        var marker = "/" + folder + "/";
+        var own = parts.Where(p => p.Mesh.Contains(marker, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (own.Count == 0 || own.Count == parts.Count) return parts;
+
+        Console.Error.WriteLine(
+            $"  {folder}: kept {own.Count} of {parts.Count} meshes, dropped props from other folders");
+        return own;
+    }
+
+    /// <summary>A named mesh field on an object, or null if it is absent or a stand-in.</summary>
+    private static string? ResolveMesh(UObject export, string field)
+    {
+        var path = ResolvePath(export.GetOrDefault<FPackageIndex?>(field, null));
+        return path == null || IsPlaceholder(path) ? null : path;
     }
 
     /// <summary>True when a reference points at mesh geometry rather than, say,

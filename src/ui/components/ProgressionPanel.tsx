@@ -17,24 +17,6 @@ import { ItemChip } from './ItemPicker'
  */
 const DEFAULT_MINUTES = 60
 
-/**
- * Tier names are hand-kept: the game shows them in the HUB but they appear
- * nowhere in its exported data, so nothing else can supply them. A missing one
- * costs a subtitle, not the feature.
- */
-const TIER_NAMES: Record<number, string> = {
-  0: 'Onboarding',
-  1: 'Field Research',
-  2: 'Part Assembly',
-  3: 'Obstacle Clearing',
-  4: 'Logistics Mk.2',
-  5: 'Jump Start',
-  6: 'Expanded Power Infrastructure',
-  7: 'Bauxite Refinement',
-  8: 'Advanced Aluminium Production',
-  9: 'Nuclear Age',
-}
-
 const TRACKS: { id: ProgressionTrack; label: string; blurb: string }[] = [
   {
     id: 'milestone',
@@ -224,7 +206,7 @@ function TieredGoals({ goals, ...rest }: ListProps) {
         <Section
           key={tier}
           eyebrow={`Tier ${tier}`}
-          title={TIER_NAMES[tier] ?? ''}
+          title={`${list.length} milestone${list.length === 1 ? '' : 's'}`}
           count={list.length}
           open={open === tier}
           onToggle={() => setOpen(open === tier ? null : tier)}
