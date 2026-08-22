@@ -26,6 +26,13 @@ export interface MeshPart {
    * the recorded position instead of the full run.
    */
   spline?: boolean
+  /**
+   * A conveyor lift's column section, repeated every this many centimetres
+   * from the base until it reaches that lift's own height.
+   */
+  stackEvery?: number | null
+  /** A conveyor lift's head, which sits at the lift's own height. */
+  atTop?: boolean | null
   /** Base-colour map for this mesh, if the game had one. */
   texture?: string | null
 }

@@ -88,10 +88,11 @@ Four mechanisms, and a building can use more than one:
   rather than on a component at all.
 - **Conveyor lifts** have no body mesh at all: they are a base, a repeating
   column section and a head (`mBottomMesh`, `mMidMesh`, `mTopMesh`), stacked as
-  many times as the lift is tall. One storey is drawn, since a blueprint's lift
-  height isn't decoded. A lift declares those fields twice — once on the class
-  default and again on its sparse-data object — so taking both stacks two lifts
-  in the same place.
+  many times as the lift is tall. How tall is per-placement, so the manifest
+  labels the column with `stackEvery` and the head with `atTop` and the viewer
+  stacks them against the height read from the blueprint. A lift declares those
+  fields twice — once on the class default and again on its sparse-data object —
+  so taking both stacks two lifts in the same place.
 - **Power lines** name theirs on `mWireMesh`, which is why they drew as markers
   until that field was added to the list.
 
@@ -153,11 +154,25 @@ that is the quick way to tell whether a game update has changed the encoding —
 the test suite asserts belt lengths land between 50 cm and 500 m, which floats
 fail immediately.
 
+A lift's own height is a separate read: `mTopTransform` in its property block
+holds where the head ends up, with X and Y always zero, so the Z is the travel —
+negative for a lift that descends. Without it every lift drew one storey tall
+however far it really reaches, which in a build that stacks them three high is
+most of the structure missing.
+
 Every belt in the test blueprints resolves a path. Lifts, mergers, splitters and
 poles have no spline, which is correct: they are placed meshes.
 
-Segments are tiled along **local X**, which is Unreal's convention for spline
-meshes whatever the mesh's proportions. Measuring the longest side instead looks
+Segments are laid between points spaced by arc length, so consecutive segments
+share an endpoint. Aiming each one at the tangent under its own midpoint instead
+leaves them overlapping on the inside of a bend and gapping on the outside. And
+orientation needs a full basis, not an axis-to-axis rotation: rotating X onto the
+tangent leaves the roll about that axis unconstrained, three.js picks one, and a
+curving belt slowly corkscrews. Building the frame against world up pins it flat,
+with another reference for vertical runs so the basis never degenerates.
+
+They are tiled along **local X**, which is Unreal's convention for spline meshes
+whatever the mesh's proportions. Measuring the longest side instead looks
 like it works, because a belt segment is 200 × 28 cm — but a pipe segment is
 100 × 150 cm, and picking its longest side lays a pipe run out as a stack of
 discs across the path.

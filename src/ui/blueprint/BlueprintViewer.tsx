@@ -29,14 +29,19 @@ function layOutAlongSplines(geometry: THREE.BufferGeometry, placements: Placemen
   // segment is 100 cm long and 150 cm across. Measuring the longest side
   // instead gets belts right by accident and lays pipes out as stacked discs.
   const segmentLength = Math.max(1, size.x)
-  const axis = new THREE.Vector3(1, 0, 0)
 
   const matrices: THREE.Matrix4[] = []
   const actor = new THREE.Matrix4()
   const local = new THREE.Matrix4()
   const quaternion = new THREE.Quaternion()
   const scale = new THREE.Vector3(1, 1, 1)
-  const tangent = new THREE.Vector3()
+  const basis = new THREE.Matrix4()
+  const forward = new THREE.Vector3()
+  const right = new THREE.Vector3()
+  const up = new THREE.Vector3()
+  const midpoint = new THREE.Vector3()
+  const WORLD_UP = new THREE.Vector3(0, 0, 1)
+  const FALLBACK_UP = new THREE.Vector3(0, 1, 0)
 
   for (const placement of placements) {
     actor.compose(
@@ -59,18 +64,85 @@ function layOutAlongSplines(geometry: THREE.BufferGeometry, placements: Placemen
     const length = curve.getLength()
     if (!isFinite(length) || length <= 0) { matrices.push(actor.clone()); continue }
 
-    // Stretch each copy a little rather than leave gaps at the ends.
     const count = Math.max(1, Math.round(length / segmentLength))
-    const stretch = length / count / segmentLength
+    // Points spaced by arc length, so consecutive segments share an endpoint.
+    // Aiming each segment at the tangent under its own midpoint instead leaves
+    // them overlapping on the inside of a bend and gapping on the outside,
+    // which is what made curved belts look chewed.
+    const points = curve.getSpacedPoints(count)
 
     for (let i = 0; i < count; i++) {
-      const t = (i + 0.5) / count
-      const point = curve.getPointAt(t)
-      curve.getTangentAt(t, tangent)
-      quaternion.setFromUnitVectors(axis, tangent.normalize())
-      scale.set(stretch, 1, 1)
-      local.compose(point, quaternion, scale)
+      const from = points[i]
+      const to = points[i + 1]
+      forward.subVectors(to, from)
+      const span = forward.length()
+      if (span < 1e-6) continue
+      forward.divideScalar(span)
+
+      // An axis-to-axis rotation leaves the roll about that axis unconstrained,
+      // so three.js picks one and a curving belt corkscrews as it goes. Building
+      // a full frame against world up pins it: belts stay flat, and a vertical
+      // run falls back to another reference so the basis never degenerates.
+      const reference = Math.abs(forward.dot(WORLD_UP)) > 0.999 ? FALLBACK_UP : WORLD_UP
+      right.crossVectors(reference, forward).normalize()
+      up.crossVectors(forward, right).normalize()
+      basis.makeBasis(forward, right, up)
+      quaternion.setFromRotationMatrix(basis)
+
+      scale.set(span / segmentLength, 1, 1)
+      midpoint.addVectors(from, to).multiplyScalar(0.5)
+      local.compose(midpoint, quaternion, scale)
       matrices.push(actor.clone().multiply(local))
+    }
+  }
+
+  return matrices
+}
+
+/**
+ * Place a part once per building — or, for a conveyor lift's column and head,
+ * as many times as that particular lift is tall.
+ *
+ * A lift has no fixed height: it is a base, a column section repeated every
+ * `stackEvery` centimetres, and a head that rides on top, and each placement in
+ * the blueprint records how far it travels. Drawing one storey for all of them
+ * left a build that stacks lifts three high looking like its middle was
+ * missing. A lift can also run downwards, in which case the parts hang below
+ * the base instead.
+ */
+function stackAlongLifts(
+  part: MeshPart,
+  placements: Placement[],
+  dummy: THREE.Object3D
+): THREE.Matrix4[] {
+  const matrices: THREE.Matrix4[] = []
+
+  for (const p of placements) {
+    dummy.rotation.set(0, 0, p.yaw)
+    dummy.scale.set(p.scale[0], p.scale[1], p.scale[2])
+
+    const at = (z: number) => {
+      dummy.position.set(p.position[0], p.position[1], p.position[2] + z)
+      dummy.updateMatrix()
+      matrices.push(dummy.matrix.clone())
+    }
+
+    const height = p.liftHeight
+    if (height === undefined || (!part.stackEvery && !part.atTop)) {
+      at(0)
+      continue
+    }
+
+    const reach = Math.abs(height)
+    const direction = Math.sign(height) || 1
+
+    if (part.atTop) {
+      at(height)
+    } else if (part.stackEvery && part.stackEvery > 0) {
+      // One section per storey, laid from the base towards the head. The last
+      // one stops short rather than overshooting past the head.
+      const sections = Math.max(0, Math.floor(reach / part.stackEvery + 1e-6))
+      for (let i = 0; i < sections; i++) at(direction * i * part.stackEvery)
     }
   }
 
@@ -403,13 +475,7 @@ export function BlueprintViewer({ blueprint, hidden }: Props) {
 
               const matrices = part.spline
                 ? layOutAlongSplines(geo, pending.list)
-                : pending.list.map((p) => {
-                  dummy.position.set(p.position[0], p.position[1], p.position[2])
-                  dummy.rotation.set(0, 0, p.yaw)
-                  dummy.scale.set(p.scale[0], p.scale[1], p.scale[2])
-                  dummy.updateMatrix()
-                  return dummy.matrix.clone()
-                })
+                : stackAlongLifts(part, pending.list, dummy)
               if (!matrices.length) return
 
               const inst = new THREE.InstancedMesh(geo, material, matrices.length)

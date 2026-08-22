@@ -267,6 +267,8 @@ public static class Program
                     ["scale"] = part.Scale,
                     ["glass"] = IsSeeThrough(part.Mesh, className),
                     ["spline"] = part.Spline,
+                    ["stackEvery"] = part.StackEvery > 0 ? part.StackEvery : null,
+                    ["atTop"] = part.AtTop ? true : null,
                     ["texture"] = meshTextures.TryGetValue(file, out var tex) ? tex : null,
                 });
             }
@@ -806,6 +808,13 @@ public static class Program
         public string? Material { get; init; }
         /// <summary>Repeated along a spline in game; we draw one segment.</summary>
         public bool Spline { get; init; }
+        /// <summary>
+        /// A conveyor lift's column section, repeated every this many
+        /// centimetres from the base until it reaches the lift's own height.
+        /// </summary>
+        public float StackEvery { get; init; }
+        /// <summary>A conveyor lift's head, which sits at the lift's own height.</summary>
+        public bool AtTop { get; init; }
     }
 
     /// <summary>
@@ -870,8 +879,9 @@ public static class Program
             // --- conveyor lifts: a stack of named parts ---
             // The lift has no single body mesh. It is a base, a repeating
             // column section and a head, and the game stacks as many middles as
-            // the lift is tall. A blueprint's height isn't decoded here, so one
-            // storey is drawn: enough to read as a lift rather than a box.
+            // the lift is tall. How tall is per-placement and comes from the
+            // blueprint, so the parts are labelled here and the viewer stacks
+            // them: the middle repeats every mMeshHeight, the head rides on top.
             var liftBottom = ResolveMesh(export, "mBottomMesh");
             var liftTop = ResolveMesh(export, "mTopMesh");
             if (liftBottom != null && liftTop != null)
@@ -881,8 +891,8 @@ public static class Program
 
                 parts.Add(new MeshPart { Mesh = liftBottom });
                 var middle = ResolveMesh(export, "mMidMesh");
-                if (middle != null) parts.Add(new MeshPart { Mesh = middle });
-                parts.Add(new MeshPart { Mesh = liftTop, Location = new[] { 0f, 0f, storey } });
+                if (middle != null) parts.Add(new MeshPart { Mesh = middle, StackEvery = storey });
+                parts.Add(new MeshPart { Mesh = liftTop, AtTop = true });
                 // Break, not continue: a lift declares the same fields twice,
                 // once on the class default and again on its sparse-data
                 // object, and taking both stacks two lifts in the same place.
