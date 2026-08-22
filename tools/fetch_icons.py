@@ -109,6 +109,11 @@ def main() -> int:
         wanted[key] = item["name"]
     for key, building in data["buildings"].items():
         wanted[key] = building["name"]
+    # Every placeable building too, so the blueprint preview can label its boxes.
+    # The wiki has no page for many wall and ramp variants; those just fall back
+    # to a plain coloured box, which is all a wall needs to be.
+    for key, name in (data.get("buildableNames") or {}).items():
+        wanted.setdefault(key, name)
 
     OUT.mkdir(parents=True, exist_ok=True)
     todo = {k: v for k, v in wanted.items() if args.force or not (OUT / f"{k}.png").exists()}

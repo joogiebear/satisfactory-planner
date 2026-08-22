@@ -65,3 +65,58 @@ maybe('blueprint parsing', () => {
     await expect(parseBlueprint(junk.buffer, 'junk.sbp')).rejects.toThrow()
   })
 })
+
+maybe('blueprint placements', () => {
+  it('reads a transform for every placed building', async () => {
+    for (const path of files) {
+      const bp = await load(path)
+      expect(bp.placements.length).toBe(bp.totalBuildings)
+      for (const p of bp.placements) {
+        for (const v of p.position) expect(Number.isFinite(v)).toBe(true)
+        expect(Number.isFinite(p.yaw)).toBe(true)
+      }
+    }
+  })
+
+  it('keeps placements inside the designer volume', async () => {
+    for (const path of files) {
+      const bp = await load(path)
+      if (!bp.bounds) continue
+      // A designer cell is 8 m; allow generous slack for parts that overhang.
+      const limit = Math.max(bp.dimensions.x, bp.dimensions.y, bp.dimensions.z) * 800
+      for (let i = 0; i < 3; i++) {
+        expect(Math.abs(bp.bounds.min[i])).toBeLessThanOrEqual(limit)
+        expect(Math.abs(bp.bounds.max[i])).toBeLessThanOrEqual(limit)
+      }
+    }
+  })
+
+  it('only leaves spline-built things without a footprint', async () => {
+    // Belts, lifts, pipes and power lines are splines: the game stores a path
+    // rather than a box, so they legitimately have no footprint. Anything else
+    // missing one would mean the extraction dropped it.
+    const splineish = new Set(['conveyor', 'pipe', 'power'])
+    const unexplained = new Map<string, number>()
+
+    for (const path of files) {
+      const bp = await load(path)
+      for (const p of bp.placements) {
+        if (p.box) continue
+        if (splineish.has(p.category) || /passthrough/i.test(p.key)) continue
+        unexplained.set(p.key, (unexplained.get(p.key) ?? 0) + 1)
+      }
+    }
+    expect([...unexplained.keys()]).toEqual([])
+  })
+
+  it('gives real machines their in-game footprint', async () => {
+    const bp = await load(files.find((f) => /smelter/i.test(f)) ?? files[0])
+    const smelter = bp.placements.find((p) => p.key === 'Build_SmelterMk1_C')
+    if (smelter?.box) {
+      // The Smelter reserves 5 m x 10 m x 4.5 m.
+      expect(smelter.box.max[0] - smelter.box.min[0]).toBeCloseTo(500, 1)
+      expect(smelter.box.max[1] - smelter.box.min[1]).toBeCloseTo(1000, 1)
+      expect(smelter.box.max[2] - smelter.box.min[2]).toBeCloseTo(450, 1)
+    }
+  })
+})

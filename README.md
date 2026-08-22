@@ -31,8 +31,11 @@ build you have installed rather than a wiki snapshot.
   `clock^1.321929` power curve and Somersloops doubling output at 4× draw.
 - **Extraction settings** — miner mark, node purity per resource, and pump
   clock, feeding exact extractor counts.
-- **Blueprint reader** — drop in a `.sbp` and see its footprint, exact build
-  cost, every building inside it, and how it lines up with your current plan.
+- **Blueprint viewer** — drop in a `.sbp` and see the build itself in 3D: every
+  building drawn at the footprint the game reserves for it, at its recorded
+  position and rotation, with its icon on top. Hide foundations or walls to see
+  the machines inside, hover to name anything, and read the exact build cost and
+  how its machines line up with your current plan.
 
 ## Running it
 
@@ -92,9 +95,10 @@ are checked against known in-game figures in the test suite.
 npm run fetch-icons
 ```
 
-Downloads an icon for every item and machine from the Satisfactory wiki and
-drops them in `src/data/icons/`. One run covers all 179; re-run it after a game
-update adds new items.
+Downloads an icon for every item, machine and placeable building from the
+Satisfactory wiki into `src/data/icons/` — 389 in total, about 9 MB. Re-run it
+after a game update adds new content. Some wall and ramp variants have no wiki
+page and fall back to a plain coloured box, which is all a wall needs to be.
 
 The folder is gitignored, so each machine fetches its own copy rather than the
 repo redistributing the artwork. Without it the app falls back to lettered
@@ -115,6 +119,23 @@ Covers the solver against known in-game values (30 ore for 20 Iron Plate/min,
 Somersloop behaviour, purity scaling), every producible item solving with all
 alternates unlocked, and the blueprint reader against any blueprints saved on
 this machine.
+
+## What the blueprint viewer draws
+
+Each `.sbp` records a transform per building but no geometry, so the viewer
+sizes every building by its **clearance box** — the volume the build gun
+reserves, taken from the game's own docs. Those match in game: a Smelter is
+5 x 10 x 4.5 m, a Foundation 8 x 8 x 1 m. Each box carries its building's icon
+on the top face.
+
+They are labelled boxes, not the game's meshes. The real models live inside the
+UE5 IoStore containers and would need an FModel mesh export per building, which
+is a large manual step and hundreds of megabytes.
+
+Belts, lifts, pipes and power lines are stored as splines. Decoding those needs
+a full Unreal property-list parser, so they are drawn as small markers at their
+own recorded positions instead — segments sit at regular intervals along a run,
+so the markers still trace where a belt goes without inventing geometry.
 
 ## How the solver works
 
@@ -154,6 +175,7 @@ Solving every producible item in the game takes about 100 ms in total.
 src/core/     game data, types, the LP solver, the blueprint reader
 src/ui/       React interface
 src/ui/graph/ the factory flow graph: nodes, belt edges, inspector
+src/ui/blueprint/  the 3D blueprint viewer
 tools/        extraction scripts for game data and icons
 electron/     desktop shell
 ```

@@ -420,6 +420,77 @@ def extract_generators(groups: dict, items: dict) -> list[dict]:
     return out
 
 
+CLEARANCE_RE = re.compile(
+    r"ClearanceBox=\(Min=\(X=(?P<x0>-?[\d.]+),Y=(?P<y0>-?[\d.]+),Z=(?P<z0>-?[\d.]+)\),"
+    r"Max=\(X=(?P<x1>-?[\d.]+),Y=(?P<y1>-?[\d.]+),Z=(?P<z1>-?[\d.]+)\)"
+)
+TRANSLATION_RE = re.compile(
+    r"RelativeTransform=\(Translation=\(X=(?P<x>-?[\d.]+),Y=(?P<y>-?[\d.]+),Z=(?P<z>-?[\d.]+)\)"
+)
+
+
+def buildable_category(group: str, key: str) -> str:
+    """Coarse grouping used to colour a blueprint preview."""
+    g, k = group.lower(), key.lower()
+    if "conveyor" in k or "conveyor" in g:
+        return "conveyor"
+    if "pipe" in k or "pipe" in g:
+        return "pipe"
+    if "foundation" in g or "foundation" in k or "ramp" in g or "walkway" in g or "catwalk" in k:
+        return "foundation"
+    if "wall" in g or "wall" in k or "door" in g or "gate" in k or "window" in k:
+        return "wall"
+    if "power" in g or "power" in k or "wire" in k or "generator" in g:
+        return "power"
+    if group in MANUFACTURER_GROUPS or group in EXTRACTOR_GROUPS:
+        return "machine"
+    if "storage" in g or "container" in k:
+        return "storage"
+    return "other"
+
+
+def extract_footprints(groups: dict) -> dict[str, dict]:
+    """Bounding box per buildable, in centimetres, from its clearance volume.
+
+    A blueprint records only a transform per building, so drawing it needs the
+    size from somewhere: the clearance box is the game's own footprint and
+    matches what the build gun reserves (Smelter 500x1000x450, Foundation
+    800x800x100). Buildings without one -- belts and pipes, which are splines --
+    fall back to a small marker so their run still shows.
+    """
+    out: dict[str, dict] = {}
+    for group, classes in groups.items():
+        if not group.startswith("FGBuildable"):
+            continue
+        for c in classes:
+            key = c.get("ClassName", "")
+            if not key or key in out:
+                continue
+            raw = str(c.get("mClearanceData", "") or "")
+            box = None
+            m = CLEARANCE_RE.search(raw)
+            if m:
+                lo = [fnum(m.group("x0")), fnum(m.group("y0")), fnum(m.group("z0"))]
+                hi = [fnum(m.group("x1")), fnum(m.group("y1")), fnum(m.group("z1"))]
+                # The box may be offset from the actor origin.
+                t = TRANSLATION_RE.search(raw[m.end():m.end() + 220])
+                if t:
+                    off = [fnum(t.group("x")), fnum(t.group("y")), fnum(t.group("z"))]
+                    lo = [lo[i] + off[i] for i in range(3)]
+                    hi = [hi[i] + off[i] for i in range(3)]
+                box = {"min": [round(v, 1) for v in lo], "max": [round(v, 1) for v in hi]}
+            elif c.get("mWidth") or c.get("mHeight"):
+                w = fnum(c.get("mWidth"), 200.0) / 2
+                h = fnum(c.get("mHeight"), 200.0)
+                box = {"min": [-w, -w, 0.0], "max": [w, w, h]}
+
+            out[key] = {
+                "category": buildable_category(group, key),
+                "box": box,
+            }
+    return out
+
+
 def extract_buildable_names(groups: dict) -> dict[str, str]:
     """Display name for every placeable building, keyed by its Build_*_C class.
 
@@ -482,6 +553,7 @@ def main() -> int:
         "pipes": extract_pipes(groups),
         "generators": extract_generators(groups, items),
         "buildableNames": extract_buildable_names(groups),
+        "footprints": extract_footprints(groups),
     }
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -497,6 +569,8 @@ def main() -> int:
     print(f"  pipes       {len(data['pipes'])}")
     print(f"  generators  {len(data['generators'])}")
     print(f"  buildables  {len(data['buildableNames'])}")
+    boxed = sum(1 for v in data['footprints'].values() if v['box'])
+    print(f"  footprints  {boxed}/{len(data['footprints'])} with a box")
     return 0
 
 

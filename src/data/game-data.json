@@ -10355,5 +10355,7718 @@
   "Build_Mam_C": "MAM",
   "Build_ConveyorAttachmentMerger_C": "Conveyor Merger",
   "Build_ConveyorAttachmentSplitter_C": "Conveyor Splitter"
+ },
+ "footprints": {
+  "Build_Wall_Window_Thin_8x4_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Window_Thin_8x4_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_SteelWall_8x4_Window_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Window_8x4_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_Window_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_SteelWall_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Window_8x4_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Fence_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Wall_8x4_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_Window_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_SteelWall_8x4_Window_04_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Window_8x4_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_Window_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_SteelWall_8x4_Window_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_Angular_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_Angular_8x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_SteelWall_8x1_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_SteelWall_FlipTris_8x1_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_SteelWall_FlipTris_8x2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_SteelWall_Tris_8x1_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_SteelWall_Tris_8x2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_SteelWall_FlipTris_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_SteelWall_Tris_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_SteelWall_Tris_8x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_WallSet_Steel_Angular_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_WallSet_Steel_Angular_8x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Window_8x4_04_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_Window_04_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_SteelWall_8x4_Window_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x1_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_FlipTris_8x1_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_FlipTris_8x2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_Tris_8x1_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_Tris_8x2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_FlipTris_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_Tris_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_FlipTris_8x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_Tris_8x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_SteelWall_8x4_Gate_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_Gate_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_8x4_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Gate_8x4_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_Angular_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_Angular_8x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Conveyor_8x4_01_Steel_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Conveyor_8x4_02_Steel_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Conveyor_8x4_03_Steel_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_ConveyorHole_01_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_ConveyorHole_02_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_ConveyorHole_03_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Conveyor_8x4_01_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Conveyor_8x4_02_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Conveyor_8x4_03_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_8x1_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_FlipTris_8x1_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_FlipTris_8x2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_Tris_8x1_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_Tris_8x2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_FlipTris_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_Tris_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_FlipTris_8x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_Tris_8x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Frame_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Railing_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Wall_Window_8x4_05_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Window_8x4_06_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Window_8x4_07_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_ChainLinkFence_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_TarpFence_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Barrier_Low_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -200.0,
+     -30.0,
+     -0.0
+    ],
+    "max": [
+     200.0,
+     30.0,
+     96.0
+    ]
+   }
+  },
+  "Build_Barrier_Tall_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -200.0,
+     -30.0,
+     -0.0
+    ],
+    "max": [
+     200.0,
+     30.0,
+     96.0
+    ]
+   }
+  },
+  "Build_Concrete_Barrier_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_WorkBench_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -200.0,
+     -300.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     300.0,
+     300.0
+    ]
+   }
+  },
+  "Build_Workshop_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -300.0,
+     -500.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     500.0,
+     550.0
+    ]
+   }
+  },
+  "Build_ConveyorPoleWall_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_LookoutTower_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     150.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     300.0
+    ]
+   }
+  },
+  "Build_HyperTubeWallHole_C": {
+   "category": "wall",
+   "box": null
+  },
+  "Build_PipelineSupportWall_C": {
+   "category": "pipe",
+   "box": null
+  },
+  "Build_PipelineSupportWallHole_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -46.8,
+     -100.0,
+     -100.0
+    ],
+    "max": [
+     46.8,
+     100.0,
+     100.0
+    ]
+   }
+  },
+  "Build_HyperTubeWallSupport_C": {
+   "category": "wall",
+   "box": null
+  },
+  "Build_LargeFan_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     100.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_LargeVent_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     100.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_ConveyorWallHole_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -100.0,
+     -150.0
+    ],
+    "max": [
+     25.0,
+     100.0,
+     50.0
+    ]
+   }
+  },
+  "Build_WreathDecor_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     0.0,
+     -100.0,
+     -100.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Snowman_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -200.0,
+     -100.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     100.0,
+     400.0
+    ]
+   }
+  },
+  "Build_XmassTree_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -800.0,
+     -800.0,
+     0.0
+    ],
+    "max": [
+     800.0,
+     800.0,
+     4100.0
+    ]
+   }
+  },
+  "Build_CandyCaneDecor_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -50.0,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     50.0,
+     50.0,
+     600.0
+    ]
+   }
+  },
+  "Build_PortalPotty_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     0.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     370.0
+    ]
+   }
+  },
+  "Build_RailroadTrack_C": {
+   "category": "other",
+   "box": null
+  },
+  "Build_Beam_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -39.8,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     39.8,
+     50.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Beam_Painted_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -50.0,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     50.0,
+     50.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Beam_Cable_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -39.8,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     39.8,
+     50.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Beam_Cable_Cluster_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -39.8,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     39.8,
+     50.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Beam_Concrete_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -39.8,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     39.8,
+     50.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Beam_Cross_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -39.8,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     39.8,
+     50.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Beam_H_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -40.0,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     40.0,
+     50.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Beam_Shelf_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -39.8,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     39.8,
+     50.0,
+     100.0
+    ]
+   }
+  },
+  "Build_TradingPost_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -800.0,
+     -1280.0,
+     0.0
+    ],
+    "max": [
+     600.0,
+     1320.0,
+     850.0
+    ]
+   }
+  },
+  "Build_ConveyorPole_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     0.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     100.0
+    ]
+   }
+  },
+  "Build_ConveyorCeilingAttachment_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -10.0,
+     -100.0,
+     40.0
+    ],
+    "max": [
+     10.0,
+     100.0,
+     240.0
+    ]
+   }
+  },
+  "Build_ConveyorBeltMk1_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorBeltMk5_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorBeltMk6_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorBeltMk4_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorBeltMk3_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorBeltMk2_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_PowerPoleWall_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     10.5,
+     -28.3,
+     -28.3
+    ],
+    "max": [
+     100.2,
+     28.3,
+     28.3
+    ]
+   }
+  },
+  "Build_PowerPoleMk1_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -40.0,
+     -40.0,
+     0.0
+    ],
+    "max": [
+     40.0,
+     40.0,
+     760.0
+    ]
+   }
+  },
+  "Build_PowerPoleWallDouble_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -100.2,
+     -28.3,
+     -28.3
+    ],
+    "max": [
+     100.2,
+     28.3,
+     28.3
+    ]
+   }
+  },
+  "Build_PowerPoleWallDouble_Mk2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -100.2,
+     -28.3,
+     -28.3
+    ],
+    "max": [
+     100.2,
+     28.3,
+     28.3
+    ]
+   }
+  },
+  "Build_PowerPoleWall_Mk2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     10.5,
+     -28.3,
+     -28.3
+    ],
+    "max": [
+     100.2,
+     28.3,
+     28.3
+    ]
+   }
+  },
+  "Build_PowerPoleWallDouble_Mk3_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -100.2,
+     -28.3,
+     -28.3
+    ],
+    "max": [
+     100.2,
+     28.3,
+     28.3
+    ]
+   }
+  },
+  "Build_PowerPoleWall_Mk3_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     10.5,
+     -28.3,
+     -28.3
+    ],
+    "max": [
+     100.2,
+     28.3,
+     28.3
+    ]
+   }
+  },
+  "Build_PowerPoleMk2_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -40.0,
+     -40.0,
+     80.0
+    ],
+    "max": [
+     40.0,
+     40.0,
+     820.0
+    ]
+   }
+  },
+  "Build_PowerPoleMk3_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -40.0,
+     -40.0,
+     80.0
+    ],
+    "max": [
+     40.0,
+     40.0,
+     950.0
+    ]
+   }
+  },
+  "Build_PowerTower_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -600.0,
+     -600.0,
+     700.0
+    ],
+    "max": [
+     600.0,
+     600.0,
+     1400.0
+    ]
+   }
+  },
+  "Build_PowerTowerPlatform_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -600.0,
+     -600.0,
+     700.0
+    ],
+    "max": [
+     600.0,
+     600.0,
+     1400.0
+    ]
+   }
+  },
+  "Build_PowerLine_C": {
+   "category": "power",
+   "box": null
+  },
+  "Build_XmassLightsLine_C": {
+   "category": "other",
+   "box": null
+  },
+  "Build_Stairs_Left_01_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Stairs_Right_01_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_WalkwayCross_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_WalkwayRamp_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     300.0
+    ]
+   }
+  },
+  "Build_WalkwayT_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_WalkwayTrun_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_CatwalkCorner_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_CatwalkCross_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_CatwalkRamp_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     300.0
+    ]
+   }
+  },
+  "Build_CatwalkStairs_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     500.0
+    ]
+   }
+  },
+  "Build_CatwalkStraight_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_CatwalkT_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_WalkwayStraight_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Wall_Conveyor_8x4_04_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Conveyor_8x4_04_Steel_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_SteelWall_FlipTris_8x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_PillarTop_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Pillar_Small_Metal_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     -200.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     200.0
+    ]
+   }
+  },
+  "Build_PillarBase_Small_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_PillarBase_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_PillarMiddle_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Pillar_Small_Frame_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     -200.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     200.0
+    ]
+   }
+  },
+  "Build_PillarMiddle_Frame_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Pillar_Small_Concrete_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     -200.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     200.0
+    ]
+   }
+  },
+  "Build_PillarMiddle_Concrete_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_JumpPad_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -300.0,
+     -300.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     300.0,
+     600.0
+    ]
+   }
+  },
+  "Build_JumpPadTilted_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -300.0,
+     -300.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     300.0,
+     600.0
+    ]
+   }
+  },
+  "Build_LandingPad_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -500.0,
+     -450.0,
+     0.0
+    ],
+    "max": [
+     500.0,
+     550.0,
+     500.0
+    ]
+   }
+  },
+  "Build_GeneratorBiomass_Automated_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     700.0
+    ]
+   }
+  },
+  "Build_GeneratorCoal_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -848.7,
+     -550.0,
+     900.0
+    ],
+    "max": [
+     151.3,
+     2050.0,
+     1800.0
+    ]
+   }
+  },
+  "Build_GeneratorFuel_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -1100.0,
+     -200.0,
+     0.0
+    ],
+    "max": [
+     1100.0,
+     200.0,
+     550.0
+    ]
+   }
+  },
+  "Build_StorageContainerMk1_C": {
+   "category": "storage",
+   "box": {
+    "min": [
+     -250.0,
+     -550.0,
+     0.0
+    ],
+    "max": [
+     250.0,
+     550.0,
+     400.0
+    ]
+   }
+  },
+  "Build_StorageMedkit_C": {
+   "category": "storage",
+   "box": {
+    "min": [
+     -50.0,
+     -80.0,
+     0.0
+    ],
+    "max": [
+     50.0,
+     80.0,
+     80.0
+    ]
+   }
+  },
+  "Build_StorageHazard_C": {
+   "category": "storage",
+   "box": {
+    "min": [
+     -50.0,
+     -80.0,
+     0.0
+    ],
+    "max": [
+     50.0,
+     80.0,
+     80.0
+    ]
+   }
+  },
+  "Build_StorageContainerMk2_C": {
+   "category": "storage",
+   "box": {
+    "min": [
+     -250.0,
+     -550.0,
+     0.0
+    ],
+    "max": [
+     250.0,
+     550.0,
+     800.0
+    ]
+   }
+  },
+  "Build_StoragePlayer_C": {
+   "category": "storage",
+   "box": {
+    "min": [
+     -50.0,
+     -80.0,
+     0.0
+    ],
+    "max": [
+     50.0,
+     80.0,
+     80.0
+    ]
+   }
+  },
+  "Build_MinerMk1_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -300.0,
+     -500.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     900.0,
+     400.0
+    ]
+   }
+  },
+  "Build_OilPump_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -400.0,
+     -510.0,
+     20.0
+    ],
+    "max": [
+     400.0,
+     790.0,
+     1820.0
+    ]
+   }
+  },
+  "Build_MinerMk2_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -300.0,
+     -500.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     900.0,
+     400.0
+    ]
+   }
+  },
+  "Build_MinerMk3_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -300.0,
+     -500.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     900.0,
+     600.0
+    ]
+   }
+  },
+  "Build_ConstructorMk1_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -565.0,
+     -965.0,
+     600.0
+    ],
+    "max": [
+     235.0,
+     35.0,
+     1200.0
+    ]
+   }
+  },
+  "Build_SmelterMk1_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -250.0,
+     -500.0,
+     450.0
+    ],
+    "max": [
+     250.0,
+     500.0,
+     900.0
+    ]
+   }
+  },
+  "Build_FoundryMk1_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -500.0,
+     -550.0,
+     0.0
+    ],
+    "max": [
+     500.0,
+     450.0,
+     450.0
+    ]
+   }
+  },
+  "Build_OilRefinery_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -500.0,
+     -1100.0,
+     1500.0
+    ],
+    "max": [
+     500.0,
+     1100.0,
+     3000.0
+    ]
+   }
+  },
+  "Build_Packager_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     1200.0
+    ]
+   }
+  },
+  "Build_ManufacturerMk1_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -900.0,
+     -1000.0,
+     400.0
+    ],
+    "max": [
+     900.0,
+     200.0,
+     1500.0
+    ]
+   }
+  },
+  "Build_AssemblerMk1_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -450.0,
+     -850.0,
+     0.0
+    ],
+    "max": [
+     450.0,
+     750.0,
+     300.0
+    ]
+   }
+  },
+  "Build_Blender_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -900.0,
+     -500.0,
+     700.0
+    ],
+    "max": [
+     300.0,
+     500.0,
+     1380.0
+    ]
+   }
+  },
+  "Build_SpaceElevator_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     750.0,
+     -2150.0,
+     0.0
+    ],
+    "max": [
+     2250.0,
+     2150.0,
+     550.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_Corner_2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x8_Corner_2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Steel_8x4_Corner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Steel_8x4_Corner_2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Steel_8x8_Corner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Steel_8x8_Corner_2_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x4_Corner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_8x8_Corner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_8x4_Corner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_8x8_Corner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_8x4_Corner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Orange_8x8_Corner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     800.0
+    ]
+   }
+  },
+  "Build_BigGarageDoor_16x8_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_BigGarageDoor_16x8_Concrete_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_BigGarageDoor_16x8_Steel_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_CDoor_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Concrete_SDoor_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Door_8x4_01_Steel_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Door_8x4_03_Steel_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Door_8x4_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Wall_Door_8x4_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Gate_Automated_8x4_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -25.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Flat_Frame_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -20.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     20.0
+    ]
+   }
+  },
+  "Build_Foundation_Frame_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_FoundationGlass_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipe_Grip_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipeInCorner_Grip_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Grip_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Grip_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Foundation_Metal_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Foundation_Metal_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Foundation_Metal_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Metal_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Metal_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Metal_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Grip_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipeOutCorner_Grip_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Grip_4x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Grip_4x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Grip_4x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipe_Grip_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeInCorner_Grip_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Grip_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Grip_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Grip_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeOutCorner_Grip_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Metal_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Metal_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Metal_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Foundation_8x1_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Foundation_8x2_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Foundation_8x4_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_RampInverted_8x1_Corner_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Ramp_Diagonal_8x1_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_RampInverted_8x2_Corner_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_Diagonal_8x2_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_RampInverted_8x4_Corner_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_Diagonal_8x4_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeCorner_01_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeCorner_03_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Ficsit_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Ficsit_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Ficsit_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Ficsit_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Ficsit_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Ficsit_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Ficsit_4x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Ficsit_4x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Ficsit_4x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipe_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipe_02_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeCorner_02_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeCorner_04_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipe_Concrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipeInCorner_Concrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipeOutCorner_Concrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Foundation_Concrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Foundation_Concrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Foundation_Concrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Concrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Concrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Concrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipe_Concrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeInCorner_Concrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Concrete_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Concrete_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Concrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Concrete_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Concrete_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Concrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Concrete_4x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Concrete_4x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Concrete_4x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeOutCorner_Concrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Concrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Concrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Concrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipe_Asphalt_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipeInCorner_Asphalt_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipeOutCorner_Asphalt_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Foundation_Asphalt_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Foundation_Asphalt_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Foundation_Asphalt_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Asphalt_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Asphalt_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Asphalt_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Asphalt_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Asphalt_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_Asphalt_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Asphalt_4x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Asphalt_4x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_Asphalt_4x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipe_Asphalt_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeInCorner_Asphalt_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Asphalt_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Asphalt_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_Asphalt_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeOutCorner_Asphalt_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Asphalt_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Asphalt_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Asphalt_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipe_ConcretePolished_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipeInCorner_ConcretePolished_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Foundation_ConcretePolished_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Foundation_ConcretePolished_8x2_2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Foundation_ConcretePolished_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Polished_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Polished_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_DCorner_Polished_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_PolishedConcrete_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_PolishedConcrete_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddle_PolishedConcrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_DownQuarterPipeOutCorner_ConcretePolished_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_PolishedConcrete_4x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -50.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_PolishedConcrete_4x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -100.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleOutCorner_PolishedConcrete_4x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipe_ConcretePolished_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeInCorner_ConcretePolished_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_PolishedConcrete_8x1_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_PolishedConcrete_8x2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_QuarterPipeMiddleInCorner_PolishedConcrete_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_QuarterPipeOutCorner_ConcretePolished_8x4_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Polished_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Polished_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_DownCorner_Polished_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Concrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Concrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Concrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Concrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Concrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Concrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Asphalt_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Asphalt_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Asphalt_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Asphalt_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Asphalt_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Asphalt_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Polished_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Polished_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Polished_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Polished_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Polished_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Polished_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_RampInverted_8x1_Corner_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Ramp_Diagonal_8x1_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_RampInverted_8x2_Corner_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_Diagonal_8x2_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_RampInverted_8x4_Corner_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_Diagonal_8x4_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Metal_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Metal_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_UCorner_Metal_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Metal_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Metal_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_UpCorner_Metal_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Ramp_Frame_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_Frame_Inverted_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Stair_GripMetal_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Stair_GripMetal_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Stair_GripMetal_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Metal_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Metal_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Metal_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_Metal_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Ramp_Metal_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_Metal_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_RampDouble_Metal_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -150.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_RampDouble_Metal_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -300.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_RampDouble_Metal_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -600.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_8x1_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Ramp_8x2_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_8x4_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_8x8x8_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -600.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_RampDouble_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -300.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_RampDouble_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -150.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Ramp_8x4_Inverted_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_RampInverted_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_RampInverted_8x2_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Stair_FicsitSet_8x1_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Stair_FicsitSet_8x2_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Stair_FicsitSet_8x4_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Stair_Concrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Stair_Concrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Stair_Concrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Stair_Asphalt_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Stair_Asphalt_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Stair_Asphalt_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Stair_PolishedConcrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Stair_PolishedConcrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Stair_PolishedConcrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Concrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Ramp_Concrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_RampDouble_Concrete_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -150.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Concrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_Concrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_RampDouble_Concrete_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -300.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Concrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_Concrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_RampDouble_Concrete_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -600.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Asphalt_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Asphalt_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Asphalt_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_Asphalt_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Ramp_Asphalt_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_Asphalt_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_RampDouble_Asphalt_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -150.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_RampDouble_Asphalt_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -300.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_RampDouble_Asphalt_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -600.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Polished_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Polished_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_InvertedRamp_Polished_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ramp_Polished_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Ramp_Polished_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Ramp_Polished_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_RampDouble_Polished_8x1_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -150.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_RampDouble_Polished_8x2_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -300.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_RampDouble_Polished_8x4_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -600.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_A_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -25.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     25.0
+    ]
+   }
+  },
+  "Build_Roof_A_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Roof_A_03_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_A_04_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -25.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     25.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_03_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_04_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -25.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     25.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_03_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_04_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Window_01_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -25.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     25.0
+    ]
+   }
+  },
+  "Build_Roof_Window_02_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -50.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     50.0
+    ]
+   }
+  },
+  "Build_Roof_Window_03_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -100.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Window_04_C": {
+   "category": "foundation",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Ladder_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -40.0,
+     -40.0,
+     0.0
+    ],
+    "max": [
+     40.0,
+     40.0,
+     200.0
+    ]
+   }
+  },
+  "Build_PipeStorageTank_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -300.0,
+     -300.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     300.0,
+     800.0
+    ]
+   }
+  },
+  "Build_IndustrialTank_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -700.0,
+     -700.0,
+     0.0
+    ],
+    "max": [
+     700.0,
+     700.0,
+     1200.0
+    ]
+   }
+  },
+  "Build_Valve_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -78.0,
+     -60.0,
+     -60.0
+    ],
+    "max": [
+     122.0,
+     60.0,
+     60.0
+    ]
+   }
+  },
+  "Build_PipelinePump_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -168.0,
+     -60.0,
+     -60.0
+    ],
+    "max": [
+     212.0,
+     60.0,
+     60.0
+    ]
+   }
+  },
+  "Build_PipelinePumpMk2_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -250.0,
+     -60.0,
+     -60.0
+    ],
+    "max": [
+     250.0,
+     60.0,
+     60.0
+    ]
+   }
+  },
+  "Build_HyperPoleStackable_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -50.0,
+     -120.0,
+     280.0
+    ],
+    "max": [
+     50.0,
+     120.0,
+     480.0
+    ]
+   }
+  },
+  "Build_PipeSupportStackable_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -50.0,
+     -120.0,
+     280.0
+    ],
+    "max": [
+     50.0,
+     120.0,
+     480.0
+    ]
+   }
+  },
+  "Build_ConveyorPoleStackable_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     50.0,
+     100.0,
+     0.0
+    ],
+    "max": [
+     -50.0,
+     -100.0,
+     200.0
+    ]
+   }
+  },
+  "Build_PipeHyperSupport_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     0.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     100.0
+    ]
+   }
+  },
+  "Build_PipelineSupport_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     0.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     100.0
+    ]
+   }
+  },
+  "Build_FoundationPassthrough_Pipe_C": {
+   "category": "pipe",
+   "box": null
+  },
+  "Build_FoundationPassthrough_Lift_C": {
+   "category": "foundation",
+   "box": null
+  },
+  "Build_HyperTubeJunction_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     -100.0
+    ],
+    "max": [
+     100.0,
+     250.0,
+     100.0
+    ]
+   }
+  },
+  "Build_HypertubeTJunction_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -250.0,
+     -100.0,
+     -100.0
+    ],
+    "max": [
+     250.0,
+     100.0,
+     100.0
+    ]
+   }
+  },
+  "Build_PipeHyper_C": {
+   "category": "pipe",
+   "box": null
+  },
+  "Build_PipelineJunction_Cross_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -120.0,
+     -120.0,
+     -75.0
+    ],
+    "max": [
+     120.0,
+     120.0,
+     75.0
+    ]
+   }
+  },
+  "Build_PipelineJunction_T_C": {
+   "category": "pipe",
+   "box": {
+    "min": [
+     -120.0,
+     -120.0,
+     -75.0
+    ],
+    "max": [
+     120.0,
+     120.0,
+     75.0
+    ]
+   }
+  },
+  "Build_WaterPump_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -1000.0,
+     -500.0,
+     -800.0
+    ],
+    "max": [
+     1000.0,
+     1300.0,
+     400.0
+    ]
+   }
+  },
+  "Build_ResourceSink_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -25.0,
+     -950.0,
+     950.0
+    ],
+    "max": [
+     1575.0,
+     450.0,
+     1900.0
+    ]
+   }
+  },
+  "Build_ResourceSinkShop_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -200.0,
+     -300.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     300.0,
+     500.0
+    ]
+   }
+  },
+  "Build_Pipeline_C": {
+   "category": "pipe",
+   "box": null
+  },
+  "Build_PipelineMK2_C": {
+   "category": "pipe",
+   "box": null
+  },
+  "Build_PipelineMK2_NoIndicator_C": {
+   "category": "pipe",
+   "box": null
+  },
+  "Build_Pipeline_NoIndicator_C": {
+   "category": "pipe",
+   "box": null
+  },
+  "Build_DroneStation_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     300.0,
+     -1200.0,
+     450.0
+    ],
+    "max": [
+     2000.0,
+     1200.0,
+     800.0
+    ]
+   }
+  },
+  "Build_StreetLight_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -25.0,
+     -25.0,
+     0.0
+    ],
+    "max": [
+     25.0,
+     25.0,
+     930.0
+    ]
+   }
+  },
+  "Build_CeilingLight_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -550.0,
+     -650.0,
+     0.0
+    ],
+    "max": [
+     550.0,
+     550.0,
+     -85.0
+    ]
+   }
+  },
+  "Build_FloodlightPole_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -150.0,
+     -150.0,
+     200.0
+    ],
+    "max": [
+     150.0,
+     150.0,
+     3400.0
+    ]
+   }
+  },
+  "Build_FloodlightWall_C": {
+   "category": "wall",
+   "box": null
+  },
+  "Build_StackableShelf_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -200.0,
+     -100.0,
+     0.0
+    ],
+    "max": [
+     200.0,
+     100.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Metal_InCorner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Metal_InCorner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Metal_InCorner_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Roof_Metal_OutCorner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Metal_OutCorner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Metal_OutCorner_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_InCorner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_InCorner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_InCorner_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_OutCorner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_OutCorner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Orange_OutCorner_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_InCorner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_InCorner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_InCorner_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_OutCorner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_OutCorner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Tar_OutCorner_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Roof_Window_InCorner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Window_InCorner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Window_InCorner_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_Roof_Window_OutCorner_01_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     100.0
+    ]
+   }
+  },
+  "Build_Roof_Window_OutCorner_02_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     200.0
+    ]
+   }
+  },
+  "Build_Roof_Window_OutCorner_03_C": {
+   "category": "wall",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     400.0
+    ]
+   }
+  },
+  "Build_ElevatorFloorStop_C": {
+   "category": "other",
+   "box": null
+  },
+  "Build_Elevator_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     0.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     0.0
+    ]
+   }
+  },
+  "Build_LightsControlPanel_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     100.0,
+     50.0,
+     300.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_Small_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -9.0,
+     -25.0
+    ],
+    "max": [
+     100.0,
+     9.0,
+     25.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_SmallVeryWide_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -200.0,
+     -9.0,
+     -25.0
+    ],
+    "max": [
+     200.0,
+     9.0,
+     25.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_SmallWide_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -150.0,
+     -9.0,
+     -25.0
+    ],
+    "max": [
+     150.0,
+     9.0,
+     25.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_Square_Tiny_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -25.0,
+     -8.0,
+     -25.0
+    ],
+    "max": [
+     25.0,
+     8.0,
+     25.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_Medium_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -9.0,
+     -50.0
+    ],
+    "max": [
+     100.0,
+     9.0,
+     50.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_Square_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -9.0,
+     -100.0
+    ],
+    "max": [
+     100.0,
+     9.0,
+     100.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_Square_Small_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -50.0,
+     -8.0,
+     -50.0
+    ],
+    "max": [
+     50.0,
+     8.0,
+     50.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_Portrait_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -9.0,
+     -150.0
+    ],
+    "max": [
+     100.0,
+     9.0,
+     150.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_Huge_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -800.0,
+     26.0,
+     -400.0
+    ],
+    "max": [
+     800.0,
+     66.0,
+     400.0
+    ]
+   }
+  },
+  "Build_StandaloneWidgetSign_Large_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -400.0,
+     -12.0,
+     -200.0
+    ],
+    "max": [
+     400.0,
+     8.0,
+     200.0
+    ]
+   }
+  },
+  "Build_FoundationPassthrough_Hypertube_C": {
+   "category": "pipe",
+   "box": null
+  },
+  "Build_Barrier_Corner_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -50.0,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     50.0,
+     50.0,
+     100.0
+    ]
+   }
+  },
+  "Build_ConveyorMonitor_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -100.0,
+     -110.0,
+     -25.0
+    ],
+    "max": [
+     100.0,
+     110.0,
+     75.0
+    ]
+   }
+  },
+  "Build_Beam_Connector_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -55.3,
+     -55.3,
+     -55.3
+    ],
+    "max": [
+     55.3,
+     55.3,
+     55.3
+    ]
+   }
+  },
+  "Build_Beam_Connector_Double_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -109.7,
+     -55.3,
+     -55.3
+    ],
+    "max": [
+     99.9,
+     55.3,
+     55.3
+    ]
+   }
+  },
+  "Build_Beam_Support_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     -0.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     59.6
+    ]
+   }
+  },
+  "Build_HadronCollider_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     900.0,
+     300.0,
+     0.0
+    ],
+    "max": [
+     1900.0,
+     1300.0,
+     800.0
+    ]
+   }
+  },
+  "Build_Converter_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -800.0,
+     -800.0,
+     400.0
+    ],
+    "max": [
+     800.0,
+     800.0,
+     800.0
+    ]
+   }
+  },
+  "Build_QuantumEncoder_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -800.0,
+     -2100.0,
+     0.0
+    ],
+    "max": [
+     800.0,
+     -1000.0,
+     450.0
+    ]
+   }
+  },
+  "Build_ConveyorLiftMk1_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorLiftMk5_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorLiftMk6_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorLiftMk4_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorLiftMk3_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_ConveyorLiftMk2_C": {
+   "category": "conveyor",
+   "box": null
+  },
+  "Build_FrackingExtractor_C": {
+   "category": "machine",
+   "box": {
+    "min": [
+     -250.0,
+     -250.0,
+     0.0
+    ],
+    "max": [
+     250.0,
+     250.0,
+     570.0
+    ]
+   }
+  },
+  "Build_FrackingSmasher_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -750.0,
+     -750.0,
+     0.0
+    ],
+    "max": [
+     750.0,
+     750.0,
+     2250.0
+    ]
+   }
+  },
+  "Build_GeneratorNuclear_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -600.0,
+     -2100.0,
+     0.0
+    ],
+    "max": [
+     600.0,
+     2100.0,
+     800.0
+    ]
+   }
+  },
+  "Build_SnowDispenser_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     0.0,
+     -200.0,
+     -200.0
+    ],
+    "max": [
+     100.0,
+     200.0,
+     200.0
+    ]
+   }
+  },
+  "Build_SnowCannon_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -100.0,
+     -100.0,
+     500.0
+    ],
+    "max": [
+     100.0,
+     100.0,
+     0.0
+    ]
+   }
+  },
+  "Build_TreeGiftProducer_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     1700.0
+    ]
+   }
+  },
+  "Build_ConveyorAttachmentMergerPriority_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -80.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     180.0
+    ]
+   }
+  },
+  "Build_RadarTower_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -500.0,
+     -500.0,
+     0.0
+    ],
+    "max": [
+     500.0,
+     500.0,
+     11800.0
+    ]
+   }
+  },
+  "Build_GeneratorGeoThermal_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -1000.0,
+     -950.0,
+     0.0
+    ],
+    "max": [
+     1000.0,
+     950.0,
+     3200.0
+    ]
+   }
+  },
+  "Build_ConveyorAttachmentSplitterProgrammable_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -80.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     180.0
+    ]
+   }
+  },
+  "Build_ConveyorAttachmentSplitterSmart_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -80.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     180.0
+    ]
+   }
+  },
+  "Build_PriorityPowerSwitch_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -100.0,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     100.0,
+     50.0,
+     300.0
+    ]
+   }
+  },
+  "Build_PowerSwitch_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -100.0,
+     -50.0,
+     0.0
+    ],
+    "max": [
+     100.0,
+     50.0,
+     300.0
+    ]
+   }
+  },
+  "Build_AlienPowerBuilding_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -1500.0,
+     -1500.0,
+     0.0
+    ],
+    "max": [
+     1500.0,
+     1500.0,
+     2500.0
+    ]
+   }
+  },
+  "Build_Portal_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     1200.0
+    ]
+   }
+  },
+  "Build_PortalSatellite_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -400.0,
+     -400.0,
+     0.0
+    ],
+    "max": [
+     400.0,
+     400.0,
+     1000.0
+    ]
+   }
+  },
+  "Build_BlueprintDesigner_Mk3_C": {
+   "category": "other",
+   "box": null
+  },
+  "Build_BlueprintDesigner_MK2_C": {
+   "category": "other",
+   "box": null
+  },
+  "Build_BlueprintDesigner_C": {
+   "category": "other",
+   "box": null
+  },
+  "Build_RailroadPathSignal_C": {
+   "category": "other",
+   "box": null
+  },
+  "Build_RailroadBlockSignal_C": {
+   "category": "other",
+   "box": null
+  },
+  "Build_RailroadEndStop_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -300.0,
+     300.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     -300.0,
+     250.0
+    ]
+   }
+  },
+  "Build_TrainStation_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -800.0,
+     -1700.0,
+     0.0
+    ],
+    "max": [
+     800.0,
+     1700.0,
+     2100.0
+    ]
+   }
+  },
+  "Build_TrainDockingStation_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -800.0,
+     -1700.0,
+     0.0
+    ],
+    "max": [
+     800.0,
+     1700.0,
+     2000.0
+    ]
+   }
+  },
+  "Build_TrainDockingStationLiquid_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -800.0,
+     -1700.0,
+     0.0
+    ],
+    "max": [
+     800.0,
+     1700.0,
+     2000.0
+    ]
+   }
+  },
+  "Build_TrainPlatformEmpty_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -800.0,
+     -1700.0,
+     0.0
+    ],
+    "max": [
+     800.0,
+     1700.0,
+     800.0
+    ]
+   }
+  },
+  "Build_TrainPlatformEmpty_02_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -800.0,
+     -1700.0,
+     0.0
+    ],
+    "max": [
+     800.0,
+     1700.0,
+     900.0
+    ]
+   }
+  },
+  "Build_FluidTruckStation_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -600.0,
+     -500.0,
+     850.0
+    ],
+    "max": [
+     1100.0,
+     400.0,
+     1470.0
+    ]
+   }
+  },
+  "Build_TruckStation_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -600.0,
+     -500.0,
+     850.0
+    ],
+    "max": [
+     1100.0,
+     400.0,
+     1470.0
+    ]
+   }
+  },
+  "Build_PowerStorageMk1_C": {
+   "category": "power",
+   "box": {
+    "min": [
+     -300.0,
+     -300.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     300.0,
+     1200.0
+    ]
+   }
+  },
+  "Build_JumpPadAdjustable_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -300.0,
+     -300.0,
+     0.0
+    ],
+    "max": [
+     300.0,
+     300.0,
+     300.0
+    ]
+   }
+  },
+  "Build_Mam_C": {
+   "category": "other",
+   "box": {
+    "min": [
+     -250.0,
+     -450.0,
+     0.0
+    ],
+    "max": [
+     350.0,
+     450.0,
+     500.0
+    ]
+   }
+  },
+  "Build_ConveyorAttachmentMerger_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -80.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     180.0
+    ]
+   }
+  },
+  "Build_ConveyorAttachmentSplitter_C": {
+   "category": "conveyor",
+   "box": {
+    "min": [
+     -200.0,
+     -200.0,
+     -80.0
+    ],
+    "max": [
+     200.0,
+     200.0,
+     180.0
+    ]
+   }
+  }
  }
 }

@@ -40,6 +40,20 @@ export interface BlueprintCost {
   amount: number
 }
 
+export interface Placement {
+  /** Buildable class, e.g. Build_SmelterMk1_C. */
+  key: string
+  name: string
+  category: string
+  /** Centimetres, in the game's own axes (Z is up). */
+  position: [number, number, number]
+  /** Rotation about Z, in radians. */
+  yaw: number
+  scale: [number, number, number]
+  /** Footprint in centimetres, or null for splines like belts. */
+  box: { min: [number, number, number]; max: [number, number, number] } | null
+}
+
 export interface BlueprintBuilding {
   key: string
   name: string
@@ -61,6 +75,10 @@ export interface BlueprintInfo {
   objectCount: number
   /** Build recipes referenced by the header, useful when the body won't parse. */
   recipeRefs: string[]
+  /** Every placed building with its transform, for the 3D preview. */
+  placements: Placement[]
+  /** Overall extent of the placements, in centimetres. */
+  bounds: { min: [number, number, number]; max: [number, number, number] } | null
   warnings: string[]
 }
 
@@ -90,6 +108,12 @@ class Reader {
 
   uint32(): number {
     const v = this.view.getUint32(this.offset, true)
+    this.offset += 4
+    return v
+  }
+
+  float(): number {
+    const v = this.view.getFloat32(this.offset, true)
     this.offset += 4
     return v
   }
@@ -163,7 +187,17 @@ function findChunkStart(bytes: Uint8Array): number {
   return -1
 }
 
-interface ParsedObject { type: number; typePath: string }
+interface ParsedObject {
+  type: number
+  typePath: string
+  /** Actors only: position in cm, yaw in radians, and scale. */
+  transform: { position: [number, number, number]; yaw: number; scale: [number, number, number] } | null
+}
+
+/** Yaw from a quaternion, which is the only rotation blueprints actually use. */
+function yawFromQuat(x: number, y: number, z: number, w: number): number {
+  return Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
+}
 
 /**
  * Read the object list. `flagBytes` covers a field whose width has changed
@@ -188,14 +222,23 @@ function readObjects(body: Uint8Array, flagBytes: number): ParsedObject[] | null
       r.string() // instance name
       r.skip(flagBytes)
 
+      let transform: ParsedObject['transform'] = null
       if (type === 1) {
-        // needTransform + rotation/position/scale + wasPlacedInLevel
-        r.skip(4 + 40 + 4)
+        r.skip(4) // needTransform
+        const qx = r.float(), qy = r.float(), qz = r.float(), qw = r.float()
+        const px = r.float(), py = r.float(), pz = r.float()
+        const sx = r.float(), sy = r.float(), sz = r.float()
+        r.skip(4) // wasPlacedInLevel
+        transform = {
+          position: [px, py, pz],
+          yaw: yawFromQuat(qx, qy, qz, qw),
+          scale: [sx || 1, sy || 1, sz || 1],
+        }
       } else {
         r.string() // parent actor name
       }
       if (r.offset > body.length) return null
-      objects.push({ type, typePath })
+      objects.push({ type, typePath, transform })
     }
     return objects
   } catch {
@@ -266,7 +309,12 @@ export async function parseBlueprint(file: ArrayBuffer, name: string): Promise<B
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
 
-  const names = (gameData as unknown as { buildableNames?: Record<string, string> }).buildableNames ?? {}
+  const extra = gameData as unknown as {
+    buildableNames?: Record<string, string>
+    footprints?: Record<string, { category: string; box: { min: number[]; max: number[] } | null }>
+  }
+  const names = extra.buildableNames ?? {}
+  const footprints = extra.footprints ?? {}
   const list: BlueprintBuilding[] = [...counts.entries()]
     .map(([key, count]) => ({
       key,
@@ -275,6 +323,42 @@ export async function parseBlueprint(file: ArrayBuffer, name: string): Promise<B
       isProduction: Boolean(buildings[key]),
     }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+
+  // Placements drive the 3D preview: a transform per building, sized by the
+  // footprint the game reserves for it.
+  const placements: Placement[] = []
+  const lo: [number, number, number] = [Infinity, Infinity, Infinity]
+  const hi: [number, number, number] = [-Infinity, -Infinity, -Infinity]
+
+  for (const o of objects) {
+    if (o.type !== 1 || !o.transform) continue
+    const key = className(o.typePath)
+    if (!key.startsWith('Build_')) continue
+    const fp = footprints[key]
+    const box = fp?.box
+      ? {
+        min: [fp.box.min[0], fp.box.min[1], fp.box.min[2]] as [number, number, number],
+        max: [fp.box.max[0], fp.box.max[1], fp.box.max[2]] as [number, number, number],
+      }
+      : null
+
+    placements.push({
+      key,
+      name: names[key] ?? key.replace(/^Build_/, '').replace(/_C$/, ''),
+      category: fp?.category ?? 'other',
+      position: o.transform.position,
+      yaw: o.transform.yaw,
+      scale: o.transform.scale,
+      box,
+    })
+
+    for (let i = 0; i < 3; i++) {
+      lo[i] = Math.min(lo[i], o.transform.position[i])
+      hi[i] = Math.max(hi[i], o.transform.position[i])
+    }
+  }
+
+  const bounds = placements.length && isFinite(lo[0]) ? { min: lo, max: hi } : null
 
   return {
     name,
@@ -288,6 +372,8 @@ export async function parseBlueprint(file: ArrayBuffer, name: string): Promise<B
     totalBuildings: list.reduce((n, b) => n + b.count, 0),
     objectCount: objects.length,
     recipeRefs,
+    placements,
+    bounds,
     warnings,
   }
 }

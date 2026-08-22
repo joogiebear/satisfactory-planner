@@ -761,3 +761,84 @@ table.mini .num { font-family: var(--mono); }
 @media (prefers-reduced-motion: reduce) {
   .react-flow__node, .react-flow__edge { transition: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Blueprint viewer
+   --------------------------------------------------------------------------- */
+
+.bp-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.bp-name {
+  font-family: var(--display);
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+.bp-meta { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+.bp-head .btn { margin-left: auto; }
+
+.bp-stage {
+  border: 1px solid var(--rivet);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--plate);
+  margin-bottom: 18px;
+}
+
+.bp3d {
+  position: relative;
+  height: 460px;
+  background: var(--void);
+  cursor: grab;
+}
+.bp3d:active { cursor: grabbing; }
+.bp3d canvas { display: block; width: 100%; height: 100%; }
+
+.bp3d-hover {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 4px 10px;
+  border-radius: var(--r);
+  background: #0e1013cc;
+  border: 1px solid var(--rivet-hi);
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ficsit);
+  pointer-events: none;
+}
+
+.bp-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 9px 11px;
+  border-top: 1px solid var(--rivet);
+}
+
+.bp-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--void);
+  border: 1px solid var(--rivet-hi);
+  border-radius: 12px;
+  padding: 3px 10px 3px 7px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.bp-filter:hover { border-color: var(--ink-faint); color: var(--ink); }
+.bp-filter[aria-pressed='true'] { color: var(--ink); border-color: var(--rivet-hi); background: var(--plate-hi); }
+.bp-filter[aria-pressed='false'] { opacity: 0.45; text-decoration: line-through; }
+.bp-filter .sw { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.bp-filter-count { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+
+.bp-note { padding: 0 11px 10px; margin: 0; }
+
+.bp-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; align-items: start; }
