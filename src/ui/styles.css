@@ -1052,3 +1052,89 @@ table.mini .num { font-family: var(--mono); }
 }
 .prog-minutes:focus { outline: none; border-color: var(--ficsit); }
 .prog-minutes-unit { font-size: 12px; align-self: center; }
+
+/* --- power ---------------------------------------------------------------- */
+
+.power-bar {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rivet);
+}
+.power-demand { display: flex; align-items: center; gap: 8px; }
+.power-blurb { grid-column: 1 / -1; margin: 0; font-size: 12px; max-width: 78ch; }
+.power-empty { padding: 26px 16px; margin: 0; }
+
+.power-table { width: 100%; }
+.power-row[data-blocked='true'] td { opacity: 0.5; }
+.power-row[data-blocked='true']:hover td { opacity: 0.85; }
+
+.power-name {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+.power-name:hover { color: var(--ficsit); }
+.power-name::before { content: '▸ '; color: var(--ink-faint); }
+.power-name[aria-expanded='true']::before { content: '▾ '; }
+
+.power-blocked {
+  font-size: 11px;
+  font-family: var(--display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border: 1px solid var(--rivet-hi);
+  border-radius: var(--r);
+  padding: 3px 7px;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.power-detail td { background: var(--plate-hi); }
+.power-detail-body { padding: 12px 16px 16px; display: grid; gap: 10px; }
+.power-why { margin: 0; color: var(--hazard); font-size: 13px; }
+.power-facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.power-facts li { display: flex; gap: 10px; }
+.power-facts .muted { min-width: 15ch; }
+.power-supply h4 {
+  margin: 0 0 3px;
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.power-supply p { margin: 0; font-size: 13px; }
+
+/* --- tier lock ------------------------------------------------------------ */
+
+/* A tier limit is set on one tab and silently governs every other, so it says
+   so wherever you are, and can be lifted from wherever you are. */
+.tier-lock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  margin-bottom: 14px;
+  background: var(--plate);
+  border: 1px solid var(--rivet-hi);
+  border-left: 3px solid var(--ficsit);
+  border-radius: var(--r);
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+.tier-lock-mark {
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ficsit);
+}
+.tier-lock .btn { margin-left: auto; }

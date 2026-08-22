@@ -9,9 +9,10 @@ import { TreeView } from './components/TreeView'
 import { BlueprintPanel } from './components/BlueprintPanel'
 import { FactoryGraph } from './components/FactoryGraph'
 import { ProgressionPanel } from './components/ProgressionPanel'
+import { PowerPanel } from './components/PowerPanel'
 import { fmt, fmtPower } from './format'
 
-type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'progression' | 'blueprint'
+type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'power' | 'progression' | 'blueprint'
 
 const STORAGE_KEY = 'satisfactory-planner/v1'
 
@@ -22,6 +23,7 @@ const TAB_LABELS: Record<Tab, string> = {
   tree: 'Tree',
   steps: 'Steps',
   summary: 'Summary',
+  power: 'Power',
   progression: 'Progression',
   blueprint: 'Blueprints',
 }
@@ -88,7 +90,7 @@ export function App() {
           <span className="brand-sub">Production Planner</span>
         </div>
         <nav className="tabs" role="tablist">
-          {(['factory', 'tree', 'steps', 'summary', 'progression', 'blueprint'] as Tab[]).map((t) => (
+          {(['factory', 'tree', 'steps', 'summary', 'power', 'progression', 'blueprint'] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
@@ -115,6 +117,20 @@ export function App() {
         />
 
         <main className="main" data-tab={tab}>
+          {settings.maxTier !== null && (
+            <div className="tier-lock">
+              <span className="tier-lock-mark">Tier {settings.maxTier}</span>
+              Only recipes you'd have by then
+              {!settings.allowResearch && <> · nothing from research or hard drives</>}
+              <button
+                className="btn"
+                onClick={() => setSettings({ ...settings, maxTier: null, allowResearch: true })}
+              >
+                Plan with everything
+              </button>
+            </div>
+          )}
+
           {plan.errors.length > 0 && (
             <div className="notice" data-kind="error">
               <strong>Can't build this plan.</strong>
@@ -130,6 +146,15 @@ export function App() {
 
           {tab === 'blueprint' && <BlueprintPanel plan={plan} />}
 
+          {tab === 'power' && (
+            <PowerPanel
+              plan={plan}
+              settings={settings}
+              setTargets={setTargets}
+              onPlanned={() => setTab('factory')}
+            />
+          )}
+
           {tab === 'progression' && (
             <ProgressionPanel
               settings={settings}
@@ -139,14 +164,14 @@ export function App() {
             />
           )}
 
-          {tab !== 'blueprint' && tab !== 'progression' && !hasPlan && plan.errors.length === 0 && (
+          {tab !== 'blueprint' && tab !== 'progression' && tab !== 'power' && !hasPlan && plan.errors.length === 0 && (
             <div className="empty">
               <h2>Nothing to build yet</h2>
               <p>Add an item under Output in the sidebar and set how many you want per minute.</p>
             </div>
           )}
 
-          {tab !== 'blueprint' && tab !== 'progression' && hasPlan && (
+          {tab !== 'blueprint' && tab !== 'progression' && tab !== 'power' && hasPlan && (
             <>
               {tab !== 'factory' && <div className="rail">
                 <Stat label="Machines" value={String(plan.totals.machines)} accent="amber" />

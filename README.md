@@ -31,6 +31,11 @@ build you have installed rather than a wiki snapshot.
   `clock^1.321929` power curve and Somersloops doubling output at 4× draw.
 - **Extraction settings** — miner mark, node purity per resource, and pump
   clock, feeding exact extractor counts.
+- **Progression** — pick a HUB milestone, a Space Elevator phase or a MAM
+  research node and it becomes the plan, capped to what you'd actually have
+  unlocked at that point.
+- **Power** — what it takes to run the factory you just planned: generators,
+  fuel rate, water, nuclear waste, and the factory that makes the fuel.
 - **Blueprint viewer** — drop in a `.sbp` and see the build itself in 3D, using
   the game's own building meshes, extracted from your installed copy on first
   run ([docs/MESHES.md](docs/MESHES.md)). Conveyors follow the paths they
@@ -137,6 +142,34 @@ default) plans with nothing but what the HUB has handed you by that tier, which
 is the honest answer to "can I build this today". **+ research & drives** opens
 it up and says in the plan which ones it leaned on. The cap doesn't apply to MAM
 research itself, which you can do whenever you find the resource.
+
+## Power
+
+The planner works out that a build draws 1.6 GW; the Power tab works out what
+that costs. Every generator and fuel the game has, ranked by how many buildings
+it takes, with the fuel rate, the water, and the nuclear waste it leaves you
+holding.
+
+The number that matters there is **overhead**. Generators burn fuel, and unless
+it's coal straight out of the ground, making the fuel takes its own factory that
+draws its own power — so it's a fixed point, not a division. Eight Fuel
+generators want 140 Fuel a minute; the refineries and extractors behind that
+draw 136 MW; covering *that* wants another generator, which wants more fuel. It
+settles in three or four passes because every real fuel yields far more than it
+costs, and when one doesn't the answer is "this never covers the load" rather
+than a number.
+
+An option that isn't buildable says why, because a plan that can't be solved
+returns no machines — and no machines reads as no overhead, which makes an
+impossible fuel look like the cheapest thing on the board:
+
+- **Gathered by hand** — the chain bottoms out in leaves, wood or hog remains,
+  which the game gives no recipe for.
+- **Locked by your settings** — recipes exist but none are available: a tier
+  limit, a ban, an alternate you haven't ticked. Worth separating from the
+  above, since calling a refinery product "gathered by hand" sends you looking
+  in entirely the wrong place.
+- **Costs more than it makes** — the fixed point diverges.
 
 ## Icons
 

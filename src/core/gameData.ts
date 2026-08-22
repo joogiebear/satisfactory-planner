@@ -1,6 +1,6 @@
 import raw from '../data/game-data.json'
 import type {
-  GameBelt, GameBuilding, GameData, GameExtractor, GameItem, GamePipe, GameRecipe,
+  GameBelt, GameBuilding, GameData, GameExtractor, GameGenerator, GameItem, GamePipe, GameRecipe,
   PlannerSettings, Purity,
 } from './types'
 
@@ -81,6 +81,8 @@ export const maxGameTier = milestones.reduce((n, m) => Math.max(n, m.tier), 0)
 export const belts: GameBelt[] = gameData.belts
 export const pipes: GamePipe[] = gameData.pipes
 export const extractors: GameExtractor[] = gameData.extractors
+/** Power generators and what they burn, for planning the supply side. */
+export const generators: GameGenerator[] = gameData.generators
 
 export const miners = extractors.filter((e) => e.kind === 'solid')
 export const oilExtractor = extractors.find((e) => e.key === 'Build_OilPump_C') ?? null
