@@ -26,6 +26,13 @@ const SORTS = {
 } as const
 type SortKey = keyof typeof SORTS
 
+/** Named as the sidebar names them, so it is clear which control is in play. */
+const OBJECTIVE_LABEL: Record<PlannerSettings['objective'], string> = {
+  raw: 'Resources',
+  buildings: 'Machines',
+  power: 'Power',
+}
+
 const STORAGE_KEY = 'satisfactory-planner/resources'
 
 interface Held { item: string; nodes: number }
@@ -71,6 +78,8 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
     () => [...ranked].sort((a, b) => SORTS[sort].of(b) - SORTS[sort].of(a)),
     [ranked, sort],
   )
+
+  const tunedCount = ranked.filter((c) => c.tuned).length
 
   const pickable = rawResources.filter(
     (r) => !UNLIMITED.has(r.key) && !held.some((h) => h.item === r.key),
@@ -146,6 +155,14 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
               Every row is sized until one of your nodes runs dry, so these are whole builds,
               not samples. The bars show how much of each resource it spends — a row leaving
               most of something untouched has room for a second factory beside it.
+              {settings.objective === 'raw' ? (
+                <> Routes are picked to get the most out of what you have, counting whatever
+                  you have least of as the dear one.</>
+              ) : (
+                <> Output comes first here: <em>{OBJECTIVE_LABEL[settings.objective]}</em> picks
+                  between the routes that reach it rather than settling for less
+                  {tunedCount > 0 && <>, which it managed on {tunedCount} of these</>}.</>
+              )}
             </p>
           </div>
 

@@ -77,4 +77,50 @@ describe('what these nodes could make', () => {
     expect(ingot.ratePerMin).toBeCloseTo(60, 4)
     expect(ingot.machines).toBe(2)
   })
+  /**
+   * Asked for the fewest machines, the planner will take a route making a
+   * fifth as much from the same nodes. That is the right answer to "build this
+   * rate cheaply" and the wrong one to "what do these nodes make", so here the
+   * objective may only choose between routes that reach the same output.
+   */
+  it('never lets the objective cost you output', () => {
+    const rates = (objective: 'raw' | 'buildings' | 'power') => {
+      const map = new Map<string, number>()
+      for (const c of bestFrom(three, { ...mk3(), objective })) map.set(c.item.key, c.ratePerMin)
+      return map
+    }
+    const base = rates('raw')
+    for (const objective of ['buildings', 'power'] as const) {
+      const other = rates(objective)
+      // The same things are on offer...
+      expect([...other.keys()].sort()).toEqual([...base.keys()].sort())
+      // ...at the same size.
+      for (const [key, rate] of base) expect(other.get(key)).toBeCloseTo(rate, 4)
+    }
+  })
+
+  /**
+   * Scarcity here is what you have, not what the map has. Iron is the commonest
+   * ore in the game, but one iron node beside four coal ones makes iron the
+   * resource worth routing around.
+   */
+  it('prices resources by what you have, not by what the map has', () => {
+    const lopsided: Available[] = [
+      { item: 'Desc_OreIron_C', nodes: 4, purity: 'pure' },
+      { item: 'Desc_Coal_C', nodes: 1, purity: 'impure' },
+      { item: 'Desc_OreCopper_C', nodes: 1, purity: 'pure' },
+      { item: 'Desc_LiquidOil_C', nodes: 1, purity: 'normal' },
+    ]
+    const settings = mk3()
+    const pipe = bestFrom(lopsided, settings).find((c) => c.item.key === 'Desc_SteelPipe_C')!
+
+    // Pricing by map-wide scarcity spends the scarce coal on the standard steel
+    // route and stops at roughly half this.
+    expect(pipe.ratePerMin).toBeGreaterThan(400)
+    // And whatever route it took has to be one those nodes can actually feed.
+    const supply = supplyOf(lopsided, settings)
+    for (const d of pipe.draws) {
+      expect(d.ratePerMin).toBeLessThanOrEqual((supply.get(d.item.key) ?? 0) * (1 + 1e-6))
+    }
+  })
 })
