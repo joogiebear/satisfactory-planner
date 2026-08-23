@@ -144,7 +144,21 @@ export const PURITY_MULTIPLIER: Record<Purity, number> = {
 }
 
 /** How the solver breaks ties when several recipe sets can hit the target. */
-export type Objective = 'raw' | 'buildings' | 'balanced'
+/**
+ * What the planner should spend least of when recipes offer a choice.
+ *
+ * `raw` is priced by scarcity rather than by count: 30 bauxite costs more
+ * than 200 limestone, because bauxite is rarer on the map. So it is not the
+ * same as the fewest items on a belt, and a plan optimised for machines can
+ * genuinely move less material while spending more of what is precious.
+ *
+ * There was a fourth, `balanced`, and it was a fiction. The three costs live on
+ * different scales, and every weighting tried for it collapsed onto one of its
+ * neighbours -- the recipe routes are discrete, so there is rarely a middle to
+ * sit in. Three that each win on their own metric beat four where one is a
+ * duplicate wearing a different name.
+ */
+export type Objective = 'raw' | 'buildings' | 'power'
 
 /** Per-recipe machine tuning. */
 export interface MachineTuning {

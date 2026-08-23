@@ -151,15 +151,18 @@ export function availableRecipes(settings: PlannerSettings): GameRecipe[] {
 // Solve
 // ---------------------------------------------------------------------------
 
-interface ObjectiveWeights { raw: number; building: number }
+interface ObjectiveWeights { raw: number; building: number; power: number }
 
 // Costs stay within a few orders of magnitude of each other so the pivot
 // tolerance keeps its meaning. Every weight must be >= 0: that is what makes
 // the all-slack basis dual-feasible and lets the solver skip a phase-1 pass.
 const OBJECTIVES: Record<PlannerSettings['objective'], ObjectiveWeights> = {
-  raw: { raw: 1, building: 0.01 },
-  balanced: { raw: 1, building: 1 },
-  buildings: { raw: 0.01, building: 1 },
+  raw: { raw: 1, building: 0.01, power: 0 },
+  buildings: { raw: 0.01, building: 1, power: 0 },
+  // Megawatts are three orders of magnitude larger than the other costs, so the
+  // weight brings them into the same range: without that the pivot tolerance
+  // stops meaning anything and the solver chases rounding noise.
+  power: { raw: 0.0002, building: 0.0005, power: 0.01 },
 }
 
 function emptyPlan(targets: PlanTarget[], errors: string[], warnings: string[]): Plan {
@@ -281,12 +284,14 @@ export function solvePlan(targets: PlanTarget[], settings: PlannerSettings): Pla
   }
 
   // --- objective ---
+  // A settings file from an older build may still say 'balanced'.
   const w = OBJECTIVES[settings.objective] ?? OBJECTIVES.raw
   const c = new Array(nVars).fill(0)
   recipeList.forEach((r, j) => {
     // Proportional to machine count, since machines = runs * time / 60 / clock.
     const tuned = tunings.get(r.key)!
-    c[j] = (w.building * r.timeSeconds) / 60 / tuned.clock
+    const machines = r.timeSeconds / 60 / tuned.clock
+    c[j] = w.building * machines + w.power * machines * powerPerMachine(r, tuned)
   })
   sourceItems.forEach((key, s) => {
     const weight = settings.resourceWeights[key] ?? (items[key]?.isRaw ? 1 : 5)

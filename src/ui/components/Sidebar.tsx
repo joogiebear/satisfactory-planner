@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
-  alternateRecipes, baseRatePerMin, belts, extractors, items, pipes, producibleItems,
+  alternateRecipes, baseRatePerMin, belts, extractors, items, maxGameTier, pipes,
+  producibleItems,
 } from '../../core/gameData'
 import type { Plan, PlanTarget, PlannerSettings, Purity } from '../../core/types'
 import { oneMachineRate } from '../../core/solver'
@@ -57,6 +58,12 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
                 <span className="target-out">{fmt(t.ratePerMin)}</span>
                 <span className="unit">{unit(item)}</span>
               </div>
+              {oneMachineRate(t.item, settings) === null ? (
+                <p className="hint build-blocked">
+                  Nothing available makes this — check the tier and the unlocked
+                  alternates above.
+                </p>
+              ) : (
               <div className="build-scale">
                 <span className="muted">Build</span>
                 {[1, 2, 5, 10].map((n) => {
@@ -79,36 +86,77 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
                     </button>
                   )
                 })}
-              </div>
+                </div>
+              )}
             </div>
           )
         })}
         {targets.length === 0 && <p className="hint">Pick an item above to start planning.</p>}
       </Section>
 
-      <Section title="Recipe choice" count={settings.objective}>
+      <Section title="Recipe choice" count={settings.maxTier === null ? settings.objective : `T${settings.maxTier}`}>
         <div className="field">
           <span className="field-label">Optimise for</span>
           <div className="segmented">
-            {(['raw', 'balanced', 'buildings'] as const).map((o) => (
+            {(['raw', 'buildings', 'power'] as const).map((o) => (
               <button
                 key={o}
                 type="button"
                 aria-pressed={settings.objective === o}
                 onClick={() => patch({ objective: o })}
               >
-                {o === 'raw' ? 'Resources' : o === 'buildings' ? 'Machines' : 'Balanced'}
+                {o === 'raw' ? 'Resources' : o === 'buildings' ? 'Machines' : 'Power'}
               </button>
             ))}
           </div>
           <p className="hint">
             {settings.objective === 'raw'
-              ? 'Uses the least ore, weighting scarce resources higher.'
+              ? 'Spends the least on resources, counting scarce ones for more — bauxite costs seven times what iron does.'
               : settings.objective === 'buildings'
-                ? 'Uses the fewest machines, even if it costs more ore.'
-                : 'Trades ore against machine count evenly.'}
+                ? 'Fewest machines to build, even where that spends scarcer resources.'
+                : 'Lowest running power, even where that costs machines or ore.'}
           </p>
         </div>
+        <div className="field">
+          <span className="field-label">Unlocked up to</span>
+          <div className="segmented tier-pick">
+            <button
+              type="button"
+              aria-pressed={settings.maxTier === null}
+              onClick={() => patch({ maxTier: null, allowResearch: true })}
+              title="Plan with everything the game has"
+            >
+              All
+            </button>
+            {Array.from({ length: maxGameTier + 1 }, (_, tier) => (
+              <button
+                key={tier}
+                type="button"
+                aria-pressed={settings.maxTier === tier}
+                onClick={() => patch({ maxTier: tier })}
+                title={`Only machines and recipes you have by Tier ${tier}`}
+              >
+                {tier}
+              </button>
+            ))}
+          </div>
+          <p className="hint">
+            {settings.maxTier === null
+              ? 'Every machine in the game is fair game, whether or not you can build it yet.'
+              : `Only what the HUB has given you by Tier ${settings.maxTier}. A Blender arrives at Tier 7, a Refinery at 5.`}
+          </p>
+        </div>
+
+        {settings.maxTier !== null && (
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={settings.allowResearch}
+              onChange={(e) => patch({ allowResearch: e.target.checked })}
+            />
+            <span>Assume MAM research and hard drives</span>
+          </label>
+        )}
       </Section>
 
       <Section title="Extraction" count={settings.extraction.defaultPurity}>

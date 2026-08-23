@@ -1159,3 +1159,12 @@ table.mini .num { font-family: var(--mono); }
   color: var(--ficsit);
   letter-spacing: 0.01em;
 }
+
+/* A tier gate is set in one place and governs the whole plan, so it lives with
+   the other recipe controls rather than only on the Progression tab. */
+.tier-pick { flex-wrap: wrap; }
+.tier-pick button { padding: 4px 8px; font-family: var(--mono); font-size: 11px; }
+
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-dim); cursor: pointer; }
+.check input { accent-color: var(--ficsit); }
+.build-blocked { margin: 6px 0 0; color: var(--hazard); }
