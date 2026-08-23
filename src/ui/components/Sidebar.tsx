@@ -3,6 +3,7 @@ import {
   alternateRecipes, baseRatePerMin, belts, extractors, items, pipes, producibleItems,
 } from '../../core/gameData'
 import type { Plan, PlanTarget, PlannerSettings, Purity } from '../../core/types'
+import { oneMachineRate } from '../../core/solver'
 import { fmt, unit } from '../format'
 import { ItemChip, ItemPicker } from './ItemPicker'
 
@@ -29,7 +30,8 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
           placeholder="Add an item to produce…"
           onPick={(item) => {
             if (targets.some((t) => t.item === item.key)) return
-            setTargets([...targets, { item: item.key, ratePerMin: baseRatePerMin(item.key) }])
+            const rate = oneMachineRate(item.key, settings) ?? baseRatePerMin(item.key)
+            setTargets([...targets, { item: item.key, ratePerMin: rate }])
           }}
         />
         {targets.map((t, i) => {
@@ -49,22 +51,34 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
                   ✕
                 </button>
               </div>
+              {/* What the factory makes, not what you asked it for. You pick the
+                  item and how many machines; the rate is the answer. */}
               <div className="target-rate">
-                <input
-                  type="number"
-                  min={0}
-                  // A rate is a real quantity, not a bucket: stepping by ten
-                  // walks straight past most of the numbers worth asking for.
-                  step={1}
-                  value={t.ratePerMin}
-                  aria-label={`Rate for ${item.name}`}
-                  onChange={(e) => {
-                    const next = targets.slice()
-                    next[i] = { ...t, ratePerMin: Math.max(0, Number(e.target.value)) }
-                    setTargets(next)
-                  }}
-                />
+                <span className="target-out">{fmt(t.ratePerMin)}</span>
                 <span className="unit">{unit(item)}</span>
+              </div>
+              <div className="build-scale">
+                <span className="muted">Build</span>
+                {[1, 2, 5, 10].map((n) => {
+                  const one = oneMachineRate(t.item, settings)
+                  if (!one) return null
+                  const at = Math.round(one * n * 10000) / 10000
+                  return (
+                    <button
+                      key={n}
+                      className="btn btn-icon"
+                      aria-pressed={Math.abs(t.ratePerMin - at) < 1e-4}
+                      title={`${n} machine${n === 1 ? '' : 's'} of ${item.name} — ${fmt(at)}/min`}
+                      onClick={() => {
+                        const next = targets.slice()
+                        next[i] = { ...t, ratePerMin: at }
+                        setTargets(next)
+                      }}
+                    >
+                      ×{n}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )

@@ -1138,3 +1138,24 @@ table.mini .num { font-family: var(--mono); }
   color: var(--ficsit);
 }
 .tier-lock .btn { margin-left: auto; }
+
+/* --- build scale ---------------------------------------------------------- */
+
+/* A build is sized to one machine of the thing you asked for; these step it up
+   in whole machines rather than asking anyone to invent a rate. */
+.build-scale { display: flex; align-items: center; gap: 5px; padding: 6px 0 0; }
+.build-scale .muted { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+.build-scale .btn { font-family: var(--mono); font-size: 11px; padding: 3px 7px; margin-left: 0; }
+.build-scale .btn[aria-pressed='true'] {
+  background: var(--ficsit);
+  border-color: var(--ficsit);
+  color: var(--void);
+}
+
+/* The output rate is read, not typed: it is what the build produces. */
+.target-out {
+  font-family: var(--mono);
+  font-size: 20px;
+  color: var(--ficsit);
+  letter-spacing: 0.01em;
+}

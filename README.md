@@ -9,6 +9,13 @@ build you have installed rather than a wiki snapshot.
 
 ## What it does
 
+- **Pick the item, not a number** — a rate is the wrong thing to ask for, so it
+  isn't asked for. Choose what you want to make and the planner sizes the
+  smallest build worth laying out: one machine of that recipe, everything
+  upstream following, with the output shown as the result. `×2 ×5 ×10` scales
+  it in whole machines. It starts on the kit a new save has — Mk.1 belts, Mk.1
+  miners, no alternates — and the build improves on its own as you upgrade
+  them, because the plan is a function of what you have.
 - **Factory view** — the plan as a machine-to-machine flow graph. Every machine
   is a card showing its building, count, recipe, power and each input and output
   with its rate; belts and pipes run between the exact ports that carry them,

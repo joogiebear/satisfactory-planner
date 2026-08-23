@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { defaultSettings, gameData, items } from '../core/gameData'
-import { solvePlan } from '../core/solver'
+import { oneMachineRate, solvePlan } from '../core/solver'
 import type { PlanTarget, PlannerSettings } from '../core/types'
 import { Sidebar } from './components/Sidebar'
 import { StepsTable } from './components/StepsTable'
@@ -37,7 +37,12 @@ interface Saved {
 function load(): Saved {
   const fallback: Saved = {
     settings: defaultSettings(),
-    targets: [{ item: 'Desc_IronPlateReinforced_C', ratePerMin: 10 }],
+    // One machine's worth, like anything else you add: a fresh install opens
+    // on a build you could go and lay out rather than a number picked here.
+    targets: [{
+      item: 'Desc_IronPlateReinforced_C',
+      ratePerMin: oneMachineRate('Desc_IronPlateReinforced_C', defaultSettings()) ?? 10,
+    }],
   }
   try {
     const raw = localStorage.getItem(STORAGE_KEY)

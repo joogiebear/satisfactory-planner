@@ -69,6 +69,41 @@ function powerForCount(recipe: GameRecipe, tuned: Tuned, count: number): number 
 }
 
 // ---------------------------------------------------------------------------
+// Sizing a build
+// ---------------------------------------------------------------------------
+
+/**
+ * The rate at which one machine makes the thing you asked for.
+ *
+ * A rate is the wrong question to put to someone. Nobody wants 14.5734 Heavy
+ * Modular Frames a minute -- they want to know what building this looks like,
+ * and the rate is part of the answer. So a build is sized to one machine of the
+ * final recipe and everything upstream follows: the smallest thing worth
+ * laying out, with nothing built as though resources were free.
+ *
+ * Two rules were tried first and both fail. Making *every* machine count whole
+ * is exact but explodes once alternates are unlocked -- their ratios put the
+ * smallest such build at 210,600 Modular Frames a minute. Scaling until the
+ * rarest machine reaches one inverts it: a chain that processes a trickle of
+ * residue in a corner drags the whole build up to 1,800 iron plates a minute.
+ * The recipe you actually chose is the stable anchor.
+ *
+ * Returns null when the item cannot be made at all with the current settings.
+ */
+export function oneMachineRate(item: string, settings: PlannerSettings): number | null {
+  const unit = solvePlan([{ item, ratePerMin: 1 }], settings)
+  if (unit.errors.length) return null
+
+  const final = unit.steps.find((s) => s.primaryItem.key === item)
+  if (!final || !(final.machines > 0)) return null
+
+  const rate = 1 / final.machines
+  if (!isFinite(rate) || rate <= 0) return null
+  // Four decimals, as the game shows rates.
+  return Math.round(rate * 10000) / 10000
+}
+
+// ---------------------------------------------------------------------------
 // Recipe availability
 // ---------------------------------------------------------------------------
 

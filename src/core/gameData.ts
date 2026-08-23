@@ -145,8 +145,10 @@ export function defaultSettings(): PlannerSettings {
       oilExtractorClock: 1,
       waterExtractorClock: 1,
     },
-    beltKey: belts[belts.length - 1]?.key ?? 'Build_ConveyorBeltMk1_C',
-    pipeKey: pipes[pipes.length - 1]?.key ?? 'Build_Pipeline_C',
+    // Start on the kit a new save has and let upgrades improve the plan,
+    // rather than assuming everything is already unlocked.
+    beltKey: belts[0]?.key ?? 'Build_ConveyorBeltMk1_C',
+    pipeKey: pipes[0]?.key ?? 'Build_Pipeline_C',
     defaultClock: 1,
     tuning: {},
     objective: 'raw',
