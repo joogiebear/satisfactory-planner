@@ -1216,3 +1216,61 @@ table.mini .num { font-family: var(--mono); }
 }
 .mesh-float-pct { margin-left: auto; font-family: var(--mono); color: var(--ficsit); }
 .mesh-float .hint { margin: 8px 0 0; line-height: 1.4; }
+
+/* --- what I have ---------------------------------------------------------- */
+
+.res-held {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rivet);
+}
+
+.res-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  background: var(--plate-hi);
+  border: 1px solid var(--rivet);
+  border-radius: var(--r);
+}
+.res-row-name { flex: 0 0 190px; min-width: 0; }
+.res-purity button { font-size: 11px; padding: 3px 9px; }
+.res-count { display: flex; align-items: center; gap: 6px; }
+.res-count input { width: 62px; }
+.res-supply { margin-left: auto; font-family: var(--mono); }
+
+.res-add { align-self: flex-start; }
+.res-add-open { display: flex; align-items: flex-start; gap: 10px; }
+.res-add-open > *:first-child { flex: 1; max-width: 420px; }
+
+.res-empty { padding: 26px 16px; margin: 0; max-width: 74ch; line-height: 1.5; }
+
+.res-sort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rivet);
+}
+.res-blurb { flex-basis: 100%; margin: 0; font-size: 12px; max-width: 78ch; }
+
+.res-table td { vertical-align: middle; }
+.res-draws { display: flex; gap: 10px; }
+.res-draw { display: flex; align-items: center; gap: 4px; }
+
+/* How much of that node the build spends. The one that hits the end is the
+   reason the build stops where it does, so it is the one that gets the colour. */
+.res-bar {
+  display: block;
+  width: 44px;
+  height: 5px;
+  background: var(--rivet-hi);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.res-bar > span { display: block; height: 100%; background: var(--ink-faint); }
+.res-draw[data-binding='true'] .res-bar > span { background: var(--ficsit); }

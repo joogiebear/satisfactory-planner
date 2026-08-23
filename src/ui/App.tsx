@@ -10,12 +10,13 @@ import { BlueprintPanel } from './components/BlueprintPanel'
 import { FactoryGraph } from './components/FactoryGraph'
 import { ProgressionPanel } from './components/ProgressionPanel'
 import { PowerPanel } from './components/PowerPanel'
+import { ResourcePanel } from './components/ResourcePanel'
 import { MeshProvider } from './blueprint/MeshContext'
 import { MeshOffer, MeshProgressCard } from './blueprint/MeshOffer'
 import { refreshIcons } from './icons'
 import { fmt, fmtPower } from './format'
 
-type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'power' | 'progression' | 'blueprint'
+type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'power' | 'resources' | 'progression' | 'blueprint'
 
 const STORAGE_KEY = 'satisfactory-planner/v1'
 
@@ -27,6 +28,7 @@ const TAB_LABELS: Record<Tab, string> = {
   steps: 'Steps',
   summary: 'Summary',
   power: 'Power',
+  resources: 'What I have',
   progression: 'Progression',
   blueprint: 'Blueprints',
 }
@@ -121,6 +123,8 @@ export function App() {
   }
 
   const hasPlan = plan.steps.length > 0 || plan.raw.length > 0
+  // The tabs that show the current plan, as opposed to the ones that build one.
+  const isPlanTab = tab === 'factory' || tab === 'tree' || tab === 'steps' || tab === 'summary'
 
   return (
     <MeshProvider>
@@ -131,7 +135,7 @@ export function App() {
           <span className="brand-sub">Production Planner</span>
         </div>
         <nav className="tabs" role="tablist">
-          {(['factory', 'tree', 'steps', 'summary', 'power', 'progression', 'blueprint'] as Tab[]).map((t) => (
+          {(['factory', 'tree', 'steps', 'summary', 'power', 'resources', 'progression', 'blueprint'] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
@@ -197,6 +201,15 @@ export function App() {
             />
           )}
 
+          {tab === 'resources' && (
+            <ResourcePanel
+              settings={settings}
+              setSettings={setSettings}
+              setTargets={setTargets}
+              onPlanned={() => setTab('factory')}
+            />
+          )}
+
           {tab === 'progression' && (
             <ProgressionPanel
               settings={settings}
@@ -206,14 +219,14 @@ export function App() {
             />
           )}
 
-          {tab !== 'blueprint' && tab !== 'progression' && tab !== 'power' && !hasPlan && plan.errors.length === 0 && (
+          {isPlanTab && !hasPlan && plan.errors.length === 0 && (
             <div className="empty">
               <h2>Nothing to build yet</h2>
               <p>Add an item under Output in the sidebar and set how many you want per minute.</p>
             </div>
           )}
 
-          {tab !== 'blueprint' && tab !== 'progression' && tab !== 'power' && hasPlan && (
+          {isPlanTab && hasPlan && (
             <>
               {tab !== 'factory' && <div className="rail">
                 <Stat label="Machines" value={String(plan.totals.machines)} accent="amber" />
