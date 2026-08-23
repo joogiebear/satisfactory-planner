@@ -1222,3 +1222,5 @@ table.mini .num { font-family: var(--mono); }
 }
 .res-bar > span { display: block; height: 100%; background: var(--ink-faint); }
 .res-draw[data-binding='true'] .res-bar > span { background: var(--ficsit); }
+.res-miner { width: 118px; padding: 3px 6px; font-size: 12px; }
+.res-plant-pick { max-width: 300px; }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { items, rawResources } from '../../core/gameData'
+import { items, miners, rawResources } from '../../core/gameData'
 import { bestFrom, supplyOf, type Available, type Candidate } from '../../core/fromResources'
+import { generatorOptions, type GeneratorCost } from '../../core/selfPowered'
 import { buildRawRequirement } from '../../core/solver'
 import type { PlanTarget, PlannerSettings } from '../../core/types'
 import { fmt, fmtPower, unit } from '../format'
@@ -34,6 +35,10 @@ const OBJECTIVE_LABEL: Record<PlannerSettings['objective'], string> = {
 }
 
 const STORAGE_KEY = 'satisfactory-planner/resources'
+const POWER_KEY = 'satisfactory-planner/resources-power'
+
+/** The value that means "assume the grid is already there". */
+const GRID = ''
 
 interface Held { item: string; nodes: number }
 
@@ -57,6 +62,9 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
   const [held, setHeld] = useState<Held[]>(loadHeld)
   const [sort, setSort] = useState<SortKey>('value')
   const [adding, setAdding] = useState(false)
+  const [powerKey, setPowerKey] = useState<string>(() => {
+    try { return localStorage.getItem(POWER_KEY) ?? GRID } catch { return GRID }
+  })
 
   const save = (next: Held[]) => {
     setHeld(next)
@@ -72,7 +80,21 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
   })), [held, settings.extraction.purity, settings.extraction.defaultPurity])
 
   const supply = useMemo(() => supplyOf(available, settings), [available, settings])
-  const ranked = useMemo(() => bestFrom(available, settings), [available, settings])
+
+  // Generators you have the fuel for come first: a nuclear plant is the biggest
+  // number on the list and no use at all on an iron and coal patch.
+  const plants = useMemo(() => {
+    const all = generatorOptions(settings)
+    const fuelled = (g: GeneratorCost) => [...g.draws.keys()].every((k) => k === 'Desc_Water_C' || supply.has(k))
+    return [...all].sort((a, b) => Number(fuelled(b)) - Number(fuelled(a)) || b.netMW - a.netMW)
+  }, [settings, supply])
+
+  const chosenPlant = plants.find((g) => plantKey(g) === powerKey) ?? null
+
+  const ranked = useMemo(
+    () => bestFrom(available, settings, chosenPlant),
+    [available, settings, chosenPlant],
+  )
 
   const sorted = useMemo(
     () => [...ranked].sort((a, b) => SORTS[sort].of(b) - SORTS[sort].of(a)),
@@ -80,6 +102,11 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
   )
 
   const tunedCount = ranked.filter((c) => c.tuned).length
+
+  const choosePower = (key: string) => {
+    setPowerKey(key)
+    try { localStorage.setItem(POWER_KEY, key) } catch { /* private mode */ }
+  }
 
   const pickable = rawResources.filter(
     (r) => !UNLIMITED.has(r.key) && !held.some((h) => h.item === r.key),
@@ -143,6 +170,21 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
       ) : (
         <>
           <div className="res-sort">
+            <span className="field-label">Power</span>
+            <select
+              className="res-plant-pick"
+              value={powerKey}
+              aria-label="How the build is powered"
+              onChange={(e) => choosePower(e.target.value)}
+            >
+              <option value={GRID}>From a grid you already have</option>
+              {plants.map((g) => (
+                <option key={plantKey(g)} value={plantKey(g)}>
+                  {g.generator.name} on {items[g.fuel.item]?.name ?? g.fuel.item}
+                </option>
+              ))}
+            </select>
+
             <span className="field-label">Rank by</span>
             <div className="segmented">
               {(Object.keys(SORTS) as SortKey[]).map((k) => (
@@ -155,6 +197,15 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
               Every row is sized until one of your nodes runs dry, so these are whole builds,
               not samples. The bars show how much of each resource it spends — a row leaving
               most of something untouched has room for a second factory beside it.
+              {chosenPlant ? (
+                <> The generators are part of the build and burn the same pile, so what you
+                  see is what these machines run on their own — nothing plugged in from
+                  elsewhere. The miners you declared draw their full rating whether or not
+                  the factory takes everything they lift.</>
+              ) : (
+                <> Power is assumed to come from somewhere: pick a generator above to size
+                  builds that run on their own resources instead.</>
+              )}
               {settings.objective === 'raw' ? (
                 <> Routes are picked to get the most out of what you have, counting whatever
                   you have least of as the dear one.</>
@@ -172,7 +223,8 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
                 <th>Make</th>
                 <th className="num">Output</th>
                 <th className="num">Machines</th>
-                <th className="num">Power</th>
+                {chosenPlant && <th className="num">Plant</th>}
+                <th className="num">{chosenPlant ? 'Load' : 'Power'}</th>
                 <th className="num">Sink points</th>
                 <th>Uses</th>
                 <th></th>
@@ -189,6 +241,15 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
                   </td>
                   <td className="num">{fmt(c.ratePerMin, 2)}<span className="muted">{unit(c.item)}</span></td>
                   <td className="num">{Math.ceil(c.machines - 1e-9)}</td>
+                  {chosenPlant && (
+                    <td className="num" title="Generators, and the water pumps cooling them">
+                      {Math.ceil((c.plant?.generators ?? 0) - 1e-9)}
+                      <span className="muted"> gen</span>
+                      {(c.plant?.pumps ?? 0) > 0 && (
+                        <> · {c.plant!.pumps}<span className="muted"> pump</span></>
+                      )}
+                    </td>
+                  )}
                   <td className="num muted">{fmtPower(c.powerMW)}</td>
                   <td className="num muted">{fmt(c.sinkPointsPerMin, 0)}<span className="muted">/min</span></td>
                   <td>
@@ -236,8 +297,13 @@ function HeldRow({
 
   // Purity is a property of the extractor, not the item: miners read it, water
   // pumps ignore it, and the fracking gear has rules of its own.
-  const graded = buildRawRequirement(item, 0, settings).extractor?.affectedByPurity ?? false
+  const extractor = buildRawRequirement(item, 0, settings).extractor
+  const graded = extractor?.affectedByPurity ?? false
   const purity = settings.extraction.purity[held.item] ?? settings.extraction.defaultPurity
+  // A miner mark is a machine you place, so it belongs on the row you placed it
+  // on rather than on a global default that every node then has to override.
+  const minable = extractor?.kind === 'solid'
+  const minerKey = settings.extraction.minerByResource?.[held.item] ?? settings.extraction.minerKey
 
   return (
     <div className="res-row">
@@ -245,6 +311,23 @@ function HeldRow({
         <Icon item={item} size={20} />
         {item.name}
       </span>
+
+      {minable && (
+        <select
+          className="res-miner"
+          value={minerKey}
+          aria-label={`Miner on the ${item.name} nodes`}
+          onChange={(e) => setSettings({
+            ...settings,
+            extraction: {
+              ...settings.extraction,
+              minerByResource: { ...settings.extraction.minerByResource, [held.item]: e.target.value },
+            },
+          })}
+        >
+          {miners.map((m) => <option key={m.key} value={m.key}>{m.name}</option>)}
+        </select>
+      )}
 
       {graded && (
         <div className="segmented res-purity">
@@ -276,7 +359,7 @@ function HeldRow({
           aria-label={`How many ${item.name} nodes`}
           onChange={(e) => onCount(Math.max(1, Math.round(Number(e.target.value) || 1)))}
         />
-        <span className="muted">node{held.nodes === 1 ? '' : 's'}</span>
+        <span className="muted">{minable ? `miner${held.nodes === 1 ? '' : 's'}` : `node${held.nodes === 1 ? '' : 's'}`}</span>
       </label>
 
       <span className="muted res-supply">{fmt(supply, 1)}/min</span>
@@ -284,4 +367,9 @@ function HeldRow({
       <button type="button" className="remove" aria-label={`Remove ${item.name}`} onClick={onRemove}>✕</button>
     </div>
   )
+}
+
+/** Stable id for a generator-and-fuel pairing. */
+function plantKey(g: GeneratorCost): string {
+  return `${g.generator.key}:${g.fuel.item}`
 }

@@ -22,7 +22,8 @@
  * plenty of.
  */
 
-import { items, rawResources, recipesByProduct } from './gameData'
+import { extractors, items, rawResources, recipesByProduct } from './gameData'
+import { balance, type Balance, type FixedPlant, type GeneratorCost } from './selfPowered'
 import { buildRawRequirement, solvePlan } from './solver'
 import type { GameItem, Plan, PlannerSettings, Purity } from './types'
 
@@ -41,6 +42,13 @@ export interface Draw {
   fraction: number
 }
 
+/** The generators a self-powered build needs, and what they cost it. */
+export interface Plant {
+  generators: number
+  pumps: number
+  drawMW: number
+}
+
 export interface Candidate {
   item: GameItem
   ratePerMin: number
@@ -50,6 +58,12 @@ export interface Candidate {
   /** The resource that runs out first — the reason it stops here. */
   limitedBy: GameItem | null
   draws: Draw[]
+  /**
+   * Set when the build powers itself: the generators it runs on, the pumps
+   * cooling them, and the load they between them carry. Null when power is
+   * somebody else's problem.
+   */
+  plant: Plant | null
   /**
    * True when the objective you picked found a route holding the same output,
    * so the machine and power figures are its doing rather than the fallback's.
@@ -93,6 +107,35 @@ export function supplyOf(available: Available[], settings: PlannerSettings): Map
 }
 
 /**
+ * The draw of the machines you said you have.
+ *
+ * A miner you placed costs its full rating whether or not the factory takes
+ * everything it lifts, which is the difference between planning a build and
+ * planning a rate: elsewhere the extractor count falls out of the demand, and
+ * here you declared it. Getting this wrong understates the load by more than a
+ * Mk.3 miner's 45 MW is comfortable.
+ */
+export function fixedPlantOf(available: Available[], settings: PlannerSettings): FixedPlant {
+  const pump = extractors.find((e) => e.key === 'Build_WaterPump_C')
+  let extractorMW = 0
+  for (const entry of available) {
+    const item = items[entry.item]
+    if (!item || !(entry.nodes > 0)) continue
+    const probe = buildRawRequirement(item, 0, settings)
+    if (!probe.extractor) continue
+    const clock = probe.extractor.key === 'Build_WaterPump_C'
+      ? settings.extraction.waterExtractorClock
+      : settings.extraction.clockByResource?.[entry.item] ?? settings.extraction.minerClock
+    extractorMW += entry.nodes * probe.extractor.powerMW * Math.pow(clock, probe.extractor.powerExponent)
+  }
+  return {
+    extractorMW,
+    pumpMW: pump?.powerMW ?? 20,
+    pumpRatePerMin: pump?.baseRatePerMin ?? 120,
+  }
+}
+
+/**
  * The planner, re-costed around what you actually have.
  *
  * Each resource is priced against the most plentiful thing on your list, so a
@@ -119,16 +162,6 @@ export function scarcitySettings(
 function fits(plan: Plan, supply: Map<string, number>): boolean {
   return plan.raw.every((r) =>
     UNLIMITED.has(r.item.key) || r.ratePerMin <= (supply.get(r.item.key) ?? 0) * (1 + 1e-6))
-}
-
-/** How much of each resource a build at this size actually spends, 0–1. */
-function spend(plan: Plan, scale: number, supply: Map<string, number>): Map<string, number> {
-  const used = new Map<string, number>()
-  for (const r of plan.raw) {
-    if (UNLIMITED.has(r.item.key)) continue
-    used.set(r.item.key, (r.ratePerMin * scale) / (supply.get(r.item.key) || 1))
-  }
-  return used
 }
 
 /**
@@ -161,11 +194,48 @@ function repriceOn(used: Map<string, number>, supply: Map<string, number>): Reco
  */
 const REPRICE_PASSES = 4
 
-interface Biggest {
+interface Sized {
   scale: number
-  limitedBy: GameItem | null
+  limitedBy: string | null
+  /** Fraction of each resource spent, which is what the next pricing round reads. */
+  used: Map<string, number>
+  plant: Plant | null
+}
+
+interface Biggest extends Sized {
   /** The prices that found this route, so the full-size solve repeats it. */
   weights: Record<string, number>
+}
+
+/** How far a unit plan stretches on resources alone. */
+function stretch(unit: Plan, supply: Map<string, number>): Sized | null {
+  let scale = Infinity
+  let limitedBy: string | null = null
+  for (const raw of unit.raw) {
+    if (UNLIMITED.has(raw.item.key) || !(raw.ratePerMin > 0)) continue
+    const room = (supply.get(raw.item.key) ?? 0) / raw.ratePerMin
+    if (room < scale) { scale = room; limitedBy = raw.item.key }
+  }
+  if (!isFinite(scale) || scale <= 0) return null
+  const used = new Map<string, number>()
+  for (const raw of unit.raw) {
+    if (!UNLIMITED.has(raw.item.key)) used.set(raw.item.key, raw.ratePerMin * scale)
+  }
+  return { scale, limitedBy, used, plant: null }
+}
+
+/** The same, with the generators drawing on the pile too. */
+function stretchPowered(
+  unit: Plan, supply: Map<string, number>, gen: GeneratorCost, fixed: FixedPlant,
+): Sized | null {
+  const b: Balance | null = balance(unit, supply, gen, fixed)
+  if (!b) return null
+  return {
+    scale: b.scale,
+    limitedBy: b.limitedBy,
+    used: b.used,
+    plant: { generators: b.generators, pumps: b.pumps, drawMW: b.drawMW },
+  }
 }
 
 /**
@@ -176,7 +246,12 @@ interface Biggest {
  * getting on for twice the steel pipe, because the first pricing had no way to
  * know the route would run the coal dry and leave the copper alone.
  */
-function maximise(itemKey: string, supply: Map<string, number>, base: PlannerSettings): Biggest | null {
+function maximise(
+  itemKey: string,
+  supply: Map<string, number>,
+  base: PlannerSettings,
+  size: (unit: Plan) => Sized | null,
+): Biggest | null {
   let weights = base.resourceWeights
   let best: Biggest | null = null
 
@@ -188,18 +263,16 @@ function maximise(itemKey: string, supply: Map<string, number>, base: PlannerSet
     // charged the earth for it, has no route that avoids it.
     if (unit.raw.some((r) => !supply.has(r.item.key) && !UNLIMITED.has(r.item.key))) break
 
-    let scale = Infinity
-    let limitedBy: GameItem | null = null
-    for (const raw of unit.raw) {
-      if (UNLIMITED.has(raw.item.key) || !(raw.ratePerMin > 0)) continue
-      const room = (supply.get(raw.item.key) ?? 0) / raw.ratePerMin
-      if (room < scale) { scale = room; limitedBy = raw.item }
-    }
-    if (!isFinite(scale) || scale <= 0) break
+    const sized = size(unit)
+    if (!sized) break
 
-    if (!best || scale > best.scale) best = { scale, limitedBy, weights }
+    if (!best || sized.scale > best.scale) best = { ...sized, weights }
 
-    const next = repriceOn(spend(unit, scale, supply), supply)
+    // Repricing reads the whole draw, generators included — which is the point
+    // when they are burning the same coal the factory wants.
+    const fractions = new Map<string, number>()
+    for (const [key, rate] of sized.used) fractions.set(key, rate / (supply.get(key) || 1))
+    const next = repriceOn(fractions, supply)
     if (rawResources.every((r) => Math.abs(next[r.key] - weights[r.key]) < 1e-9)) break
     weights = next
   }
@@ -218,9 +291,18 @@ function maximise(itemKey: string, supply: Map<string, number>, base: PlannerSet
  * or cooler-running way to reach that same size. If it can't, the
  * resource-first route stands.
  */
-export function bestFrom(available: Available[], settings: PlannerSettings): Candidate[] {
+export function bestFrom(
+  available: Available[], settings: PlannerSettings, generator: GeneratorCost | null = null,
+): Candidate[] {
   const supply = supplyOf(available, settings)
   if (supply.size === 0) return []
+
+  // With generators in the build the pile has a second claimant, and the size
+  // of the factory is what is left once they have taken their cut.
+  const fixed = generator ? fixedPlantOf(available, settings) : null
+  const size = generator && fixed
+    ? (unit: Plan) => stretchPowered(unit, supply, generator, fixed)
+    : (unit: Plan) => stretch(unit, supply)
 
   // Sizing runs on resources alone: whatever you are optimising for, wasting a
   // node is never the most of something you can make.
@@ -231,9 +313,9 @@ export function bestFrom(available: Available[], settings: PlannerSettings): Can
   for (const item of Object.values(items)) {
     if (item.isRaw || !(recipesByProduct[item.key] ?? []).length) continue
 
-    const biggest = maximise(item.key, supply, sizing)
+    const biggest = maximise(item.key, supply, sizing, size)
     if (!biggest) continue
-    const { scale, limitedBy } = biggest
+    const { scale } = biggest
 
     const target = [{ item: item.key, ratePerMin: scale }]
     const sized = solvePlan(target, { ...sizing, resourceWeights: biggest.weights })
@@ -256,15 +338,19 @@ export function bestFrom(available: Available[], settings: PlannerSettings): Can
       ratePerMin: scale,
       sinkPointsPerMin: full.totals.sinkPointsPerMin,
       machines: full.totals.machines,
-      powerMW: full.totals.totalPowerMW,
-      limitedBy,
+      // Self-powered, the load is the whole plant: the factory, the extractors
+      // you declared, the pumps and the fuel chain. Otherwise it is what the
+      // factory alone draws off a grid you already have.
+      powerMW: biggest.plant ? biggest.plant.drawMW : full.totals.totalPowerMW,
+      limitedBy: biggest.limitedBy ? items[biggest.limitedBy] ?? null : null,
       tuned: useAlt,
-      draws: full.raw
-        .filter((r) => r.ratePerMin > 0 && !UNLIMITED.has(r.item.key))
-        .map((r) => ({
-          item: r.item,
-          ratePerMin: r.ratePerMin,
-          fraction: r.ratePerMin / (supply.get(r.item.key) || 1),
+      plant: biggest.plant,
+      draws: [...biggest.used]
+        .filter(([key, rate]) => rate > 0 && !UNLIMITED.has(key) && items[key])
+        .map(([key, rate]) => ({
+          item: items[key],
+          ratePerMin: rate,
+          fraction: rate / (supply.get(key) || 1),
         }))
         .sort((a, b) => b.fraction - a.fraction),
     })
