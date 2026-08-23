@@ -32,7 +32,7 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
           onPick={(item) => {
             if (targets.some((t) => t.item === item.key)) return
             const rate = oneMachineRate(item.key, settings) ?? baseRatePerMin(item.key)
-            setTargets([...targets, { item: item.key, ratePerMin: rate }])
+            setTargets([...targets, { item: item.key, ratePerMin: rate, build: 1 }])
           }}
         />
         {targets.map((t, i) => {
@@ -74,11 +74,11 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
                     <button
                       key={n}
                       className="btn btn-icon"
-                      aria-pressed={Math.abs(t.ratePerMin - at) < 1e-4}
+                      aria-pressed={(t.build ?? 1) === n}
                       title={`${n} machine${n === 1 ? '' : 's'} of ${item.name} — ${fmt(at)}/min`}
                       onClick={() => {
                         const next = targets.slice()
-                        next[i] = { ...t, ratePerMin: at }
+                        next[i] = { ...t, ratePerMin: at, build: n }
                         setTargets(next)
                       }}
                     >

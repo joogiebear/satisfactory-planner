@@ -84,6 +84,30 @@ export function App() {
     return () => clearTimeout(id)
   }, [settings, targets])
 
+  /**
+   * Keep every output at what its build actually makes.
+   *
+   * The rate is not something anyone typed: it is the product of how many
+   * machines you are building and how they are tuned. So overclocking them,
+   * pinning a different recipe or unlocking an alternate has to move it. Left
+   * alone it would sit at whatever the settings used to imply, and the machine
+   * counts would drift into fractions to make up the difference.
+   */
+  useEffect(() => {
+    setTargets((current) => {
+      let changed = false
+      const next = current.map((t) => {
+        const one = oneMachineRate(t.item, settings)
+        if (one === null) return t
+        const rate = Math.round(one * (t.build ?? 1) * 10000) / 10000
+        if (Math.abs(rate - t.ratePerMin) < 1e-6) return t
+        changed = true
+        return { ...t, ratePerMin: rate }
+      })
+      return changed ? next : current
+    })
+  }, [settings])
+
   const plan = useMemo(() => solvePlan(targets, settings), [targets, settings])
 
   const onTune = (recipeKey: string, tweak: { clock?: number; sloops?: number }) => {

@@ -12,10 +12,19 @@ build you have installed rather than a wiki snapshot.
 - **Pick the item, not a number** — a rate is the wrong thing to ask for, so it
   isn't asked for. Choose what you want to make and the planner sizes the
   smallest build worth laying out: one machine of that recipe, everything
-  upstream following, with the output shown as the result. `×2 ×5 ×10` scales
-  it in whole machines. It starts on the kit a new save has — Mk.1 belts, Mk.1
-  miners, no alternates — and the build improves on its own as you upgrade
-  them, because the plan is a function of what you have.
+  upstream following. `×2 ×5 ×10` scales it in whole machines.
+
+  The output is *derived* from that build and follows what you change.
+  Overclock the machines to 250% and the same eight buildings go from 5/min to
+  12.5/min, with the power bill rising to match; pin a different recipe and it
+  moves again. It starts on the kit a new save has — Mk.1 belts, Mk.1 miners,
+  no alternates — so the plan improves on its own as you upgrade.
+- **Three ways to optimise** — fewest resources (priced by scarcity, so bauxite
+  costs seven times what iron does), fewest machines, or lowest power. They
+  give genuinely different factories once you have alternates unlocked.
+- **Plan at your tier** — cap the plan to what the HUB has actually given you,
+  driven from the real milestone data. A Blender arrives at Tier 7; ask for one
+  at Tier 4 and the planner says so rather than quietly using it.
 - **Factory view** — the plan as a machine-to-machine flow graph. Every machine
   is a card showing its building, count, recipe, power and each input and output
   with its rate; belts and pipes run between the exact ports that carry them,

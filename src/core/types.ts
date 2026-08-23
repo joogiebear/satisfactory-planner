@@ -274,7 +274,17 @@ export interface PlanNode {
 
 export interface PlanTarget {
   item: string
+  /**
+   * What the build produces. Derived, not asked for: it follows from how many
+   * machines you are building and how they are tuned, so overclocking them or
+   * changing a recipe moves this number rather than leaving it stranded.
+   */
   ratePerMin: number
+  /**
+   * How many machines of the chosen recipe, which is the thing actually being
+   * decided. Absent on targets saved before the rate stopped being an input.
+   */
+  build?: number
 }
 
 export interface Plan {
