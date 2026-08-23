@@ -80,6 +80,8 @@ interface MeshApi {
   manifest(): Promise<Record<string, MeshPart[]>>
   /** Class names that have an extracted icon. */
   icons(): Promise<string[]>
+  /** How many nodes of each resource and purity the map holds. */
+  nodes?(): Promise<import('../../core/mapNodes').NodeCounts | null>
   browse(): Promise<{ dir: string; valid: boolean } | null>
   extract(gameDir: string): Promise<{ ok: boolean; count?: number; dir?: string; error?: string }>
   clear(): Promise<MeshStatus>

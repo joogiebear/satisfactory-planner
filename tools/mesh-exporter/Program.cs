@@ -52,6 +52,7 @@ public static class Program
         var dumpAsset = ArgValue(args, "--dump");
         var phasesOut = ArgValue(args, "--phases");
         var iconsFrom = ArgValue(args, "--icons");
+        var nodesOut = ArgValue(args, "--nodes");
 
         if (string.IsNullOrWhiteSpace(gameDir))
         {
@@ -228,6 +229,11 @@ public static class Program
                 }
             }
             return 0;
+        }
+
+        if (!string.IsNullOrWhiteSpace(nodesOut))
+        {
+            return WriteNodes(provider, nodesOut, args.Contains("--survey"));
         }
 
         // One entry per Build_* blueprint. Keying by class name matters: a
@@ -1350,5 +1356,135 @@ public static class Program
     {
         var i = Array.IndexOf(args, name);
         return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
+    }
+
+    /// <summary>
+    /// Purity as the game spells it. "Inpure" is not a typo on this side.
+    /// </summary>
+    private static readonly Dictionary<string, string> Purities = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["RP_Inpure"] = "impure",
+        ["RP_Normal"] = "normal",
+        ["RP_Pure"] = "pure",
+    };
+
+    /// <summary>
+    /// Count every resource node on the map, by resource and purity.
+    ///
+    /// The map is a World Partition level, so there is no one file holding the
+    /// world: it is split into a couple of hundred generated cells, and the
+    /// nodes are actors scattered across them. Every cell has to be opened.
+    ///
+    /// Deposits are deliberately skipped. They are the small surface lumps you
+    /// mine by hand and cannot place a miner on, so counting them would inflate
+    /// every number here with resources you can never automate.
+    /// </summary>
+    private static int WriteNodes(DefaultFileProvider provider, string outPath, bool survey)
+    {
+        var cells = provider.Files.Keys
+            .Where(k => k.EndsWith(".umap", StringComparison.OrdinalIgnoreCase)
+                        && k.Contains("Persistent_Level", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(k => k)
+            .ToList();
+        Console.WriteLine($"Scanning {cells.Count} map cells for resource nodes");
+
+        // resource -> node kind -> purity -> count
+        var counts = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>(StringComparer.OrdinalIgnoreCase);
+        var classSeen = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var scanned = 0;
+        var found = 0;
+
+        foreach (var cell in cells)
+        {
+            if (!provider.TryLoadPackage(cell, out var pkg)) continue;
+            scanned++;
+            if (scanned % 50 == 0) Console.WriteLine($"  {scanned}/{cells.Count} cells, {found} nodes");
+
+            foreach (var export in pkg.GetExports())
+            {
+                var cls = export.Class?.Name.ToString() ?? "";
+                if (!cls.Contains("ResourceNode", StringComparison.OrdinalIgnoreCase)
+                    && !cls.Contains("FrackingCore", StringComparison.OrdinalIgnoreCase)
+                    && !cls.Contains("ResourceWell", StringComparison.OrdinalIgnoreCase)) continue;
+
+                if (survey)
+                    classSeen[cls] = classSeen.GetValueOrDefault(cls) + 1;
+
+                var resource = ResourceOf(export);
+                if (resource is null) continue;
+
+                var kind = NodeKind(export, cls);
+                // Hand-mined lumps are not something you can build on.
+                if (kind == "deposit") continue;
+
+                // A node with no mPurity of its own is a normal one: the property
+                // is only written where it differs from the class default, and the
+                // counts bear it out — iron comes to 39 impure, 42 normal, 46 pure.
+                var purity = PurityOf(export) ?? "normal";
+                if (!counts.TryGetValue(resource, out var byKind))
+                    counts[resource] = byKind = new(StringComparer.OrdinalIgnoreCase);
+                if (!byKind.TryGetValue(kind, out var byPurity))
+                    byKind[kind] = byPurity = new(StringComparer.OrdinalIgnoreCase);
+                byPurity[purity] = byPurity.GetValueOrDefault(purity) + 1;
+                found++;
+            }
+        }
+
+        if (survey)
+            foreach (var (cls, n) in classSeen.OrderByDescending(kv => kv.Value))
+                Console.WriteLine($"  class {cls} × {n}");
+
+        Console.WriteLine($"Found {found} placeable nodes across {counts.Count} resources");
+        var json = JsonSerializer.Serialize(counts, new JsonSerializerOptions { WriteIndented = true });
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outPath))!);
+        File.WriteAllText(outPath, json);
+        Console.WriteLine($"Wrote {outPath}");
+        return 0;
+    }
+
+    /// <summary>Which resource an actor sits on, as its Desc_*_C class name.</summary>
+    private static string? ResourceOf(UObject export)
+    {
+        foreach (var name in new[] { "mResourceClass", "mResourceNodeClass", "mItemClass" })
+        {
+            if (!export.TryGetValue(out FPackageIndex idx, name) || idx.IsNull) continue;
+            var resolved = idx.Name;
+            if (!string.IsNullOrEmpty(resolved)) return resolved!;
+        }
+        // Some node blueprints only name the resource in their own class,
+        // e.g. BP_ResourceNode_Iron_C.
+        return null;
+    }
+
+    private static string? PurityOf(UObject export)
+    {
+        if (export.TryGetValue(out FName purity, "mPurity")
+            && Purities.TryGetValue(LastSegment(purity.Text ?? ""), out var name)) return name;
+        return null;
+    }
+
+    /// <summary>
+    /// Nodes take a miner, wells take a pressuriser and its satellites, and
+    /// deposits take a pickaxe. Only the first two can be built on.
+    /// </summary>
+    private static string NodeKind(UObject export, string cls)
+    {
+        if (export.TryGetValue(out FName type, "mResourceNodeType"))
+        {
+            var t = LastSegment(type.Text ?? "");
+            if (t.Contains("Deposit", StringComparison.OrdinalIgnoreCase)) return "deposit";
+            if (t.Contains("Fracking", StringComparison.OrdinalIgnoreCase)
+                || t.Contains("Geyser", StringComparison.OrdinalIgnoreCase)) return "well";
+        }
+        if (cls.Contains("Deposit", StringComparison.OrdinalIgnoreCase)) return "deposit";
+        if (cls.Contains("Fracking", StringComparison.OrdinalIgnoreCase)
+            || cls.Contains("Geyser", StringComparison.OrdinalIgnoreCase)) return "well";
+        return "node";
+    }
+
+    private static string LastSegment(string value)
+    {
+        var cut = value.LastIndexOf("::", StringComparison.Ordinal);
+        return cut >= 0 ? value[(cut + 2)..] : value;
     }
 }

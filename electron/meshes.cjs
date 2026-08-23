@@ -124,6 +124,9 @@ async function extract(gameDir, onProgress) {
     onProgress({ phase: 'reading', done: 0, total: 0, message: 'Reading the icons…' })
     await runIcons(exporter, gameDir, raw, onProgress)
 
+    onProgress({ phase: 'reading', done: 0, total: 0, message: 'Counting the map’s resource nodes…' })
+    await runNodes(exporter, gameDir, raw, onProgress)
+
     onProgress({ phase: 'optimising', done: 0, total: 0, message: 'Simplifying for display…' })
     const out = meshDir()
     await fsp.rm(out, { recursive: true, force: true })
@@ -156,6 +159,25 @@ async function runIcons(exporter, gameDir, outDir, onProgress) {
     // failing the whole extraction over that would cost the models too.
   } finally {
     await fsp.rm(list, { force: true }).catch(() => {})
+  }
+}
+
+/**
+ * Count what the map holds, so a survey can be checked against it.
+ *
+ * The nodes live in the level rather than in any data table, and the level is
+ * a World Partition one — a few thousand cells, all of which have to be opened.
+ * It runs last because it is the slowest part and the least missed: without it
+ * you can still say you have three iron nodes, you just don't get told how many
+ * there are to have.
+ */
+async function runNodes(exporter, gameDir, outDir, onProgress) {
+  try {
+    await runExporter(exporter, gameDir, outDir, onProgress, [
+      '--nodes', path.join(outDir, 'nodes.json'),
+    ])
+  } catch {
+    /* the tab falls back to unbounded counts */
   }
 }
 
@@ -241,6 +263,7 @@ async function optimise(rawDir, outDir, onProgress) {
   } catch {
     /* no manifest means no real geometry, and the boxes stand in */
   }
+  await fsp.copyFile(path.join(rawDir, 'nodes.json'), path.join(outDir, 'nodes.json')).catch(() => {})
 
   // Base-colour maps and icons are already sized for display; copy as they are.
   for (const file of await fsp.readdir(rawDir)) {
@@ -248,6 +271,15 @@ async function optimise(rawDir, outDir, onProgress) {
     await fsp.copyFile(path.join(rawDir, file), path.join(outDir, file)).catch(() => {})
   }
   return written
+}
+
+/** How many nodes of each resource and purity the map holds. */
+async function nodes() {
+  try {
+    return JSON.parse(await fsp.readFile(path.join(meshDir(), 'nodes.json'), 'utf8'))
+  } catch {
+    return null
+  }
 }
 
 /** Class names that have an extracted icon, for the interface to look up. */
@@ -265,4 +297,4 @@ async function clear() {
   return status()
 }
 
-module.exports = { meshDir, findGame, isGameDir, status, manifest, icons, extract, clear }
+module.exports = { meshDir, findGame, isGameDir, status, manifest, icons, nodes, extract, clear }

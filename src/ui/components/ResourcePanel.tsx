@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { items, miners, rawResources } from '../../core/gameData'
 import { bestFrom, supplyOf, type Available, type Candidate } from '../../core/fromResources'
+import { hasMapNodes, nodesAt, nodesOf, spread, surveyed } from '../../core/mapNodes'
 import { generatorOptions, type GeneratorCost } from '../../core/selfPowered'
 import { buildRawRequirement } from '../../core/solver'
-import type { PlanTarget, PlannerSettings } from '../../core/types'
+import type { PlanTarget, PlannerSettings, Purity } from '../../core/types'
 import { fmt, fmtPower, unit } from '../format'
 import { Icon } from '../graph/FactoryNode'
 import { ItemPicker } from './ItemPicker'
@@ -40,13 +41,26 @@ const POWER_KEY = 'satisfactory-planner/resources-power'
 /** The value that means "assume the grid is already there". */
 const GRID = ''
 
-interface Held { item: string; nodes: number }
+/**
+ * One line of a survey: this many nodes of this resource, at this purity.
+ *
+ * Purity belongs on the row rather than on the resource, because a real survey
+ * is "two pure iron and one impure" and a resource-wide setting cannot say
+ * that. It also makes the whole map expressible, which it wasn't when 127 iron
+ * nodes had to claim a single purity between them.
+ */
+interface Held { item: string; purity: Purity; nodes: number }
+
+const heldKey = (h: Held) => `${h.item}:${h.purity}`
 
 function loadHeld(): Held[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
-    return (JSON.parse(raw) as Held[]).filter((h) => items[h.item] && h.nodes > 0)
+    return (JSON.parse(raw) as Partial<Held>[])
+      .filter((h) => h.item && items[h.item] && (h.nodes ?? 0) > 0)
+      // Surveys saved before purity moved onto the row.
+      .map((h) => ({ item: h.item!, purity: h.purity ?? 'normal', nodes: h.nodes! }))
   } catch { return [] }
 }
 
@@ -71,15 +85,13 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch { /* private mode */ }
   }
 
-  // Purity lives on the miner, the same setting the factory view edits, so a
-  // node declared pure here stays pure when the plan opens.
   const available = useMemo<Available[]>(() => held.map((h) => ({
-    item: h.item,
-    nodes: h.nodes,
-    purity: settings.extraction.purity[h.item] ?? settings.extraction.defaultPurity,
-  })), [held, settings.extraction.purity, settings.extraction.defaultPurity])
+    item: h.item, nodes: h.nodes, purity: h.purity,
+  })), [held])
 
   const supply = useMemo(() => supplyOf(available, settings), [available, settings])
+  const rateOf = (h: Held) => (supplyOf([{ item: h.item, nodes: h.nodes, purity: h.purity }], settings)
+    .get(h.item) ?? 0)
 
   // Generators you have the fuel for come first: a nuclear plant is the biggest
   // number on the list and no use at all on an iron and coal patch.
@@ -108,11 +120,37 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
     try { localStorage.setItem(POWER_KEY, key) } catch { /* private mode */ }
   }
 
-  const pickable = rawResources.filter(
-    (r) => !UNLIMITED.has(r.key) && !held.some((h) => h.item === r.key),
-  )
+  // A resource stays pickable while any of its purities is unlisted: a survey
+  // of two pure iron nodes and one impure is two rows, not a contradiction.
+  const pickable = rawResources.filter((r) => {
+    if (UNLIMITED.has(r.key)) return false
+    const listed = new Set(held.filter((h) => h.item === r.key).map((h) => h.purity))
+    return listed.size < 3
+  })
+
+  /** Every node the map holds, each at the purity it actually is. */
+  const wholeMap = () => {
+    const next: Held[] = []
+    for (const key of surveyed()) {
+      if (UNLIMITED.has(key) || !items[key]) continue
+      for (const { purity, count } of spread(key)) next.push({ item: key, purity, nodes: count })
+    }
+    if (next.length) save(next)
+  }
 
   const plan = (c: Candidate) => {
+    // The factory view has one purity per miner, so a survey spread over three
+    // takes the one it has most of. The rate came from the real mix and stands;
+    // this only decides what the miners on the canvas say they are sitting on.
+    const dominant: Record<string, Purity> = {}
+    const most: Record<string, number> = {}
+    for (const h of held) {
+      if (h.nodes > (most[h.item] ?? 0)) { most[h.item] = h.nodes; dominant[h.item] = h.purity }
+    }
+    setSettings({
+      ...settings,
+      extraction: { ...settings.extraction, purity: { ...settings.extraction.purity, ...dominant } },
+    })
     setTargets([{ item: c.item.key, ratePerMin: c.ratePerMin }])
     onPlanned()
   }
@@ -129,13 +167,13 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
       <div className="res-held">
         {held.map((h) => (
           <HeldRow
-            key={h.item}
+            key={heldKey(h)}
             held={h}
             settings={settings}
             setSettings={setSettings}
-            supply={supply.get(h.item) ?? 0}
-            onCount={(nodes) => save(held.map((x) => (x.item === h.item ? { ...x, nodes } : x)))}
-            onRemove={() => save(held.filter((x) => x.item !== h.item))}
+            rate={rateOf(h)}
+            onChange={(next) => save(held.map((x) => (heldKey(x) === heldKey(h) ? next : x)))}
+            onRemove={() => save(held.filter((x) => heldKey(x) !== heldKey(h)))}
           />
         ))}
 
@@ -145,14 +183,30 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
               items={pickable}
               placeholder="Which resource did you find?"
               emptyText="Nothing left to add."
-              onPick={(item) => { save([...held, { item: item.key, nodes: 1 }]); setAdding(false) }}
+              onPick={(item) => {
+                const listed = new Set(held.filter((h) => h.item === item.key).map((h) => h.purity))
+                const purity = (['normal', 'pure', 'impure'] as const).find((p) => !listed.has(p)) ?? 'normal'
+                save([...held, { item: item.key, purity, nodes: 1 }])
+                setAdding(false)
+              }}
             />
             <button className="btn" onClick={() => setAdding(false)}>Cancel</button>
           </div>
         ) : (
-          <button className="btn btn-primary res-add" onClick={() => setAdding(true)}>
-            + Add a resource
-          </button>
+          <div className="res-add-row">
+            <button className="btn btn-primary res-add" onClick={() => setAdding(true)}>
+              + Add a resource
+            </button>
+            {hasMapNodes() && (
+              <button
+                className="btn"
+                onClick={wholeMap}
+                title="Every node on the map, as a ceiling rather than a plan"
+              >
+                Everything on the map
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -161,6 +215,8 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
           List the nodes you've surveyed — the ore, the oil, the coal — and this works out
           everything they could feed and how big each build would get. Water isn't listed:
           extractors go wherever there's a lake, so it never runs out.
+          {hasMapNodes() && <> The map's own node counts have been read from your copy of
+            the game, so each row knows how many of that resource there are to have.</>}
         </p>
       ) : ranked.length === 0 ? (
         <p className="muted res-empty">
@@ -283,13 +339,13 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
 }
 
 function HeldRow({
-  held, settings, setSettings, supply, onCount, onRemove,
+  held, settings, setSettings, rate, onChange, onRemove,
 }: {
   held: Held
   settings: PlannerSettings
   setSettings: (s: PlannerSettings) => void
-  supply: number
-  onCount: (nodes: number) => void
+  rate: number
+  onChange: (next: Held) => void
   onRemove: () => void
 }) {
   const item = items[held.item]
@@ -299,11 +355,16 @@ function HeldRow({
   // pumps ignore it, and the fracking gear has rules of its own.
   const extractor = buildRawRequirement(item, 0, settings).extractor
   const graded = extractor?.affectedByPurity ?? false
-  const purity = settings.extraction.purity[held.item] ?? settings.extraction.defaultPurity
   // A miner mark is a machine you place, so it belongs on the row you placed it
   // on rather than on a global default that every node then has to override.
   const minable = extractor?.kind === 'solid'
   const minerKey = settings.extraction.minerByResource?.[held.item] ?? settings.extraction.minerKey
+
+  // What the map holds of this, if it has been counted. A survey claiming more
+  // pure iron than exists is not a survey, and until now nothing could say so.
+  const onMap = hasMapNodes() ? nodesAt(held.item, held.purity) : 0
+  const known = hasMapNodes() && nodesOf(held.item) > 0
+  const over = known && held.nodes > onMap
 
   return (
     <div className="res-row">
@@ -335,14 +396,9 @@ function HeldRow({
             <button
               key={p}
               type="button"
-              aria-pressed={purity === p}
-              onClick={() => setSettings({
-                ...settings,
-                extraction: {
-                  ...settings.extraction,
-                  purity: { ...settings.extraction.purity, [held.item]: p },
-                },
-              })}
+              aria-pressed={held.purity === p}
+              title={hasMapNodes() ? `${nodesAt(held.item, p)} ${p} on the map` : undefined}
+              onClick={() => onChange({ ...held, purity: p })}
             >
               {p}
             </button>
@@ -354,15 +410,34 @@ function HeldRow({
         <input
           type="number"
           min={1}
+          max={known ? onMap : undefined}
           step={1}
           value={held.nodes}
+          data-over={over || undefined}
           aria-label={`How many ${item.name} nodes`}
-          onChange={(e) => onCount(Math.max(1, Math.round(Number(e.target.value) || 1)))}
+          onChange={(e) => onChange({ ...held, nodes: Math.max(1, Math.round(Number(e.target.value) || 1)) })}
         />
         <span className="muted">{minable ? `miner${held.nodes === 1 ? '' : 's'}` : `node${held.nodes === 1 ? '' : 's'}`}</span>
       </label>
 
-      <span className="muted res-supply">{fmt(supply, 1)}/min</span>
+      {known && (
+        <span className="res-onmap" data-over={over || undefined}>
+          {over ? (
+            <button
+              type="button"
+              className="res-trim"
+              onClick={() => onChange({ ...held, nodes: Math.max(1, onMap) })}
+              title={`Only ${onMap} ${held.purity} ${item.name} node${onMap === 1 ? '' : 's'} exist`}
+            >
+              only {onMap} on the map
+            </button>
+          ) : (
+            <span className="muted">of {onMap} {held.purity}</span>
+          )}
+        </span>
+      )}
+
+      <span className="muted res-supply">{fmt(rate, 1)}/min</span>
 
       <button type="button" className="remove" aria-label={`Remove ${item.name}`} onClick={onRemove}>✕</button>
     </div>

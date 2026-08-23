@@ -1224,3 +1224,18 @@ table.mini .num { font-family: var(--mono); }
 .res-draw[data-binding='true'] .res-bar > span { background: var(--ficsit); }
 .res-miner { width: 118px; padding: 3px 6px; font-size: 12px; }
 .res-plant-pick { max-width: 300px; }
+
+/* A survey claiming more pure iron than the map holds is worth saying so about,
+   without refusing the number: you might be planning for a modded world. */
+.res-onmap { font-size: 12px; min-width: 13ch; }
+.res-count input[data-over] { border-color: var(--hazard); }
+.res-trim {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--hazard);
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
+.res-add-row { display: flex; gap: 10px; align-items: center; }

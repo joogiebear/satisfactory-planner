@@ -13,6 +13,7 @@ import { ResourcePanel } from './components/ResourcePanel'
 import { MeshProvider } from './blueprint/MeshContext'
 import { MeshOffer, MeshProgressCard } from './blueprint/MeshOffer'
 import { refreshIcons } from './icons'
+import { refreshMapNodes } from '../core/mapNodes'
 import { fmt, fmtPower } from './format'
 
 type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'resources' | 'progression' | 'blueprint'
@@ -62,12 +63,14 @@ function load(): Saved {
 }
 
 export function App() {
-  // Icons are extracted, not bundled, so they arrive after the first paint.
-  // Every chip in the app reads them, not just the blueprint viewer, so the
-  // load happens here and a bump re-renders the tree once they land.
+  // Icons and the map's node counts are extracted, not bundled, so they arrive
+  // after the first paint. Every chip in the app reads the icons, not just the
+  // blueprint viewer, so the load happens here and a bump re-renders the tree
+  // once they land.
   const [, setIconGeneration] = useState(0)
   useEffect(() => {
     void refreshIcons().then((n) => { if (n) setIconGeneration((g) => g + 1) })
+    void refreshMapNodes().then((n) => { if (n) setIconGeneration((g) => g + 1) })
   }, [])
 
   const initial = useMemo(load, [])
