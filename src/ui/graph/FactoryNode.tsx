@@ -48,12 +48,13 @@ function PortRow({ port, side }: { port: Port; side: 'in' | 'out' }) {
 }
 
 export function FactoryNode({ data, selected }: NodeProps<FactoryNodeType>) {
-  const { kind, step, raw } = data
+  const { kind, step, raw, power } = data
 
   const headerKey =
     kind === 'machine' ? step?.recipe.machine ?? null
-      : kind === 'source' ? null
-        : data.item?.key ?? null
+      : kind === 'power' ? power?.generator.key ?? null
+        : kind === 'source' ? null
+          : data.item?.key ?? null
 
   return (
     <div
@@ -72,7 +73,9 @@ export function FactoryNode({ data, selected }: NodeProps<FactoryNodeType>) {
           <div className="fnode-sub">{data.subtitle}</div>
         </div>
 
-        {data.powerMW > 0 && <div className="fnode-power">{fmtPower(data.powerMW)}</div>}
+        {kind === 'power' && power
+          ? <div className="fnode-power fnode-power-out">+{fmtPower(power.outputMW)}</div>
+          : data.powerMW > 0 && <div className="fnode-power">{fmtPower(data.powerMW)}</div>}
       </div>
 
       {(step?.clock !== 1 || (step?.sloops ?? 0) > 0) && step && (
@@ -81,6 +84,17 @@ export function FactoryNode({ data, selected }: NodeProps<FactoryNodeType>) {
           {step.sloops > 0 && (
             <span className="badge badge-sloop">
               {step.sloops} sloop{step.sloops > 1 ? 's' : ''} · ×{fmt(step.sloopMultiplier, 2)}
+            </span>
+          )}
+        </div>
+      )}
+
+      {kind === 'power' && power && (
+        <div className="fnode-badges">
+          <span className="badge">{fmt(power.generator.powerMW)} MW each</span>
+          {power.overheadMW > 0.05 && (
+            <span className="badge" title="What the factory making this fuel draws, which these generators also cover">
+              +{fmt(power.overheadMW, 0)} MW to feed itself
             </span>
           )}
         </div>

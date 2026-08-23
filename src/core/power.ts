@@ -92,18 +92,31 @@ export function planPower(demandMW: number, settings: PlannerSettings): PowerOpt
     }
   }
 
-  // Fewest generators first, then least overhead: a plan that needs four
-  // buildings beats one that needs forty, and among equals the one that spends
-  // less of its own output feeding itself.
+  // Smallest plant that does the job, then fewest buildings, then least
+  // overhead.
+  //
+  // This used to lead on the building count alone, which reads well in a list
+  // and badly as an answer: a 135 MW factory came back as one Nuclear Power
+  // Plant, because a single 2.5 GW reactor is fewer buildings than two coal
+  // generators and the 95% of it left idle cost nothing to say. Ranking on what
+  // you have to install instead puts the two coal generators first, and still
+  // prefers the reactor once there is a factory big enough to load it.
   options.sort((a, b) => {
-    // Anything blocked sorts below anything buildable, however few buildings it
-    // would have needed.
+    // Anything blocked sorts below anything buildable, however small it
+    // would have been.
     const blocked = (BLOCKER_RANK[a.blocker ?? ''] ?? 0) - (BLOCKER_RANK[b.blocker ?? ''] ?? 0)
     if (blocked !== 0) return blocked
+    const installed = installedMW(a) - installedMW(b)
+    if (Math.abs(installed) > 1e-6) return installed
     const units = Math.ceil(a.units - 1e-9) - Math.ceil(b.units - 1e-9)
     return units !== 0 ? units : a.overheadMW - b.overheadMW
   })
   return options
+}
+
+/** What you actually have to build: whole generators at their full rating. */
+function installedMW(option: PowerOption): number {
+  return Math.ceil(option.units - 1e-9) * option.generator.powerMW
 }
 
 function solveOne(

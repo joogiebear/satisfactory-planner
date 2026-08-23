@@ -9,14 +9,13 @@ import { TreeView } from './components/TreeView'
 import { BlueprintPanel } from './components/BlueprintPanel'
 import { FactoryGraph } from './components/FactoryGraph'
 import { ProgressionPanel } from './components/ProgressionPanel'
-import { PowerPanel } from './components/PowerPanel'
 import { ResourcePanel } from './components/ResourcePanel'
 import { MeshProvider } from './blueprint/MeshContext'
 import { MeshOffer, MeshProgressCard } from './blueprint/MeshOffer'
 import { refreshIcons } from './icons'
 import { fmt, fmtPower } from './format'
 
-type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'power' | 'resources' | 'progression' | 'blueprint'
+type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'resources' | 'progression' | 'blueprint'
 
 const STORAGE_KEY = 'satisfactory-planner/v1'
 
@@ -27,7 +26,6 @@ const TAB_LABELS: Record<Tab, string> = {
   tree: 'Tree',
   steps: 'Steps',
   summary: 'Summary',
-  power: 'Power',
   resources: 'What I have',
   progression: 'Progression',
   blueprint: 'Blueprints',
@@ -135,7 +133,7 @@ export function App() {
           <span className="brand-sub">Production Planner</span>
         </div>
         <nav className="tabs" role="tablist">
-          {(['factory', 'tree', 'steps', 'summary', 'power', 'resources', 'progression', 'blueprint'] as Tab[]).map((t) => (
+          {(['factory', 'tree', 'steps', 'summary', 'resources', 'progression', 'blueprint'] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
@@ -192,15 +190,6 @@ export function App() {
 
           {tab === 'blueprint' && <BlueprintPanel plan={plan} />}
 
-          {tab === 'power' && (
-            <PowerPanel
-              plan={plan}
-              settings={settings}
-              setTargets={setTargets}
-              onPlanned={() => setTab('factory')}
-            />
-          )}
-
           {tab === 'resources' && (
             <ResourcePanel
               settings={settings}
@@ -241,7 +230,7 @@ export function App() {
                 <Stat label="Sink points" value={fmt(plan.totals.sinkPointsPerMin, 0)} unit="/min" />
               </div>}
 
-              {tab === 'factory' && <FactoryGraph plan={plan} settings={settings} setSettings={setSettings} />}
+              {tab === 'factory' && <FactoryGraph plan={plan} settings={settings} setSettings={setSettings} setTargets={setTargets} />}
               {tab === 'tree' && <TreeView plan={plan} settings={settings} />}
               {tab === 'steps' && <StepsTable plan={plan} settings={settings} onTune={onTune} />}
               {tab === 'summary' && <SummaryPanel plan={plan} settings={settings} />}

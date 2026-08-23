@@ -9,9 +9,10 @@
  * exactly.
  */
 
+import type { PowerOption } from '../../core/power'
 import type { GameItem, Plan, ProductionStep, RawRequirement } from '../../core/types'
 
-export type FlowNodeKind = 'machine' | 'source' | 'sink' | 'byproduct'
+export type FlowNodeKind = 'machine' | 'source' | 'sink' | 'byproduct' | 'power'
 
 export interface Port {
   item: GameItem
@@ -25,6 +26,8 @@ export interface FlowNodeData extends Record<string, unknown> {
   item: GameItem | null
   step: ProductionStep | null
   raw: RawRequirement | null
+  /** Set on the power node: how the factory's draw would be covered. */
+  power: PowerOption | null
   /** Whole machines to build. */
   count: number
   powerMW: number
@@ -68,7 +71,9 @@ const EPS = 1e-7
 interface Supplier { nodeId: string; rate: number }
 interface Consumer { nodeId: string; rate: number }
 
-export function buildGraph(plan: Plan): { nodes: GraphNode[]; edges: GraphEdge[] } {
+export function buildGraph(
+  plan: Plan, power: PowerOption | null = null,
+): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const nodes: GraphNode[] = []
 
   // --- machines ---
@@ -85,6 +90,7 @@ export function buildGraph(plan: Plan): { nodes: GraphNode[]; edges: GraphEdge[]
         item: step.primaryItem,
         step,
         raw: null,
+        power: null,
         count,
         powerMW: step.powerMW,
         inputs,
@@ -107,6 +113,7 @@ export function buildGraph(plan: Plan): { nodes: GraphNode[]; edges: GraphEdge[]
         item: raw.item,
         step: null,
         raw,
+        power: null,
         count,
         powerMW: raw.powerMW,
         inputs: [],
@@ -132,6 +139,7 @@ export function buildGraph(plan: Plan): { nodes: GraphNode[]; edges: GraphEdge[]
         item,
         step: null,
         raw: null,
+        power: null,
         count: 0,
         powerMW: 0,
         inputs: [{ item, ratePerMin: target.ratePerMin }],
@@ -153,12 +161,49 @@ export function buildGraph(plan: Plan): { nodes: GraphNode[]; edges: GraphEdge[]
         item: bp.item,
         step: null,
         raw: null,
+        power: null,
         count: 0,
         powerMW: 0,
         inputs: [{ item: bp.item, ratePerMin: bp.ratePerMin }],
         outputs: [],
         width: NODE_WIDTH,
         height: nodeHeight(1, 0),
+      },
+    })
+  }
+
+  // --- the plant that would run all this ---
+  //
+  // Deliberately wired to nothing. The generators are not part of the plan
+  // until you ask for their fuel, and giving them edges would put fuel the
+  // factory does not yet make into a graph that balances exactly.
+  if (power) {
+    const units = Math.ceil(power.units - 1e-9)
+    const inputs: Port[] = [{ item: power.fuelItem, ratePerMin: power.fuelPerMin }]
+    if (power.supplementalItem && power.supplementalPerMin > 0) {
+      inputs.push({ item: power.supplementalItem, ratePerMin: power.supplementalPerMin })
+    }
+    const outputs: Port[] = power.byproductItem && power.byproductPerMin > 0
+      ? [{ item: power.byproductItem, ratePerMin: power.byproductPerMin }]
+      : []
+    nodes.push({
+      id: 'power',
+      data: {
+        kind: 'power',
+        title: `${units}× ${power.generator.name}`,
+        // Generation minus what the fuel plant draws is what the factory on the
+        // canvas actually gets, and that is the number worth reading here.
+        subtitle: `covers ${Math.round(power.outputMW - power.overheadMW)} MW of factory`,
+        item: power.fuelItem,
+        step: null,
+        raw: null,
+        power,
+        count: units,
+        powerMW: 0,
+        inputs,
+        outputs,
+        width: NODE_WIDTH,
+        height: nodeHeight(inputs.length, outputs.length),
       },
     })
   }
@@ -173,6 +218,7 @@ export function buildGraph(plan: Plan): { nodes: GraphNode[]; edges: GraphEdge[]
   }
 
   for (const node of nodes) {
+    if (node.data.kind === 'power') continue
     for (const out of node.data.outputs) {
       if (out.ratePerMin > EPS) add(suppliers, out.item.key, { nodeId: node.id, rate: out.ratePerMin })
     }

@@ -166,7 +166,7 @@ export function ResourcePanel({ settings, setSettings, setTargets, onPlanned }: 
             </p>
           </div>
 
-          <table className="power-table res-table">
+          <table className="data-table res-table">
             <thead>
               <tr>
                 <th>Make</th>

@@ -7,7 +7,8 @@ import {
 import '@xyflow/react/dist/style.css'
 import dagre from 'dagre'
 
-import type { Plan, PlannerSettings } from '../../core/types'
+import { planPower } from '../../core/power'
+import type { Plan, PlanTarget, PlannerSettings } from '../../core/types'
 import { buildGraph, type FlowEdgeData, type FlowNodeData } from '../graph/model'
 import { FactoryNode } from '../graph/FactoryNode'
 import { BeltEdge, setEdgeSettings } from '../graph/BeltEdge'
@@ -25,6 +26,7 @@ interface Props {
   plan: Plan
   settings: PlannerSettings
   setSettings: (next: PlannerSettings) => void
+  setTargets: (t: PlanTarget[]) => void
 }
 
 /** Lay the graph out with dagre, which keeps a production chain readable. */
@@ -57,13 +59,26 @@ function layout(
   })
 }
 
-function Canvas({ plan, settings, setSettings }: Props) {
+function Canvas({ plan, settings, setSettings, setTargets }: Props) {
   const [direction, setDirection] = useState<Direction>('LR')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const { fitView } = useReactFlow()
   setEdgeSettings(settings)
 
-  const graph = useMemo(() => buildGraph(plan), [plan])
+  // What it would take to run this. Costed here rather than on a tab of its
+  // own: a factory's draw is a property of the factory, and asking about it
+  // somewhere else meant answering for one that wasn't on screen.
+  const [generatorKey, setGeneratorKey] = useState<string | null>(null)
+  const options = useMemo(
+    () => planPower(plan.totals.totalPowerMW, settings),
+    [plan.totals.totalPowerMW, settings],
+  )
+  const chosen = useMemo(
+    () => options.find((o) => o.key === generatorKey) ?? options[0] ?? null,
+    [options, generatorKey],
+  )
+
+  const graph = useMemo(() => buildGraph(plan, chosen), [plan, chosen])
 
   const built = useMemo(() => {
     const nodes: Node<FlowNodeData>[] = graph.nodes.map((n) => ({
@@ -208,6 +223,7 @@ function Canvas({ plan, settings, setSettings }: Props) {
             zoomable
             nodeColor={(n) => {
               const kind = (n.data as FlowNodeData)?.kind
+              if (kind === 'power') return '#f2c14e'
               if (kind === 'source') return '#6fbf73'
               if (kind === 'sink') return '#f89a3c'
               if (kind === 'byproduct') return '#f2c14e'
@@ -223,6 +239,7 @@ function Canvas({ plan, settings, setSettings }: Props) {
             data={selected}
             settings={settings}
             setSettings={setSettings}
+            power={{ options, chosen, choose: setGeneratorKey, setTargets }}
             onClose={() => setSelectedId(null)}
           />
         )}
@@ -233,7 +250,7 @@ function Canvas({ plan, settings, setSettings }: Props) {
         <span><i className="sw" style={{ background: 'var(--coolant)' }} /> pipe</span>
         <span><i className="sw sw-dash" /> over your tier</span>
         <span><i className="sw" style={{ background: 'var(--go)' }} /> extraction</span>
-        <span className="muted">click a machine to change its recipe · drag to rearrange · scroll to zoom</span>
+        <span className="muted">click a machine to change its recipe or the plant to change generators · drag to rearrange · scroll to zoom</span>
       </div>
     </div>
   )

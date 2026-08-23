@@ -1,9 +1,22 @@
 import { useMemo } from 'react'
 import { miners, recipes as allRecipes, items } from '../../core/gameData'
-import type { PlannerSettings } from '../../core/types'
+import { fuelTargets, type PowerOption } from '../../core/power'
+import type { PlanTarget, PlannerSettings } from '../../core/types'
 import type { FlowNodeData } from './model'
 import { fmt, fmtPower, unit } from '../format'
 import { Icon } from './FactoryNode'
+
+const BLOCKER_LABEL: Record<string, string> = {
+  gathered: 'Gathered by hand',
+  locked: 'Locked by your settings',
+  runaway: 'Costs more than it makes',
+}
+
+const BLOCKER_WHY: Record<string, string> = {
+  gathered: 'The chain bottoms out in something the game gives no recipe for — you pick it up rather than automate it.',
+  locked: 'Recipes for this exist, but none are available right now: check the tier limit, banned recipes and unlocked alternates.',
+  runaway: 'Making the fuel draws more power than burning it yields, so no number of generators covers the load.',
+}
 
 /** The clock a resource uses when its own miner has not been set. */
 function rawClockDefault(ex: { key: string; kind: string }, settings: PlannerSettings): number {
@@ -12,15 +25,24 @@ function rawClockDefault(ex: { key: string; kind: string }, settings: PlannerSet
   return settings.extraction.minerClock
 }
 
+/** Everything the power block needs: the options, the pick, and the way out. */
+export interface PowerControls {
+  options: PowerOption[]
+  chosen: PowerOption | null
+  choose: (key: string) => void
+  setTargets: (t: PlanTarget[]) => void
+}
+
 interface Props {
   data: FlowNodeData
   settings: PlannerSettings
   setSettings: (next: PlannerSettings) => void
+  power: PowerControls
   onClose: () => void
 }
 
 /** Panel for the selected machine: swap its recipe, set clock and Somersloops. */
-export function NodeInspector({ data, settings, setSettings, onClose }: Props) {
+export function NodeInspector({ data, settings, setSettings, power, onClose }: Props) {
   const { step, raw } = data
   const producedItem = step?.primaryItem ?? null
 
@@ -78,6 +100,8 @@ export function NodeInspector({ data, settings, setSettings, onClose }: Props) {
       </div>
 
       <div className="inspector-body">
+        {data.kind === 'power' && <PowerChoice power={power} />}
+
         {step && producedItem && options.length > 1 && (
           <div className="field">
             <label htmlFor="insp-recipe">Recipe for {producedItem.name}</label>
@@ -280,5 +304,82 @@ export function NodeInspector({ data, settings, setSettings, onClose }: Props) {
         )}
       </div>
     </aside>
+  )
+}
+
+/**
+ * Which generators run the factory, chosen where the factory is.
+ *
+ * This was a tab of its own, which put the question one click away from the
+ * thing it was about and let you ask it about a factory that wasn't on screen.
+ * The demand is whatever the plan on the canvas draws, so there is nothing to
+ * type: pick a generator and the block on the canvas becomes that plant.
+ */
+function PowerChoice({ power }: { power: PowerControls }) {
+  const { options, chosen } = power
+  if (!chosen) {
+    return <p className="hint">Nothing here draws power yet.</p>
+  }
+
+  const units = Math.ceil(chosen.units - 1e-9)
+  const buildable = options.filter((o) => o.blocker === null).length
+
+  return (
+    <>
+      <div className="field">
+        <label htmlFor="insp-gen">Generator</label>
+        <select id="insp-gen" value={chosen.key} onChange={(e) => power.choose(e.target.value)}>
+          {options.map((o) => (
+            <option key={o.key} value={o.key}>
+              {o.generator.name} on {o.fuelItem.name}
+              {o.blocker ? ` — ${BLOCKER_LABEL[o.blocker]}` : ` — ${Math.ceil(o.units - 1e-9)}`}
+            </option>
+          ))}
+        </select>
+        <p className="hint">
+          {buildable} of {options.length} options you could actually build. Each one's
+          generators cover the factory <em>and</em> the draw of the plant making its own
+          fuel — divide the demand by a generator's rating instead and it browns out
+          under its own mining and refining.
+        </p>
+      </div>
+
+      {chosen.blocker && (
+        <div className="field">
+          <span className="field-label">{BLOCKER_LABEL[chosen.blocker]}</span>
+          <p className="hint">{BLOCKER_WHY[chosen.blocker]}</p>
+        </div>
+      )}
+
+      <div className="field">
+        <span className="field-label">Exactly</span>
+        <p className="hint">
+          {units} × {chosen.generator.name} at {fmtPower(chosen.generator.powerMW)} each,
+          burning {fmt(chosen.fuelPerMin, 2)} {chosen.fuelItem.name}/min
+          {chosen.supplementalItem && chosen.supplementalPerMin > 0 && (
+            <> and {fmt(chosen.supplementalPerMin, 2)} {chosen.supplementalItem.name}/min</>
+          )}
+          {chosen.byproductItem && chosen.byproductPerMin > 0 && (
+            <>, leaving {fmt(chosen.byproductPerMin, 2)} {chosen.byproductItem.name}/min to deal with</>
+          )}
+          .{chosen.overheadMW > 0.05 && (
+            <> {fmtPower(chosen.overheadMW)} of that output goes on making the fuel.</>
+          )}
+        </p>
+        {chosen.imported.length > 0 && (
+          <p className="hint">You supply: {chosen.imported.map((i) => i.name).join(', ')}.</p>
+        )}
+      </div>
+
+      {chosen.blocker === null && (
+        <button
+          className="btn btn-primary"
+          onClick={() => power.setTargets(fuelTargets(chosen))}
+          title="Replace the plan with a factory that makes this fuel"
+        >
+          Plan the fuel instead
+        </button>
+      )}
+    </>
   )
 }
