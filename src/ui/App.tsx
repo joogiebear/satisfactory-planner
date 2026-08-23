@@ -10,6 +10,8 @@ import { BlueprintPanel } from './components/BlueprintPanel'
 import { FactoryGraph } from './components/FactoryGraph'
 import { ProgressionPanel } from './components/ProgressionPanel'
 import { PowerPanel } from './components/PowerPanel'
+import { MeshProvider } from './blueprint/MeshContext'
+import { MeshOffer, MeshProgressCard } from './blueprint/MeshOffer'
 import { refreshIcons } from './icons'
 import { fmt, fmtPower } from './format'
 
@@ -121,6 +123,7 @@ export function App() {
   const hasPlan = plan.steps.length > 0 || plan.raw.length > 0
 
   return (
+    <MeshProvider>
     <div className="app">
       <header className="topbar">
         <div className="brand">
@@ -155,6 +158,7 @@ export function App() {
         />
 
         <main className="main" data-tab={tab}>
+          <MeshOffer />
           {settings.maxTier !== null && (
             <div className="tier-lock">
               <span className="tier-lock-mark">Tier {settings.maxTier}</span>
@@ -232,7 +236,9 @@ export function App() {
           )}
         </main>
       </div>
+      <MeshProgressCard />
     </div>
+    </MeshProvider>
   )
 }
 

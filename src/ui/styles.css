@@ -1168,3 +1168,51 @@ table.mini .num { font-family: var(--mono); }
 .check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-dim); cursor: pointer; }
 .check input { accent-color: var(--ficsit); }
 .build-blocked { margin: 6px 0 0; color: var(--hazard); }
+
+/* --- model extraction ----------------------------------------------------- */
+
+/* The offer sits above the tabs, not inside the blueprint panel: somebody
+   planning a factory has no reason to open that tab and would never be asked. */
+.mesh-offer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: var(--plate);
+  border: 1px solid var(--rivet-hi);
+  border-left: 3px solid var(--ficsit);
+  border-radius: var(--r);
+}
+.mesh-offer-text { display: grid; gap: 3px; flex: 1; min-width: 320px; font-size: 13px; }
+.mesh-offer-text .muted { line-height: 1.45; max-width: 78ch; }
+.mesh-offer-actions { display: flex; gap: 8px; margin-left: auto; }
+
+/* Extraction runs in the main process and takes minutes, so it gets a corner
+   rather than a modal — the planner stays usable throughout. */
+.mesh-float {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 60;
+  width: 320px;
+  padding: 12px 14px;
+  background: var(--plate-hi);
+  border: 1px solid var(--rivet-hi);
+  border-radius: var(--r);
+  box-shadow: 0 10px 30px #0009;
+}
+.mesh-float[data-kind='error'] { border-left: 3px solid var(--alert); }
+.mesh-float-head {
+  display: flex;
+  align-items: baseline;
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 8px;
+}
+.mesh-float-pct { margin-left: auto; font-family: var(--mono); color: var(--ficsit); }
+.mesh-float .hint { margin: 8px 0 0; line-height: 1.4; }
