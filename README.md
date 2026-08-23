@@ -45,8 +45,10 @@ build you have installed rather than a wiki snapshot.
 - **Alternate recipes** — tick the ones you've unlocked; only those are used.
 - **Overclocking and Somersloops** — per recipe, with the real
   `clock^1.321929` power curve and Somersloops doubling output at 4× draw.
-- **Extraction settings** — miner mark, node purity per resource, and pump
-  clock, feeding exact extractor counts.
+- **Extraction set on the miner** — click a miner in the factory view and set
+  its mark, node purity and overclock there. A survey turns up a pure iron node
+  and an impure copper one; they are separate machines, so they get separate
+  settings rather than one global default and a list of exceptions.
 - **Progression** — pick a HUB milestone, a Space Elevator phase or a MAM
   research node and it becomes the plan, capped to what you'd actually have
   unlocked at that point.

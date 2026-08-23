@@ -174,8 +174,15 @@ export interface ExtractionSettings {
   minerClock: number
   /** Node purity assumed for solid resources without an explicit override. */
   defaultPurity: Purity
-  /** Per-resource purity override. */
+  /**
+   * Per-resource overrides, set on the miner in the factory view rather than
+   * globally. A survey turns up a pure iron node and an impure copper one; they
+   * are separate machines with separate settings, and pretending one default
+   * covers both is what made the sidebar need so many.
+   */
   purity: Record<string, Purity>
+  minerByResource: Record<string, string>
+  clockByResource: Record<string, number>
   oilExtractorClock: number
   waterExtractorClock: number
 }

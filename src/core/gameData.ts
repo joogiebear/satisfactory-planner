@@ -142,6 +142,8 @@ export function defaultSettings(): PlannerSettings {
       minerClock: 1,
       defaultPurity: 'normal' as Purity,
       purity: {},
+      minerByResource: {},
+      clockByResource: {},
       oilExtractorClock: 1,
       waterExtractorClock: 1,
     },

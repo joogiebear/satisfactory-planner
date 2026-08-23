@@ -1,9 +1,16 @@
 import { useMemo } from 'react'
-import { recipes as allRecipes, items } from '../../core/gameData'
+import { miners, recipes as allRecipes, items } from '../../core/gameData'
 import type { PlannerSettings } from '../../core/types'
 import type { FlowNodeData } from './model'
 import { fmt, fmtPower, unit } from '../format'
 import { Icon } from './FactoryNode'
+
+/** The clock a resource uses when its own miner has not been set. */
+function rawClockDefault(ex: { key: string; kind: string }, settings: PlannerSettings): number {
+  if (ex.key === 'Build_WaterPump_C') return settings.extraction.waterExtractorClock
+  if (ex.key === 'Build_OilPump_C' || ex.kind === 'fracking') return settings.extraction.oilExtractorClock
+  return settings.extraction.minerClock
+}
 
 interface Props {
   data: FlowNodeData
@@ -144,14 +151,87 @@ export function NodeInspector({ data, settings, setSettings, onClose }: Props) {
         )}
 
         {raw && raw.extractor && (
-          <div className="field">
-            <span className="field-label">Extraction</span>
-            <p className="hint">
-              {raw.extractor.name} on a {raw.purity ?? 'normal'} node delivers {fmt(raw.ratePerExtractor)} {unit(raw.item)}.
-              This plan needs {fmt(raw.ratePerMin)}, so {Math.ceil(raw.extractorCount - 1e-9)} node
-              {Math.ceil(raw.extractorCount - 1e-9) === 1 ? '' : 's'} ({fmt(raw.extractorCount, 2)} used).
-            </p>
-          </div>
+          <>
+            {/* Set on the miner rather than in a global default: a survey turns
+                up a pure iron node and an impure copper one, and they are
+                separate machines with separate settings. */}
+            {raw.extractor.kind === 'solid' && (
+              <>
+                <div className="field">
+                  <label htmlFor="insp-miner">Miner</label>
+                  <select
+                    id="insp-miner"
+                    value={settings.extraction.minerByResource?.[raw.item.key] ?? settings.extraction.minerKey}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      extraction: {
+                        ...settings.extraction,
+                        minerByResource: { ...settings.extraction.minerByResource, [raw.item.key]: e.target.value },
+                      },
+                    })}
+                  >
+                    {miners.map((m) => (
+                      <option key={m.key} value={m.key}>{m.name} — {fmt(m.baseRatePerMin)}/min normal</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="field">
+                  <span className="field-label">Node purity</span>
+                  <div className="segmented">
+                    {(['impure', 'normal', 'pure'] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        aria-pressed={(settings.extraction.purity[raw.item.key] ?? settings.extraction.defaultPurity) === p}
+                        onClick={() => setSettings({
+                          ...settings,
+                          extraction: {
+                            ...settings.extraction,
+                            purity: { ...settings.extraction.purity, [raw.item.key]: p },
+                          },
+                        })}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="field">
+              <label htmlFor="insp-exclock">Overclock %</label>
+              <input
+                id="insp-exclock"
+                type="number"
+                min={1}
+                max={250}
+                step={1}
+                value={Math.round((settings.extraction.clockByResource?.[raw.item.key]
+                  ?? rawClockDefault(raw.extractor, settings)) * 1000) / 10}
+                onChange={(e) => setSettings({
+                  ...settings,
+                  extraction: {
+                    ...settings.extraction,
+                    clockByResource: {
+                      ...settings.extraction.clockByResource,
+                      [raw.item.key]: Math.max(0.01, Number(e.target.value) / 100),
+                    },
+                  },
+                })}
+              />
+            </div>
+
+            <div className="field">
+              <span className="field-label">Exactly</span>
+              <p className="hint">
+                {raw.extractor.name}{raw.purity ? ` on a ${raw.purity} node` : ''} delivers {fmt(raw.ratePerExtractor)} {unit(raw.item)}.
+                This plan needs {fmt(raw.ratePerMin)}, so {Math.ceil(raw.extractorCount - 1e-9)} node
+                {Math.ceil(raw.extractorCount - 1e-9) === 1 ? '' : 's'} ({fmt(raw.extractorCount, 2)} used).
+              </p>
+            </div>
+          </>
         )}
 
         {(data.inputs.length > 0 || data.outputs.length > 0) && (

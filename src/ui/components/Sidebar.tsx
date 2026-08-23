@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import {
-  alternateRecipes, baseRatePerMin, belts, extractors, items, maxGameTier, pipes,
+  alternateRecipes, baseRatePerMin, belts, items, maxGameTier, pipes,
   producibleItems,
 } from '../../core/gameData'
-import type { Plan, PlanTarget, PlannerSettings, Purity } from '../../core/types'
+import type { Plan, PlanTarget, PlannerSettings } from '../../core/types'
 import { oneMachineRate } from '../../core/solver'
 import { fmt, unit } from '../format'
 import { ItemChip, ItemPicker } from './ItemPicker'
@@ -13,15 +13,13 @@ interface Props {
   setSettings: (next: PlannerSettings) => void
   targets: PlanTarget[]
   setTargets: (next: PlanTarget[]) => void
-  plan: Plan
+  /** Kept so callers need not change; the panel no longer reads it. */
+  plan?: Plan
 }
 
-const PURITIES: Purity[] = ['impure', 'normal', 'pure']
 
-export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Props) {
+export function Sidebar({ settings, setSettings, targets, setTargets }: Props) {
   const patch = (p: Partial<PlannerSettings>) => setSettings({ ...settings, ...p })
-  const patchExtraction = (p: Partial<PlannerSettings['extraction']>) =>
-    patch({ extraction: { ...settings.extraction, ...p } })
 
   return (
     <aside className="sidebar">
@@ -156,98 +154,6 @@ export function Sidebar({ settings, setSettings, targets, setTargets, plan }: Pr
             />
             <span>Assume MAM research and hard drives</span>
           </label>
-        )}
-      </Section>
-
-      <Section title="Extraction" count={settings.extraction.defaultPurity}>
-        <div className="field">
-          <label htmlFor="miner">Miner</label>
-          <select
-            id="miner"
-            value={settings.extraction.minerKey}
-            onChange={(e) => patchExtraction({ minerKey: e.target.value })}
-          >
-            {extractors.filter((e) => e.kind === 'solid').map((e) => (
-              <option key={e.key} value={e.key}>
-                {e.name} — {fmt(e.baseRatePerMin)}/min normal
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="field">
-          <span className="field-label">Default node purity</span>
-          <div className="segmented">
-            {PURITIES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                aria-pressed={settings.extraction.defaultPurity === p}
-                onClick={() => patchExtraction({ defaultPurity: p })}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="field" style={{ flex: 1 }}>
-            <label htmlFor="minerClock">Miner clock %</label>
-            <input
-              id="minerClock"
-              type="number"
-              min={1}
-              max={250}
-              step={1}
-              value={Math.round(settings.extraction.minerClock * 1000) / 10}
-              onChange={(e) => patchExtraction({ minerClock: Number(e.target.value) / 100 })}
-            />
-          </div>
-          <div className="field" style={{ flex: 1 }}>
-            <label htmlFor="pumpClock">Pump clock %</label>
-            <input
-              id="pumpClock"
-              type="number"
-              min={1}
-              max={250}
-              step={1}
-              value={Math.round(settings.extraction.oilExtractorClock * 1000) / 10}
-              onChange={(e) => patchExtraction({
-                oilExtractorClock: Number(e.target.value) / 100,
-                waterExtractorClock: Number(e.target.value) / 100,
-              })}
-            />
-          </div>
-        </div>
-
-        {plan.raw.filter((r) => r.extractor?.affectedByPurity).length > 0 && (
-          <div className="field">
-            <span className="field-label">Purity per resource in this plan</span>
-            {plan.raw
-              .filter((r) => r.extractor?.affectedByPurity)
-              .map((r) => (
-                <div className="row" key={r.item.key} style={{ marginTop: 4 }}>
-                  <ItemChip item={r.item} />
-                  <span style={{ flex: 1, fontSize: 12 }}>{r.item.name}</span>
-                  <div className="segmented" style={{ width: 150 }}>
-                    {PURITIES.map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        title={`${r.item.name}: ${p}`}
-                        aria-pressed={(settings.extraction.purity[r.item.key] ?? settings.extraction.defaultPurity) === p}
-                        onClick={() => patchExtraction({
-                          purity: { ...settings.extraction.purity, [r.item.key]: p },
-                        })}
-                      >
-                        {p[0].toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-          </div>
         )}
       </Section>
 

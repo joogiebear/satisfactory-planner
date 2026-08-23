@@ -401,14 +401,19 @@ export function extractorFor(item: GameItem, settings: PlannerSettings): GameExt
   if (item.key === 'Desc_Water_C') return extractors.find((e) => e.key === 'Build_WaterPump_C') ?? null
   if (item.key === 'Desc_LiquidOil_C') return extractors.find((e) => e.key === 'Build_OilPump_C') ?? null
   if (item.key === 'Desc_NitrogenGas_C') return extractors.find((e) => e.kind === 'fracking') ?? null
+  // Set on the miner itself where one has been, falling back to the default.
+  const chosen = settings.extraction.minerByResource?.[item.key]
+    ?? settings.extraction.minerKey
   return (
-    extractors.find((e) => e.key === settings.extraction.minerKey)
+    extractors.find((e) => e.key === chosen)
     ?? extractors.find((e) => e.kind === 'solid')
     ?? null
   )
 }
 
-function clockForExtractor(ex: GameExtractor, settings: PlannerSettings): number {
+function clockForExtractor(ex: GameExtractor, settings: PlannerSettings, item: GameItem): number {
+  const own = settings.extraction.clockByResource?.[item.key]
+  if (own !== undefined) return own
   if (ex.key === 'Build_WaterPump_C') return settings.extraction.waterExtractorClock
   if (ex.key === 'Build_OilPump_C' || ex.kind === 'fracking') return settings.extraction.oilExtractorClock
   return settings.extraction.minerClock
@@ -427,7 +432,7 @@ export function buildRawRequirement(
   const purity: Purity | null = ex.affectedByPurity
     ? settings.extraction.purity[item.key] ?? settings.extraction.defaultPurity
     : null
-  const clock = clampClock(clockForExtractor(ex, settings))
+  const clock = clampClock(clockForExtractor(ex, settings, item))
   const perExtractor = ex.baseRatePerMin * (purity ? PURITY_MULTIPLIER[purity] : 1) * clock
 
   const count = perExtractor > 0 ? rate / perExtractor : 0
