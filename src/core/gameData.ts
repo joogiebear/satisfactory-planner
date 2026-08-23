@@ -68,6 +68,9 @@ export function getRecipe(key: string): GameRecipe | undefined { return recipes[
 export function getBuilding(key: string): GameBuilding | undefined { return buildings[key] }
 
 /** The four ways the game opens up, and the tier each recipe arrives at. */
+/** Display name for every placeable building, keyed by its Build_*_C class. */
+export const buildableNames: Record<string, string> = gameData.buildableNames
+
 export const milestones = gameData.milestones
 export const spaceElevatorPhases = gameData.spaceElevator
 export const mamResearch = gameData.mamResearch

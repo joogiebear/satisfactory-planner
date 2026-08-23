@@ -10,9 +10,15 @@ building models, into the same folder, and are served over the `mesh://` scheme.
 `src/data/game-data.json` carries an `icons` map of class name to icon texture,
 built by `tools/extract_game_data.py` from the game's published docs. A
 descriptor names its own icon in `mSmallIcon`; a *buildable* does not, so
-`Build_X_C` is matched to `Desc_X_C` to find one. That covers 675 classes — all
-168 items and 507 of the 539 buildables. The remainder are wall and ramp
-variants whose descriptors name no icon; those fall back to a lettered tile.
+`Build_X_C` is matched to `Desc_X_C` to find one.
+
+Some descriptors name no icon at all — ramp walls and half foundations, mostly,
+where a material variant was added without one. The game lists those under the
+same name as a sibling that does have one, so the icon is borrowed: a polished
+concrete half foundation and a plain one are the same picture as far as a chip
+in a list is concerned. That takes it to 697 classes, leaving ten with nothing
+to borrow (Catwalk Corner, the wall outlets, some FICSMAS pieces), which fall
+back to a lettered tile.
 
 The mesh exporter turns that map into files:
 

@@ -745,6 +745,20 @@ def extract_icons(groups: dict, items: dict, buildables: dict) -> dict[str, str]
         descriptor = "Desc_" + key[len("Build_"):] if key.startswith("Build_") else key
         if descriptor in by_descriptor:
             out[key] = by_descriptor[descriptor]
+
+    # Some descriptors name no icon at all -- the ramp walls and half
+    # foundations, mostly, where a material variant was added without one. The
+    # game shows them under the same name as a sibling that does have one, so
+    # borrow it: a polished concrete half foundation and a plain one are the
+    # same picture as far as a chip in a list is concerned.
+    by_label: dict[str, str] = {}
+    for key, label in buildables.items():
+        if key in out and label:
+            by_label.setdefault(label, out[key])
+    for key, label in buildables.items():
+        if key not in out and label in by_label:
+            out[key] = by_label[label]
+
     return out
 
 

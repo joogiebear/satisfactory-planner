@@ -112,9 +112,29 @@ export async function refreshMeshManifest(): Promise<number> {
   return Object.keys(extracted).length
 }
 
+/**
+ * A lowercased index of whatever manifest is in play, rebuilt when it changes.
+ *
+ * The game is not consistent with itself: its docs call the Mk.2 pipeline pump
+ * Build_PipelinePumpMk2_C while the asset backing it is spelled MK2, so an
+ * exact lookup misses and the pump draws as a box.
+ */
+let foldedKeys: Map<string, string> = new Map()
+let foldedFrom: Record<string, MeshPart[]> | null = null
+
+function foldKey(source: Record<string, MeshPart[]>, key: string): MeshPart[] | undefined {
+  if (foldedFrom !== source) {
+    foldedFrom = source
+    foldedKeys = new Map(Object.keys(source).map((k) => [k.toLowerCase(), k]))
+  }
+  const real = foldedKeys.get(key.toLowerCase())
+  return real === undefined ? undefined : source[real]
+}
+
 /** The parts that draw a building, or an empty list to fall back to a box. */
 export function partsFor(buildableKey: string): MeshPart[] {
-  const found = extracted[buildableKey] ?? bundledParts[buildableKey]
+  const source = Object.keys(extracted).length > 0 ? extracted : bundledParts
+  const found = source[buildableKey] ?? foldKey(source, buildableKey)
   // An earlier build wrote one file name per building instead of a parts list;
   // a stale cache like that must fall back to boxes, not be iterated as a string.
   return Array.isArray(found) ? found : []

@@ -215,9 +215,17 @@ unused, and Satisfactory's real look also comes from per-instance swatch tinting
 and decal layers applied by its own shader — reproducing that would mean
 reimplementing the material graph.
 
-A dozen or so buildables resolve no mesh at all and keep a sized box — all
-decorative, plus a handful of cheat and debug classes that are not real
+Every placeable building resolves geometry. The last five to hold out named
+theirs on fields nothing else uses — a floor hole puts the visible ring on
+`mCapMesh` (its `mMidMesh` is a black box filling the hole, which is not
+something to draw) and a ladder names one rung section on `mLadderSegmentMesh`.
+A few cheat and debug classes still resolve the engine's cube; they are not real
 buildings.
+
+One lookup hazard remains worth knowing: the game disagrees with itself about
+capitalisation. Its docs call the Mk.2 pipeline pump `Build_PipelinePumpMk2_C`
+while the asset behind it is spelled `MK2`, so the viewer folds case when
+matching a building to its parts.
 
 ## Size
 

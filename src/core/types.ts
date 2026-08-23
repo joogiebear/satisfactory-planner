@@ -125,6 +125,10 @@ export interface GameData {
   spaceElevator: ProgressionGoal[]
   mamResearch: ProgressionGoal[]
   hardDrives: ProgressionGoal[]
+  /** Display name for every placeable building, keyed by its Build_*_C class. */
+  buildableNames: Record<string, string>
+  /** Icon texture per item and buildable, extracted on first run. */
+  icons: Record<string, string>
   /** Tier the HUB hands you each recipe at. MAM and hard-drive recipes have no entry. */
   recipeTiers: Record<string, number>
   /** Earliest tier each production building can exist at. */

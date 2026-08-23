@@ -223,6 +223,27 @@ export function NodeInspector({ data, settings, setSettings, onClose }: Props) {
               />
             </div>
 
+            {/* Setting each node separately is right, but a base with Mk.3
+                miners everywhere should not mean clicking every one of them. */}
+            <button
+              className="btn"
+              onClick={() => setSettings({
+                ...settings,
+                extraction: {
+                  ...settings.extraction,
+                  minerKey: settings.extraction.minerByResource?.[raw.item.key] ?? settings.extraction.minerKey,
+                  minerClock: settings.extraction.clockByResource?.[raw.item.key] ?? settings.extraction.minerClock,
+                  defaultPurity: settings.extraction.purity[raw.item.key] ?? settings.extraction.defaultPurity,
+                  minerByResource: {},
+                  clockByResource: {},
+                  purity: {},
+                },
+              })}
+              title="Give every other miner this mark, purity and overclock"
+            >
+              Use these for every miner
+            </button>
+
             <div className="field">
               <span className="field-label">Exactly</span>
               <p className="hint">

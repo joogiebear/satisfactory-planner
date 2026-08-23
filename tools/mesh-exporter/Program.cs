@@ -962,6 +962,19 @@ public static class Program
                 break;
             }
 
+            // --- a body named on the class default ---
+            // Not everything hangs its geometry off a component. A floor hole
+            // names the visible ring on mCapMesh (its mMidMesh is a black box
+            // filling the hole, which is not something to draw), and a ladder
+            // names one rung section it repeats.
+            foreach (var field in new[] { "mCapMesh", "mLadderSegmentMesh" })
+            {
+                var body = ResolveMesh(export, field);
+                if (body == null) continue;
+                parts.Add(new MeshPart { Mesh = body });
+                break;
+            }
+
             // --- conveyor lifts: a stack of named parts ---
             // The lift has no single body mesh. It is a base, a repeating
             // column section and a head, and the game stacks as many middles as
