@@ -26,6 +26,9 @@ interface Props {
 /** Roomy enough to read a label, tight enough that a big build still fits. */
 const PAD = 600
 
+/** How far a block's box reaches past its machines, to take in its buses. */
+const BUS_GAP = 500
+
 export function LayoutView({ plan, settings }: Props) {
   const layout = useMemo(() => layOut(plan, settings), [plan, settings])
   const bom = useMemo(() => billOfMaterials(layout), [layout])
@@ -141,7 +144,8 @@ export function LayoutView({ plan, settings }: Props) {
       <div className="panel-head">
         Top-down layout
         <span className="count">
-          {layout.rows.length} row{layout.rows.length === 1 ? '' : 's'} ·{' '}
+          {layout.rows.length} block{layout.rows.length === 1 ? '' : 's'}
+          {layout.columns > 1 && <> in {layout.columns} columns</>} ·{' '}
           {Math.round(layout.width / 100)}×{Math.round(layout.height / 100)} m
         </span>
       </div>
@@ -213,15 +217,16 @@ export function LayoutView({ plan, settings }: Props) {
           {layout.rows.map((row) => (
             <g key={row.index} opacity={hover === null || hover === row.index ? 1 : 0.25}>
               <rect
-                x={minX - PAD / 2} y={row.y - u}
-                width={maxX - minX + PAD} height={row.height + u * 2}
+                x={row.x - BUS_GAP} y={row.y - label * 0.2}
+                width={row.width + BUS_GAP + label * 0.2}
+                height={row.height + label * 0.4}
                 className="layout-rowbox"
                 strokeWidth={u * 0.25}
                 onMouseEnter={() => setHover(row.index)}
                 onMouseLeave={() => setHover(null)}
               />
               <text
-                x={minX - PAD / 2 + label * 0.4} y={row.y - label * 0.45}
+                x={row.x - BUS_GAP} y={row.y - label * 0.45}
                 className="layout-rowlabel" style={{ fontSize: label }}
               >
                 {row.label}

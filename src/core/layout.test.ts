@@ -45,16 +45,23 @@ describe('laying a plan out to build', () => {
     expect(l.rows.some((r) => r.inputs.length > 1)).toBe(true)
   })
 
-  /** Belts that run backwards are worse than no diagram at all. */
-  it('puts a row below everything that feeds it', () => {
+  /**
+   * Belts that run backwards are worse than no diagram at all. Blocks are dealt
+   * into columns, so "before" means earlier in reading order — down a column
+   * and then across — rather than simply higher up the page.
+   */
+  it('puts a block after everything that feeds it', () => {
     const { plan: p, settings } = plan('Desc_ModularFrame_C', 10)
     const l = layOut(p, settings)
+    const before = (a: { column: number; y: number }, b: { column: number; y: number }) =>
+      a.column < b.column || (a.column === b.column && a.y < b.y)
+
     for (const row of l.rows) {
       for (const input of row.step?.inputs ?? []) {
         const feeder = l.rows.find((r) => r.made?.key === input.item.key)
         if (!feeder || feeder === row) continue
         expect(feeder.index).toBeLessThan(row.index)
-        expect(feeder.y).toBeLessThan(row.y)
+        expect(before(feeder, row)).toBe(true)
       }
     }
   })
@@ -108,7 +115,7 @@ describe('laying a plan out to build', () => {
           && r.outputs.some((o) => o.item.key === port.item.key))
         if (!upstream) continue
         checked++
-        expect(l.runs.some((r) => r.id === `main:${port.item.key}`)).toBe(true)
+        expect(l.runs.some((r) => r.id.startsWith(`main:${port.item.key}:`))).toBe(true)
         expect(l.runs.some((r) => r.id.startsWith(`tap:${port.item.key}:${row.index}:`))).toBe(true)
       }
     }
@@ -160,10 +167,47 @@ describe('laying a plan out to build', () => {
     for (const row of mining) {
       expect(row.step).toBeNull()
       expect(row.inputRate).toBe(0)
-      // Above every row that isn't itself a miner.
+      // First in reading order: nothing feeds a miner.
       for (const other of l.rows.filter((r) => !r.raw)) {
-        expect(row.y).toBeLessThan(other.y)
+        expect(row.column < other.column || (row.column === other.column && row.y < other.y))
+          .toBe(true)
       }
+    }
+  })
+
+  /**
+   * A chain of eight blocks in one column is a hundred metres wide and three
+   * hundred long: legal, unreadable, and nothing like how anybody lays out a
+   * factory.
+   */
+  it('deals a long chain into columns rather than one ribbon', () => {
+    const { plan: p, settings } = plan('Desc_ModularFrame_C', 10)
+    const l = layOut(p, settings)
+    expect(l.rows.length).toBeGreaterThan(5)
+    expect(l.columns).toBeGreaterThan(1)
+
+    // Every column is used, and the build is a shape rather than a strip.
+    for (let c = 0; c < l.columns; c++) {
+      expect(l.rows.some((r) => r.column === c)).toBe(true)
+    }
+    expect(l.height / l.width).toBeLessThan(3)
+  })
+
+  /** An item wanted in two columns is carried across the top, not teleported. */
+  it('joins the columns it carries an item between', () => {
+    const { plan: p, settings } = plan('Desc_ModularFrame_C', 10)
+    const l = layOut(p, settings)
+
+    for (const run of l.runs.filter((r) => r.id.startsWith('trunk:'))) {
+      const key = run.id.slice('trunk:'.length)
+      const columns = new Set(l.runs
+        .filter((r) => r.id.startsWith(`main:${key}:`))
+        .map((r) => r.id.split(':').pop()))
+      // A trunk only exists where the main really does stand in more than one.
+      expect(columns.size).toBeGreaterThan(1)
+      // And it runs flat across the top, above every block.
+      expect(run.points[0].y).toBe(run.points[1].y)
+      expect(run.points[0].y).toBeLessThan(Math.min(...l.rows.map((r) => r.y)))
     }
   })
 })

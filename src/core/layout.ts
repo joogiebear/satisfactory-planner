@@ -15,12 +15,14 @@
  * of a binary tree of splitters per line — a different diagram, and a much
  * busier one.
  *
- * Two things it will not do. It will not run a line off the end of the map —
+ * Three things it will not do. It will not run a line off the end of the map —
  * past about a hundred metres the machines wrap onto another line, the way
- * anybody actually building it would. And it will not pretend a recipe has one
+ * anybody actually building it would. It will not pretend a recipe has one
  * ingredient: a Modular Frame Assembler eats plate and rod, so it gets a bus
  * for each, and each of those buses comes off a main that every consumer of
- * that item taps.
+ * that item taps. And it will not stack every block down one side of the map:
+ * blocks are dealt into columns until the build is a shape you can see at once,
+ * with the mains carried between columns on a trunk across the top.
  *
  * Everything is in centimetres, the game's own unit, so a foundation is 800 and
  * the numbers can be read straight off.
@@ -95,6 +97,11 @@ export interface Port {
 
 export interface Row {
   index: number
+  /** Which column of the build this block sits in. */
+  column: number
+  /** Top-left of the block, so the drawing can box it. */
+  x: number
+  width: number
   /** The recipe this row runs. Null on a row of extractors. */
   step: ProductionStep | null
   /** What this row mines. Null on a row of machines. */
@@ -118,10 +125,49 @@ export interface Row {
   height: number
 }
 
+/** A machine's box before its block has been placed. */
+interface LocalBox { id: string; x: number; y: number; w: number; h: number }
+interface LocalAttachment {
+  id: string
+  kind: 'splitter' | 'merger'
+  item: GameItem
+  x: number
+  y: number
+}
+interface LocalRun {
+  id: string
+  item: GameItem
+  ratePerMin: number
+  points: { x: number; y: number }[]
+}
+
+/** One block measured against its own corner, ready to be placed anywhere. */
+interface Laid {
+  block: Block
+  perLine: number
+  lines: number
+  size: Size
+  machines: LocalBox[]
+  attachments: LocalAttachment[]
+  drops: LocalRun[]
+  busInY: number[][]
+  busOutY: number[][]
+  /** Where each line's buses stop. */
+  busEnd: number[]
+  width: number
+  height: number
+  settings: PlannerSettings
+}
+
 export interface Layout {
   buildings: Placed[]
   runs: Run[]
   rows: Row[]
+  /** How many columns the blocks were dealt into. */
+  columns: number
+  /** Top-left of everything drawn, mains and trunks included. */
+  minX: number
+  minY: number
   /** Extent of the whole build, centimetres. */
   width: number
   height: number
@@ -297,111 +343,213 @@ function blocksOf(plan: Plan): Block[] {
  * Blocks run down the page in feed order, and every item moves between them on
  * a main down the left that its producers feed and its consumers tap.
  */
+
+/**
+ * Measure one block: where its machines, attachments and buses sit, relative to
+ * its own top-left corner.
+ *
+ * Measuring before placing is what lets blocks be packed into columns. Laying
+ * them out straight into world coordinates meant the shape of the build was
+ * decided by the order they happened to be emitted in, which is how eight
+ * blocks became a three-hundred-metre ribbon down one side of the map.
+ */
+function measure(block: Block, settings: PlannerSettings): Laid {
+  const { count, inputs, outputs } = block
+  const size = footprint(block.machineKey)
+  const perLine = machinesPerLine(count, size)
+  const lines = Math.ceil(count / perLine)
+
+  const machines: LocalBox[] = []
+  const attachments: LocalAttachment[] = []
+  const drops: LocalRun[] = []
+  const busInY: number[][] = []
+  const busOutY: number[][] = []
+  const busEnd: number[] = []
+
+  let cursor = 0
+  let width = 0
+
+  for (let line = 0; line < lines; line++) {
+    const onLine = Math.min(perLine, count - line * perLine)
+    const lineWidth = onLine * size.w + (onLine - 1) * MACHINE_GAP
+    width = Math.max(width, lineWidth)
+    busEnd.push(lineWidth - size.w / 2)
+
+    const inY = inputs.map((_, k) => cursor + k * BUS_PITCH)
+    const machineY = cursor + (inputs.length ? inputs.length * BUS_PITCH : 0) + BUS_OFFSET
+    const outTop = machineY + size.h + BUS_OFFSET
+    const outY = outputs.map((_, k) => outTop + k * BUS_PITCH)
+    busInY.push(inY)
+    busOutY.push(outY)
+
+    for (let i = 0; i < onLine; i++) {
+      const at = line * perLine + i
+      const x = i * (size.w + MACHINE_GAP)
+      machines.push({ id: `${at}`, x, y: machineY, w: size.w, h: size.h })
+
+      // Each ingredient takes its own share of the machine's frontage, so two
+      // drops land side by side rather than on top of one another.
+      inputs.forEach((port, k) => {
+        const px = x + ((k + 1) * size.w) / (inputs.length + 1) - ATTACHMENT / 2
+        attachments.push({ id: `s:${k}:${at}`, kind: 'splitter', item: port.item, x: px, y: inY[k] })
+        drops.push({
+          id: `in:${k}:${at}`,
+          item: port.item,
+          ratePerMin: port.ratePerMin / count,
+          points: [
+            { x: px + ATTACHMENT / 2, y: inY[k] + ATTACHMENT },
+            { x: px + ATTACHMENT / 2, y: machineY },
+          ],
+        })
+      })
+
+      outputs.forEach((port, k) => {
+        const px = x + ((k + 1) * size.w) / (outputs.length + 1) - ATTACHMENT / 2
+        attachments.push({ id: `g:${k}:${at}`, kind: 'merger', item: port.item, x: px, y: outY[k] })
+        drops.push({
+          id: `out:${k}:${at}`,
+          item: port.item,
+          ratePerMin: port.ratePerMin / count,
+          points: [
+            { x: px + ATTACHMENT / 2, y: machineY + size.h },
+            { x: px + ATTACHMENT / 2, y: outY[k] },
+          ],
+        })
+      })
+    }
+
+    cursor = (outY[outY.length - 1] ?? machineY + size.h) + ATTACHMENT + ROW_GAP / 2
+  }
+
+  return {
+    block, perLine, lines, size,
+    machines, attachments, drops,
+    busInY, busOutY, busEnd,
+    width,
+    height: cursor - ROW_GAP / 2,
+    settings,
+  }
+}
+
+/**
+ * Deal the blocks into columns so the build is a shape rather than a ribbon.
+ *
+ * Stacked in one column, a chain of eight blocks is a hundred metres wide and
+ * three hundred long — legal, unreadable, and nothing like how anybody lays out
+ * a factory. Filling a column to roughly the height that would make the whole
+ * thing square, then starting another, gets it back to a footprint you can see
+ * at once. Feed order is preserved down each column and then across, so the
+ * belts still run one way.
+ */
+function intoColumns(laid: Laid[], gutter: number): { column: number; x: number; y: number }[] {
+  const colWidth = Math.max(...laid.map((l) => l.width), FOUNDATION)
+  const stacked = laid.reduce((n, l) => n + l.height + ROW_GAP, 0)
+  const columns = Math.max(1, Math.min(4, Math.round(Math.sqrt(stacked / (colWidth + gutter)))))
+  const target = stacked / columns
+
+  const placed: { column: number; x: number; y: number }[] = []
+  let column = 0
+  let y = 0
+
+  for (const l of laid) {
+    // Start a new column once this one has had its share — but never leave a
+    // column empty, and never spill past the last one.
+    if (y > 0 && y + l.height / 2 > target && column < columns - 1) {
+      column++
+      y = 0
+    }
+    placed.push({ column, x: column * (colWidth + gutter), y })
+    y += l.height + ROW_GAP
+  }
+  return placed
+}
+
+/**
+ * Lay a plan out as blocks of machines with the belts that feed them.
+ *
+ * A block is a whole production step: every Constructor making iron rods sits
+ * together, wrapped onto as many lines as it takes. Blocks are measured, dealt
+ * into columns so the build is a shape rather than a ribbon, and then every
+ * item that moves between them runs on a main its producers feed and all of its
+ * consumers tap.
+ */
 export function layOut(plan: Plan, settings: PlannerSettings): Layout {
+  const blocks = blocksOf(plan)
+  const laid = blocks.map((b) => measure(b, settings))
+  if (!laid.length) {
+    return {
+      buildings: [], runs: [], rows: [], columns: 0,
+      minX: 0, minY: 0, width: 0, height: 0,
+      foundations: 0, beltMetres: 0, splitters: 0, mergers: 0, warnings: [],
+    }
+  }
+
+  // Every item that leaves a block gets a lane of its own in the corridors, so
+  // the gutter has to be wide enough for all of them.
+  const carried: string[] = []
+  for (const l of laid) {
+    for (const out of l.block.outputs) {
+      const wanted = laid.some((other) => other !== l
+        && other.block.inputs.some((i) => i.item.key === out.item.key))
+      if (wanted && !carried.includes(out.item.key)) carried.push(out.item.key)
+    }
+  }
+  const corridor = BUS_OFFSET + ATTACHMENT * (1 + carried.length)
+  const gutter = corridor + FOUNDATION
+
+  const spots = intoColumns(laid, gutter)
+
   const buildings: Placed[] = []
   const runs: Run[] = []
   const rows: Row[] = []
   const warnings: string[] = []
 
-  const blocks = blocksOf(plan)
+  for (const [index, l] of laid.entries()) {
+    const { x: ox, y: oy, column } = spots[index]
+    const { block } = l
 
-  let y = 0
-  let width = 0
+    for (const m of l.machines) {
+      buildings.push({
+        id: `m:${block.id}:${m.id}`,
+        kind: 'machine',
+        key: block.machineKey,
+        name: block.machineName,
+        item: block.made,
+        x: ox + m.x, y: oy + m.y, w: m.w, h: m.h,
+        row: index,
+      })
+    }
+    for (const a of l.attachments) {
+      buildings.push({
+        id: `${a.kind[0]}:${block.id}:${a.id}`,
+        kind: a.kind,
+        key: a.kind === 'splitter'
+          ? 'Build_ConveyorAttachmentSplitter_C'
+          : 'Build_ConveyorAttachmentMerger_C',
+        name: a.kind === 'splitter' ? 'Splitter' : 'Merger',
+        item: a.item,
+        x: ox + a.x, y: oy + a.y, w: ATTACHMENT, h: ATTACHMENT,
+        row: index,
+      })
+    }
+    for (const d of l.drops) {
+      runs.push({
+        id: `${block.id}:${d.id}`,
+        item: d.item,
+        ratePerMin: d.ratePerMin,
+        points: d.points.map((p) => ({ x: ox + p.x, y: oy + p.y })),
+        lanes: 1,
+        row: index,
+      })
+    }
 
-  for (const [index, block] of blocks.entries()) {
-    const { count, inputs, outputs } = block
-    const size = footprint(block.machineKey)
-    const perLine = machinesPerLine(count, size)
-    const lines = Math.ceil(count / perLine)
+    // The buses, one per item per line, running the length of the line.
+    for (let line = 0; line < l.lines; line++) {
+      const onLine = Math.min(l.perLine, block.count - line * l.perLine)
+      const share = onLine / block.count
+      const end = ox + l.busEnd[line]
 
-    const busInY: number[][] = []
-    const busOutY: number[][] = []
-    let cursor = y
-
-    for (let line = 0; line < lines; line++) {
-      const onLine = Math.min(perLine, count - line * perLine)
-      const lineWidth = onLine * size.w + (onLine - 1) * MACHINE_GAP
-      width = Math.max(width, lineWidth)
-
-      // A recipe with two ingredients needs two buses. Drawing one, labelled
-      // with whichever item came first and carrying the sum of both rates, is
-      // a diagram you can only follow if you already know the answer.
-      const inY = inputs.map((_, k) => cursor + k * BUS_PITCH)
-      const machineY = cursor + (inputs.length ? inputs.length * BUS_PITCH : 0) + BUS_OFFSET
-      const outTop = machineY + size.h + BUS_OFFSET
-      const outY = outputs.map((_, k) => outTop + k * BUS_PITCH)
-      busInY.push(inY)
-      busOutY.push(outY)
-
-      for (let i = 0; i < onLine; i++) {
-        const at = line * perLine + i
-        const x = i * (size.w + MACHINE_GAP)
-
-        buildings.push({
-          id: `m:${block.id}:${at}`,
-          kind: 'machine',
-          key: block.machineKey,
-          name: block.machineName,
-          item: block.made,
-          x, y: machineY, w: size.w, h: size.h,
-          row: index,
-        })
-
-        // Each ingredient takes its own share of the machine's frontage, so
-        // two drops land side by side rather than on top of one another.
-        inputs.forEach((port, k) => {
-          const px = x + ((k + 1) * size.w) / (inputs.length + 1) - ATTACHMENT / 2
-          buildings.push({
-            id: `s:${block.id}:${k}:${at}`,
-            kind: 'splitter',
-            key: 'Build_ConveyorAttachmentSplitter_C',
-            name: 'Splitter',
-            item: port.item,
-            x: px, y: inY[k], w: ATTACHMENT, h: ATTACHMENT,
-            row: index,
-          })
-          runs.push({
-            id: `in:${block.id}:${k}:${at}`,
-            item: port.item,
-            ratePerMin: port.ratePerMin / count,
-            points: [
-              { x: px + ATTACHMENT / 2, y: inY[k] + ATTACHMENT },
-              { x: px + ATTACHMENT / 2, y: machineY },
-            ],
-            lanes: 1,
-            row: index,
-          })
-        })
-
-        outputs.forEach((port, k) => {
-          const px = x + ((k + 1) * size.w) / (outputs.length + 1) - ATTACHMENT / 2
-          buildings.push({
-            id: `g:${block.id}:${k}:${at}`,
-            kind: 'merger',
-            key: 'Build_ConveyorAttachmentMerger_C',
-            name: 'Merger',
-            item: port.item,
-            x: px, y: outY[k], w: ATTACHMENT, h: ATTACHMENT,
-            row: index,
-          })
-          runs.push({
-            id: `out:${block.id}:${k}:${at}`,
-            item: port.item,
-            ratePerMin: port.ratePerMin / count,
-            points: [
-              { x: px + ATTACHMENT / 2, y: machineY + size.h },
-              { x: px + ATTACHMENT / 2, y: outY[k] },
-            ],
-            lanes: 1,
-            row: index,
-          })
-        })
-      }
-
-      // The buses themselves, one per item, running the length of the line.
-      const busEnd = lineWidth - size.w / 2
-      const share = onLine / count
-      inputs.forEach((port, k) => {
+      block.inputs.forEach((port, k) => {
         const rate = port.ratePerMin * share
         const need = lanesFor(rate, port.item, settings)
         if (need > 1) {
@@ -415,52 +563,50 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
           item: port.item,
           ratePerMin: rate,
           points: [
-            { x: -BUS_OFFSET, y: inY[k] + ATTACHMENT / 2 },
-            { x: busEnd, y: inY[k] + ATTACHMENT / 2 },
+            { x: ox - BUS_OFFSET, y: oy + l.busInY[line][k] + ATTACHMENT / 2 },
+            { x: end, y: oy + l.busInY[line][k] + ATTACHMENT / 2 },
           ],
           lanes: need,
           row: index,
         })
       })
-      outputs.forEach((port, k) => {
+      block.outputs.forEach((port, k) => {
         const rate = port.ratePerMin * share
         runs.push({
           id: `bus-out:${block.id}:${line}:${k}`,
           item: port.item,
           ratePerMin: rate,
           points: [
-            { x: busEnd, y: outY[k] + ATTACHMENT / 2 },
-            { x: -BUS_OFFSET, y: outY[k] + ATTACHMENT / 2 },
+            { x: end, y: oy + l.busOutY[line][k] + ATTACHMENT / 2 },
+            { x: ox - BUS_OFFSET, y: oy + l.busOutY[line][k] + ATTACHMENT / 2 },
           ],
           lanes: lanesFor(rate, port.item, settings),
           row: index,
         })
       })
-
-      cursor = (outY[outY.length - 1] ?? machineY + size.h) + ATTACHMENT + ROW_GAP / 2
     }
 
-    const bottom = cursor - ROW_GAP / 2
     rows.push({
-      index, step: block.step, raw: block.raw, label: block.label,
-      machines: count, perLine, lines,
-      inputs, outputs,
-      inputRate: inputs.reduce((n, i) => n + i.ratePerMin, 0),
-      outputRate: outputs.reduce((n, o) => n + o.ratePerMin, 0),
+      index, column,
+      step: block.step, raw: block.raw, label: block.label,
+      machines: block.count, perLine: l.perLine, lines: l.lines,
+      inputs: block.inputs, outputs: block.outputs,
+      inputRate: block.inputs.reduce((n, i) => n + i.ratePerMin, 0),
+      outputRate: block.outputs.reduce((n, o) => n + o.ratePerMin, 0),
       made: block.made,
-      busInY, busOutY,
-      y, height: bottom - y,
+      busInY: l.busInY.map((line) => line.map((v) => oy + v)),
+      busOutY: l.busOutY.map((line) => line.map((v) => oy + v)),
+      x: ox, y: oy, width: l.width, height: l.height,
     })
-
-    y = bottom + ROW_GAP
   }
 
-  runs.push(...mains(rows, settings))
+  const colX = [...new Set(spots.map((s) => s.x))].sort((a, b) => a - b)
+  const trunk = mains(rows, carried, colX, settings)
+  runs.push(...trunk.runs)
 
-  const lanes = new Set(rows.flatMap((r) => r.outputs.map((o) => o.item.key)))
-  const height = y > 0 ? y - ROW_GAP : 0
-  // The buses and the mains live to the left of x=0, so the floor has to reach.
-  const left = BUS_OFFSET + ATTACHMENT * (1 + lanes.size)
+  const right = Math.max(...rows.map((r) => r.x + r.width))
+  const bottom = Math.max(...rows.map((r) => r.y + r.height))
+  const left = -corridor
   const beltMetres = runs.reduce((n, r) => {
     let d = 0
     for (let i = 1; i < r.points.length; i++) {
@@ -469,13 +615,18 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
     return n + (d * r.lanes) / 100
   }, 0)
 
+  const width = right - left
+  const height = bottom - trunk.top
   return {
     buildings,
     runs,
     rows,
-    width: width + left,
+    columns: colX.length,
+    minX: left,
+    minY: trunk.top,
+    width,
     height,
-    foundations: Math.ceil((width + left) / FOUNDATION) * Math.ceil(height / FOUNDATION),
+    foundations: Math.ceil(width / FOUNDATION) * Math.ceil(height / FOUNDATION),
     beltMetres: Math.round(beltMetres),
     splitters: buildings.filter((b) => b.kind === 'splitter').length,
     mergers: buildings.filter((b) => b.kind === 'merger').length,
@@ -484,74 +635,102 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
 }
 
 /**
- * The mains down the left, one per item that moves between blocks.
+ * The mains: one per item that moves between blocks.
  *
- * Drawing a belt from each producer to each consumer was the other half of what
+ * Each runs vertically in the corridor to the left of every column it touches,
+ * and where it touches more than one those verticals are joined by a trunk
+ * across the top of the build. Producers feed it, consumers tap it. Drawing a
+ * belt from each producer to each consumer instead was the other half of what
  * made the picture nonsense: iron rods go to the screws, the rotors and the
- * modular frames, and one link per row left two of those apparently fed by
- * nothing. A main every producer feeds and every consumer taps is both correct
- * and what you would actually build.
+ * modular frames, and one link per row left two of those fed by nothing.
  */
-function mains(rows: Row[], settings: PlannerSettings): Run[] {
+function mains(
+  rows: Row[], carried: string[], colX: number[], settings: PlannerSettings,
+): { runs: Run[]; top: number } {
   const runs: Run[] = []
-  const order: string[] = []
-  for (const row of rows) {
-    for (const out of row.outputs) if (!order.includes(out.item.key)) order.push(out.item.key)
-  }
+  let top = 0
 
-  for (const [lane, key] of order.entries()) {
-    const x = -BUS_OFFSET - ATTACHMENT * (1 + lane)
-    const taps: { y: number; rate: number; row: number; into: boolean }[] = []
+  for (const [lane, key] of carried.entries()) {
+    const offset = BUS_OFFSET + ATTACHMENT * (1 + lane)
+    const taps: { column: number; x: number; y: number; rate: number; row: number; into: boolean }[] = []
     let item: GameItem | null = null
 
     for (const row of rows) {
+      const at = colX.indexOf(row.x)
       row.outputs.forEach((port, k) => {
         if (port.item.key !== key) return
         item = port.item
-        row.busOutY.forEach((line) => {
-          taps.push({ y: line[k] + ATTACHMENT / 2, rate: port.ratePerMin / row.lines, row: row.index, into: true })
-        })
+        row.busOutY.forEach((line) => taps.push({
+          column: at, x: row.x, y: line[k] + ATTACHMENT / 2,
+          rate: port.ratePerMin / row.lines, row: row.index, into: true,
+        }))
       })
       row.inputs.forEach((port, k) => {
         if (port.item.key !== key) return
         item = port.item
-        row.busInY.forEach((line) => {
-          taps.push({ y: line[k] + ATTACHMENT / 2, rate: port.ratePerMin / row.lines, row: row.index, into: false })
-        })
+        row.busInY.forEach((line) => taps.push({
+          column: at, x: row.x, y: line[k] + ATTACHMENT / 2,
+          rate: port.ratePerMin / row.lines, row: row.index, into: false,
+        }))
       })
     }
-
-    // Nothing downstream wants it, so it never leaves its own block.
     if (!item || !taps.some((t) => t.into) || !taps.some((t) => !t.into)) continue
 
-    const top = Math.min(...taps.map((t) => t.y))
-    const bottom = Math.max(...taps.map((t) => t.y))
-    const carried = taps.filter((t) => !t.into).reduce((n, t) => n + t.rate, 0)
+    const columns = [...new Set(taps.map((t) => t.column))].sort((a, b) => a - b)
+    const demand = taps.filter((t) => !t.into).reduce((n, t) => n + t.rate, 0)
+    const lanes = lanesFor(demand, item, settings)
+    const trunkY = -(FOUNDATION + ATTACHMENT * (1 + lane))
+    if (columns.length > 1) top = Math.min(top, trunkY)
 
-    runs.push({
-      id: `main:${key}`,
-      item,
-      ratePerMin: carried,
-      points: [{ x, y: top }, { x, y: bottom }],
-      lanes: lanesFor(carried, item, settings),
-      row: -1,
-    })
+    for (const column of columns) {
+      const here = taps.filter((t) => t.column === column)
+      const x = colX[column] - offset
+      const highest = Math.min(...here.map((t) => t.y))
+      const lowest = Math.max(...here.map((t) => t.y))
 
-    for (const tap of taps) {
       runs.push({
-        id: `tap:${key}:${tap.row}:${Math.round(tap.y)}:${tap.into ? 'in' : 'out'}`,
+        id: `main:${key}:${column}`,
         item,
-        ratePerMin: tap.rate,
-        points: tap.into
-          ? [{ x: -BUS_OFFSET, y: tap.y }, { x, y: tap.y }]
-          : [{ x, y: tap.y }, { x: -BUS_OFFSET, y: tap.y }],
-        lanes: 1,
-        row: tap.row,
+        ratePerMin: demand,
+        points: [
+          { x, y: columns.length > 1 ? trunkY : highest },
+          { x, y: lowest },
+        ],
+        lanes,
+        row: -1,
+      })
+
+      for (const tap of here) {
+        runs.push({
+          id: `tap:${key}:${tap.row}:${Math.round(tap.y)}:${tap.into ? 'in' : 'out'}`,
+          item,
+          ratePerMin: tap.rate,
+          points: tap.into
+            ? [{ x: tap.x - BUS_OFFSET, y: tap.y }, { x, y: tap.y }]
+            : [{ x, y: tap.y }, { x: tap.x - BUS_OFFSET, y: tap.y }],
+          lanes: 1,
+          row: tap.row,
+        })
+      }
+    }
+
+    // Join the columns across the top, which is the only clear run there is.
+    if (columns.length > 1) {
+      runs.push({
+        id: `trunk:${key}`,
+        item,
+        ratePerMin: demand,
+        points: [
+          { x: colX[columns[0]] - offset, y: trunkY },
+          { x: colX[columns[columns.length - 1]] - offset, y: trunkY },
+        ],
+        lanes,
+        row: -1,
       })
     }
   }
 
-  return runs
+  return { runs, top }
 }
 
 /** Everything the build needs placing, as a shopping list. */
