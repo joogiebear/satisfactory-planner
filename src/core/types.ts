@@ -133,6 +133,20 @@ export interface GameData {
   recipeTiers: Record<string, number>
   /** Earliest tier each production building can exist at. */
   machineTiers: Record<string, number>
+  /**
+   * Each buildable's own bounding box in centimetres, read from the game.
+   *
+   * This is what lets a plan be drawn to scale rather than as boxes of a size
+   * somebody picked: a Constructor really is 8 m by 10 m and an Assembler 9 by
+   * 16, and a layout that gets that wrong is not one you can copy.
+   */
+  footprints: Record<string, BuildingFootprint>
+}
+
+export interface BuildingFootprint {
+  /** 'machine', 'conveyor', 'wall' and so on — what kind of thing it is. */
+  category: string
+  box: { min: number[]; max: number[] }
 }
 
 // ---------------------------------------------------------------------------

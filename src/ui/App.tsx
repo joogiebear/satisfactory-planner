@@ -10,13 +10,14 @@ import { BlueprintPanel } from './components/BlueprintPanel'
 import { FactoryGraph } from './components/FactoryGraph'
 import { ProgressionPanel } from './components/ProgressionPanel'
 import { ResourcePanel } from './components/ResourcePanel'
+import { LayoutView } from './components/LayoutView'
 import { MeshProvider } from './blueprint/MeshContext'
 import { MeshOffer, MeshProgressCard } from './blueprint/MeshOffer'
 import { refreshIcons } from './icons'
 import { refreshMapNodes } from '../core/mapNodes'
 import { fmt, fmtPower } from './format'
 
-type Tab = 'factory' | 'tree' | 'steps' | 'summary' | 'resources' | 'progression' | 'blueprint'
+type Tab = 'factory' | 'layout' | 'tree' | 'steps' | 'summary' | 'resources' | 'progression' | 'blueprint'
 
 const STORAGE_KEY = 'satisfactory-planner/v1'
 
@@ -24,6 +25,7 @@ const APP_VERSION = __APP_VERSION__
 
 const TAB_LABELS: Record<Tab, string> = {
   factory: 'Factory',
+  layout: 'Layout',
   tree: 'Tree',
   steps: 'Steps',
   summary: 'Summary',
@@ -125,7 +127,8 @@ export function App() {
 
   const hasPlan = plan.steps.length > 0 || plan.raw.length > 0
   // The tabs that show the current plan, as opposed to the ones that build one.
-  const isPlanTab = tab === 'factory' || tab === 'tree' || tab === 'steps' || tab === 'summary'
+  const isPlanTab = tab === 'factory' || tab === 'layout' || tab === 'tree'
+    || tab === 'steps' || tab === 'summary'
 
   return (
     <MeshProvider>
@@ -136,7 +139,7 @@ export function App() {
           <span className="brand-sub">Production Planner</span>
         </div>
         <nav className="tabs" role="tablist">
-          {(['factory', 'tree', 'steps', 'summary', 'resources', 'progression', 'blueprint'] as Tab[]).map((t) => (
+          {(['factory', 'layout', 'tree', 'steps', 'summary', 'resources', 'progression', 'blueprint'] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
@@ -220,7 +223,7 @@ export function App() {
 
           {isPlanTab && hasPlan && (
             <>
-              {tab !== 'factory' && <div className="rail">
+              {tab !== 'factory' && tab !== 'layout' && <div className="rail">
                 <Stat label="Machines" value={String(plan.totals.machines)} accent="amber" />
                 <Stat label="Total power" value={fmtPower(plan.totals.totalPowerMW)} />
                 <Stat
@@ -234,6 +237,7 @@ export function App() {
               </div>}
 
               {tab === 'factory' && <FactoryGraph plan={plan} settings={settings} setSettings={setSettings} setTargets={setTargets} />}
+              {tab === 'layout' && <LayoutView plan={plan} settings={settings} />}
               {tab === 'tree' && <TreeView plan={plan} settings={settings} />}
               {tab === 'steps' && <StepsTable plan={plan} settings={settings} onTune={onTune} />}
               {tab === 'summary' && <SummaryPanel plan={plan} settings={settings} />}

@@ -1239,3 +1239,66 @@ table.mini .num { font-family: var(--mono); }
   text-decoration: underline dotted;
 }
 .res-add-row { display: flex; gap: 10px; align-items: center; }
+
+/* --- top-down layout ------------------------------------------------------ */
+
+.layout-panel { display: flex; flex-direction: column; min-height: 0; }
+.layout-empty { padding: 26px 16px; margin: 0; }
+
+.layout-bar {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rivet);
+}
+.layout-stat { display: flex; align-items: baseline; gap: 6px; font-size: 13px; }
+.layout-stat strong { font-family: var(--mono); color: var(--ink); }
+.layout-bar .btn { margin-left: auto; }
+
+.layout-blurb { margin: 0; padding: 12px 16px 0; font-size: 12px; max-width: 88ch; line-height: 1.5; }
+
+.layout-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 0;
+  font-size: 12px;
+}
+.layout-zoom input[type='range'] { width: 200px; accent-color: var(--ficsit); }
+.layout-scale { margin-left: auto; font-family: var(--mono); }
+
+/* The whole build fits at 1x; the slider magnifies and the box scrolls, which
+   is the only way to read a forty-machine row and still see where it sits. */
+.layout-canvas {
+  flex: 1;
+  min-height: 0;
+  height: 62vh;
+  overflow: auto;
+  padding: 12px 16px;
+}
+.layout-svg { display: block; background: var(--void); border: 1px solid var(--rivet); border-radius: var(--r); }
+
+.layout-rowbox { fill: #ffffff05; stroke: var(--rivet-hi); }
+.layout-rowbox:hover { fill: #f89a3c14; }
+.layout-rowlabel { fill: var(--ink-dim); font-family: var(--display); letter-spacing: 0.08em; }
+
+.layout-b[data-kind='machine'] { fill: var(--plate-hi); stroke: var(--ficsit); }
+.layout-b[data-kind='splitter'] { fill: var(--plate); stroke: var(--go); }
+.layout-b[data-kind='merger'] { fill: var(--plate); stroke: var(--coolant); }
+.layout-btext { fill: var(--ink-dim); font-family: var(--display); text-anchor: middle; dominant-baseline: central; }
+
+.layout-belt { fill: none; stroke: var(--ficsit); stroke-linejoin: round; stroke-linecap: round; }
+.layout-rate { fill: var(--ink-dim); font-family: var(--mono); text-anchor: middle; }
+
+.layout-bom { padding: 4px 16px 18px; border-top: 1px solid var(--rivet); }
+.layout-bom h4 {
+  margin: 12px 0 8px;
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.layout-bom ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; }
+.layout-bom strong { font-family: var(--mono); color: var(--ficsit); }
