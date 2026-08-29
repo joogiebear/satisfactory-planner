@@ -1313,3 +1313,36 @@ table.mini .num { font-family: var(--mono); }
 .layout-canvas { cursor: grab; }
 .layout-canvas.is-panning { cursor: grabbing; }
 .layout-canvas.is-panning .layout-svg { pointer-events: none; }
+
+/* Identity on the drawing is the icon and the name; colour says what a thing
+   is — machine, splitter, merger, main — not what is riding on it. Past three
+   hues no categorical palette stays legible to a colourblind reader when any
+   two belts can end up side by side, which in a schematic they can. */
+.layout-carried { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; }
+.layout-carried li { display: flex; align-items: center; gap: 6px; }
+.layout-carried li[data-crossing] strong,
+.layout-carried li[data-crossing] { color: var(--ink); }
+.layout-carried li[data-crossing]::after {
+  content: 'crosses blocks';
+  font-size: 10px;
+  font-family: var(--display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ficsit);
+  border: 1px solid var(--rivet-hi);
+  border-radius: var(--r);
+  padding: 1px 5px;
+}
+.layout-belt[data-main] { stroke: var(--hazard); }
+.layout-key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 2px solid var(--ficsit);
+  vertical-align: baseline;
+}
+.layout-key[data-kind='machine'] { background: var(--plate-hi); border-color: var(--ficsit); }
+.layout-key[data-kind='splitter'] { background: var(--plate); border-color: var(--go); }
+.layout-key[data-kind='merger'] { background: var(--plate); border-color: var(--coolant); }
+.layout-key[data-kind='main'] { background: var(--hazard); border-color: var(--hazard); }

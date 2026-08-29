@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { billOfMaterials, layOut, FOUNDATION, ROW_GAP, type Placed, type Run } from '../../core/layout'
-import type { Plan, PlannerSettings } from '../../core/types'
-import { fmt } from '../format'
+import type { GameItem, Plan, PlannerSettings } from '../../core/types'
+import { fmt, unit } from '../format'
 import { iconFor } from '../icons'
 import { initials } from '../format'
 
@@ -32,6 +32,30 @@ const BUS_GAP = 500
 export function LayoutView({ plan, settings }: Props) {
   const layout = useMemo(() => layOut(plan, settings), [plan, settings])
   const bom = useMemo(() => billOfMaterials(layout), [layout])
+
+  // Everything that moves on a belt here, so nothing on the drawing is a
+  // shape you have to guess at. Colour cannot carry this — a schematic puts
+  // any two belts side by side, and past three hues no palette stays legible
+  // to a colourblind reader at that point — so identity is the icon and the
+  // name, and colour is left to say what a thing is rather than what is on it.
+  const carried = useMemo(() => {
+    const seen = new Map<string, { item: GameItem; ratePerMin: number; crossing: boolean }>()
+    for (const run of layout.runs) {
+      if (!run.id.startsWith('bus-out') && !run.id.startsWith('main')) continue
+      const at = seen.get(run.item.key)
+      if (at) {
+        at.ratePerMin = Math.max(at.ratePerMin, run.ratePerMin)
+        at.crossing = at.crossing || run.id.startsWith('main')
+      } else {
+        seen.set(run.item.key, {
+          item: run.item,
+          ratePerMin: run.ratePerMin,
+          crossing: run.id.startsWith('main'),
+        })
+      }
+    }
+    return [...seen.values()].sort((a, b) => b.ratePerMin - a.ratePerMin)
+  }, [layout])
   const [hover, setHover] = useState<number | null>(null)
   const [zoom, setZoom] = useState(1)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -183,10 +207,16 @@ export function LayoutView({ plan, settings }: Props) {
       </div>
 
       <p className="muted layout-blurb">
-        A manifold, which is what most people build: one belt along the front of each row
-        with a splitter per machine, one along the back collecting through mergers. The
-        machines nearest the head fill first and the row evens out once it is saturated.
-        Everything is drawn at its real size on the game's 8 m foundation grid.
+        A manifold, which is what most people build: a belt along the front of each line
+        with a splitter per machine, another along the back collecting through mergers.
+        Everything is drawn at its real size on the game's 8 m foundation grid. Every
+        splitter, merger and bus carries the icon of whatever runs through it, so nothing
+        on the drawing is a shape you have to guess at —{' '}
+        <span className="layout-key" data-kind="machine" /> machines,{' '}
+        <span className="layout-key" data-kind="splitter" /> splitters feeding them,{' '}
+        <span className="layout-key" data-kind="merger" /> mergers collecting, and{' '}
+        <span className="layout-key" data-kind="main" /> the mains carrying an item between
+        blocks.
       </p>
 
       {layout.warnings.length > 0 && (
@@ -276,6 +306,17 @@ export function LayoutView({ plan, settings }: Props) {
       </div>
 
       <div className="layout-bom">
+        <h4>On the belts</h4>
+        <ul className="layout-carried">
+          {carried.map((c) => (
+            <li key={c.item.key} data-crossing={c.crossing || undefined}>
+              <Chip item={c.item} />
+              {c.item.name}
+              <span className="muted">{fmt(c.ratePerMin)}{unit(c.item)}</span>
+            </li>
+          ))}
+        </ul>
+
         <h4>What to build</h4>
         <ul>
           {bom.map((b) => (
@@ -290,8 +331,12 @@ export function LayoutView({ plan, settings }: Props) {
 }
 
 function Building({ b, u, dim }: { b: Placed; u: number; dim: boolean }) {
-  const src = iconFor(b.key) ?? (b.item ? iconFor(b.item.key) : undefined)
-  const pad = Math.min(b.w, b.h) * 0.2
+  // A machine shows what it is; a splitter or merger shows what runs through
+  // it, which is the thing you cannot otherwise tell about a 4 m grey square.
+  const src = b.kind === 'machine'
+    ? iconFor(b.key) ?? (b.item ? iconFor(b.item.key) : undefined)
+    : b.item ? iconFor(b.item.key) : undefined
+  const pad = Math.min(b.w, b.h) * (b.kind === 'machine' ? 0.2 : 0.12)
   const size = Math.min(b.w, b.h) - pad * 2
 
   return (
@@ -301,7 +346,7 @@ function Building({ b, u, dim }: { b: Placed; u: number; dim: boolean }) {
         x={b.x} y={b.y} width={b.w} height={b.h} rx={u * 0.5}
         className="layout-b" data-kind={b.kind} strokeWidth={u * 0.22}
       />
-      {b.kind === 'machine' && src && (
+      {src && (
         <image href={src} x={b.x + (b.w - size) / 2} y={b.y + (b.h - size) / 2} width={size} height={size} />
       )}
       {b.kind === 'machine' && !src && (
@@ -319,7 +364,8 @@ function Building({ b, u, dim }: { b: Placed; u: number; dim: boolean }) {
 function Belt({ run, u, small, dim }: { run: Run; u: number; small: number; dim: boolean }) {
   const d = run.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
   const mid = run.points[Math.floor(run.points.length / 2)]
-  const bus = run.id.startsWith('bus') || run.id.startsWith('link')
+  const bus = run.id.startsWith('bus') || run.id.startsWith('main') || run.id.startsWith('trunk')
+  const icon = iconFor(run.item.key)
 
   return (
     <g opacity={dim ? 0.2 : 1}>
@@ -328,15 +374,29 @@ function Belt({ run, u, small, dim }: { run: Run; u: number; small: number; dim:
         d={d}
         className="layout-belt"
         data-bus={bus || undefined}
+        data-main={run.row < 0 || undefined}
         data-over={run.lanes > 1 || undefined}
         strokeWidth={bus ? u * 0.5 : u * 0.3}
         strokeDasharray={run.lanes > 1 ? `${u} ${u * 0.7}` : undefined}
         markerEnd={bus ? 'url(#flow)' : undefined}
       />
       {bus && (
-        <text x={mid.x} y={mid.y - small * 0.6} className="layout-rate" style={{ fontSize: small }}>
-          {fmt(run.ratePerMin)}/min{run.lanes > 1 ? ` ×${run.lanes}` : ''}
-        </text>
+        <>
+          {icon && (
+            <image
+              href={icon}
+              x={mid.x - small * 2.6} y={mid.y - small * 1.5}
+              width={small * 1.2} height={small * 1.2}
+            />
+          )}
+          <text
+            x={mid.x - small * 1.2} y={mid.y - small * 0.6}
+            className="layout-rate" style={{ fontSize: small }}
+          >
+            {run.item.name} {fmt(run.ratePerMin)}{unit(run.item)}
+            {run.lanes > 1 ? ` ×${run.lanes}` : ''}
+          </text>
+        </>
       )}
     </g>
   )
@@ -348,6 +408,17 @@ function Stat({ label, value, unit }: { label: string; value: string; unit?: str
       <span className="muted">{label}</span>
       <strong>{value}</strong>
       {unit && <span className="muted">{unit}</span>}
+    </span>
+  )
+}
+
+/** The item's own icon, or a lettered tile where the art isn't extracted. */
+function Chip({ item }: { item: GameItem }) {
+  const src = iconFor(item.key)
+  if (src) return <img className="gi" src={src} alt="" width={18} height={18} />
+  return (
+    <span className="gi gi-letter" data-fluid={item.isFluid} style={{ width: 18, height: 18 }}>
+      {initials(item.name)}
     </span>
   )
 }
