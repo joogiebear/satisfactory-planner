@@ -25,11 +25,16 @@ describe('laying a plan out to build', () => {
     const { plan: p, settings } = plan('Desc_IronPlateReinforced_C', 20)
     const l = layOut(p, settings)
     const machines = l.buildings.filter((b) => b.kind === 'machine').length
+    const extractors = p.raw.reduce(
+      (n, r) => n + (r.extractor ? Math.ceil(r.extractorCount - 1e-9) : 0), 0)
 
-    expect(machines).toBe(p.totals.machines)
+    // Miners are part of the build: a layout that starts at the smelters is not
+    // one you can walk onto and put down.
+    expect(extractors).toBeGreaterThan(0)
+    expect(machines).toBe(p.totals.machines + extractors)
     expect(l.mergers).toBe(machines)
-    // Only rows that eat something need feeding.
-    const fed = l.rows.filter((r) => r.step.inputs.length > 0)
+    // Only rows that eat something need feeding — a miner row has no input.
+    const fed = l.rows.filter((r) => (r.step?.inputs.length ?? 0) > 0)
       .reduce((n, r) => n + r.machines, 0)
     expect(l.splitters).toBe(fed)
   })
@@ -38,14 +43,12 @@ describe('laying a plan out to build', () => {
   it('puts a row below everything that feeds it', () => {
     const { plan: p, settings } = plan('Desc_ModularFrame_C', 10)
     const l = layOut(p, settings)
-    const rowOf = new Map(l.rows.map((r) => [r.step.recipe.key, r]))
-
     for (const row of l.rows) {
-      for (const input of row.step.inputs) {
-        const feeder = l.rows.find((r) => r.step.outputs.some((o) => o.item.key === input.item.key))
+      for (const input of row.step?.inputs ?? []) {
+        const feeder = l.rows.find((r) => r.made?.key === input.item.key)
         if (!feeder || feeder === row) continue
         expect(feeder.index).toBeLessThan(row.index)
-        expect(rowOf.get(feeder.step.recipe.key)!.y).toBeLessThan(row.y)
+        expect(feeder.y).toBeLessThan(row.y)
       }
     }
   })
@@ -97,5 +100,21 @@ describe('laying a plan out to build', () => {
     const l = layOut(solvePlan([], defaultSettings()), defaultSettings())
     expect(l.rows).toEqual([])
     expect(l.foundations).toBe(0)
+  })
+  /** The miners are the top of the build and nothing feeds them. */
+  it('lays the extractors out above everything they feed', () => {
+    const { plan: p, settings } = plan('Desc_IronPlateReinforced_C', 20)
+    const l = layOut(p, settings)
+    const mining = l.rows.filter((r) => r.raw)
+    expect(mining.length).toBe(p.raw.filter((r) => r.extractor).length)
+
+    for (const row of mining) {
+      expect(row.step).toBeNull()
+      expect(row.inputRate).toBe(0)
+      // Above every row that isn't itself a miner.
+      for (const other of l.rows.filter((r) => !r.raw)) {
+        expect(row.y).toBeLessThan(other.y)
+      }
+    }
   })
 })

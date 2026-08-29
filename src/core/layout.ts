@@ -20,7 +20,7 @@
  */
 
 import { belts, gameData, items, pipes } from './gameData'
-import type { GameItem, Plan, PlannerSettings, ProductionStep } from './types'
+import type { GameItem, Plan, PlannerSettings, ProductionStep, RawRequirement } from './types'
 
 /** The game's foundation, and the grid everything snaps to. */
 export const FOUNDATION = 800
@@ -32,7 +32,7 @@ const MACHINE_GAP = 200
 const BUS_OFFSET = 400
 
 /** Between one row's output bus and the next row's input bus. */
-const ROW_GAP = 800
+export const ROW_GAP = 800
 
 const ATTACHMENT = 400
 
@@ -68,13 +68,34 @@ export interface Run {
 
 export interface Row {
   index: number
-  step: ProductionStep
+  /** The recipe this row runs. Null on a row of extractors. */
+  step: ProductionStep | null
+  /** What this row mines. Null on a row of machines. */
+  raw: RawRequirement | null
+  /** How the row reads on the drawing, e.g. "15× Constructor — Iron Plate". */
+  label: string
   machines: number
   /** Rate along the input bus, which is what decides its belt tier. */
   inputRate: number
   outputRate: number
+  /** What the row puts out, which is what the row below it eats. */
+  made: GameItem | null
   y: number
   height: number
+}
+
+/** One band of the drawing: a row of like machines with its buses. */
+interface Block {
+  id: string
+  machineKey: string
+  machineName: string
+  label: string
+  count: number
+  made: GameItem | null
+  inputs: { item: GameItem; ratePerMin: number }[]
+  outputs: { item: GameItem; ratePerMin: number }[]
+  step: ProductionStep | null
+  raw: RawRequirement | null
 }
 
 export interface Layout {
@@ -186,16 +207,50 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
   const rows: Row[] = []
   const warnings: string[] = []
 
-  const steps = inFeedOrder(plan)
+  // Extractors first: they feed everything and nothing feeds them, so a build
+  // that starts at the smelters is a build you cannot actually walk onto.
+  const blocks: Block[] = []
+  for (const raw of plan.raw) {
+    const count = Math.ceil(raw.extractorCount - 1e-9)
+    if (!raw.extractor || count <= 0) continue
+    blocks.push({
+      id: `raw:${raw.item.key}`,
+      machineKey: raw.extractor.key,
+      machineName: raw.extractor.name,
+      label: `${count}× ${raw.extractor.name}`
+        + `${raw.purity ? ` on ${raw.purity} nodes` : ''} — ${raw.item.name}`,
+      count,
+      made: raw.item,
+      inputs: [],
+      outputs: [{ item: raw.item, ratePerMin: raw.ratePerMin }],
+      step: null,
+      raw,
+    })
+  }
+  for (const step of inFeedOrder(plan)) {
+    const count = Math.ceil(step.machines - 1e-9)
+    if (count <= 0) continue
+    blocks.push({
+      id: `step:${step.recipe.key}`,
+      machineKey: step.recipe.machine,
+      machineName: step.building?.name ?? 'Machine',
+      label: `${count}× ${step.building?.name ?? 'Machine'} — ${step.recipe.name}`,
+      count,
+      made: primaryOut(step),
+      inputs: step.inputs.map((i) => ({ item: i.item, ratePerMin: i.ratePerMin })),
+      outputs: step.outputs.map((o) => ({ item: o.item, ratePerMin: o.ratePerMin })),
+      step,
+      raw: null,
+    })
+  }
 
   let y = 0
   let width = 0
 
-  for (const [index, step] of steps.entries()) {
-    const count = Math.ceil(step.machines - 1e-9)
-    if (count <= 0) continue
-    const size = footprint(step.recipe.machine)
-    const made = primaryOut(step)
+  for (const [index, block] of blocks.entries()) {
+    const { count } = block
+    const size = footprint(block.machineKey)
+    const made = block.made
 
     const rowWidth = count * size.w + (count - 1) * MACHINE_GAP
     width = Math.max(width, rowWidth)
@@ -205,36 +260,36 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
     const busOut = machineY + size.h + BUS_OFFSET
 
     // The bus carries everything the row eats, so it is what decides the tier.
-    const inputRate = step.inputs.reduce((n, i) => n + i.ratePerMin, 0)
-    const outputRate = step.outputs.reduce((n, o) => n + o.ratePerMin, 0)
+    const inputRate = block.inputs.reduce((n, i) => n + i.ratePerMin, 0)
+    const outputRate = block.outputs.reduce((n, o) => n + o.ratePerMin, 0)
 
     for (let i = 0; i < count; i++) {
       const x = i * (size.w + MACHINE_GAP)
       const centre = x + size.w / 2 - ATTACHMENT / 2
 
       buildings.push({
-        id: `m:${step.recipe.key}:${i}`,
+        id: `m:${block.id}:${i}`,
         kind: 'machine',
-        key: step.recipe.machine,
-        name: step.building?.name ?? 'Machine',
+        key: block.machineKey,
+        name: block.machineName,
         item: made,
         x, y: machineY, w: size.w, h: size.h,
         row: index,
       })
 
-      if (step.inputs.length > 0) {
+      if (block.inputs.length > 0) {
         buildings.push({
-          id: `s:${step.recipe.key}:${i}`,
+          id: `s:${block.id}:${i}`,
           kind: 'splitter',
           key: 'Build_ConveyorAttachmentSplitter_C',
           name: 'Splitter',
-          item: step.inputs[0]?.item ?? null,
+          item: block.inputs[0]?.item ?? null,
           x: centre, y: busIn, w: ATTACHMENT, h: ATTACHMENT,
           row: index,
         })
       }
       buildings.push({
-        id: `g:${step.recipe.key}:${i}`,
+        id: `g:${block.id}:${i}`,
         kind: 'merger',
         key: 'Build_ConveyorAttachmentMerger_C',
         name: 'Merger',
@@ -244,11 +299,11 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
       })
 
       // The drop from bus to machine, and back out the far side.
-      if (step.inputs.length > 0) {
+      if (block.inputs.length > 0) {
         runs.push({
-          id: `in:${step.recipe.key}:${i}`,
-          item: step.inputs[0].item,
-          ratePerMin: step.inputs.reduce((n, s) => n + s.ratePerMin, 0) / count,
+          id: `in:${block.id}:${i}`,
+          item: block.inputs[0].item,
+          ratePerMin: inputRate / count,
           points: [
             { x: centre + ATTACHMENT / 2, y: busIn + ATTACHMENT },
             { x: centre + ATTACHMENT / 2, y: machineY },
@@ -259,7 +314,7 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
       }
       if (made) {
         runs.push({
-          id: `out:${step.recipe.key}:${i}`,
+          id: `out:${block.id}:${i}`,
           item: made,
           ratePerMin: outputRate / count,
           points: [
@@ -274,18 +329,18 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
 
     // The buses themselves, running the length of the row.
     const busEnd = rowWidth - size.w / 2
-    if (step.inputs.length > 0) {
-      const feed = step.inputs[0].item
+    if (block.inputs.length > 0) {
+      const feed = block.inputs[0].item
       const lanes = lanesFor(inputRate, feed, settings)
       if (lanes > 1) {
         warnings.push(
-          `${step.building?.name ?? 'This row'} eats ${Math.round(inputRate)}/min, over one `
+          `${block.machineName} eats ${Math.round(inputRate)}/min, over one `
           + `${laneFor(feed, settings).name} — the bus needs ${lanes} lines, or split the row.`,
         )
       }
       runs.push({
-        id: `bus-in:${step.recipe.key}`,
-        item: step.inputs[0].item,
+        id: `bus-in:${block.id}`,
+        item: block.inputs[0].item,
         ratePerMin: inputRate,
         points: [
           { x: -BUS_OFFSET, y: busIn + ATTACHMENT / 2 },
@@ -298,7 +353,7 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
     if (made) {
       const lanes = lanesFor(outputRate, made, settings)
       runs.push({
-        id: `bus-out:${step.recipe.key}`,
+        id: `bus-out:${block.id}`,
         item: made,
         ratePerMin: outputRate,
         points: [
@@ -311,7 +366,8 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
     }
 
     rows.push({
-      index, step, machines: count, inputRate, outputRate,
+      index, step: block.step, raw: block.raw, label: block.label,
+      machines: count, inputRate, outputRate, made,
       y: busIn, height: busOut + ATTACHMENT - busIn,
     })
 
@@ -320,15 +376,15 @@ export function layOut(plan: Plan, settings: PlannerSettings): Layout {
 
   // Carry each row's output down the left-hand side to whatever eats it next.
   for (const row of rows) {
-    const made = primaryOut(row.step)
+    const made = row.made
     if (!made) continue
     const next = rows.find((r) => r.index > row.index
-      && r.step.inputs.some((i) => i.item.key === made.key))
+      && (r.step?.inputs ?? []).some((i) => i.item.key === made.key))
     if (!next) continue
     const from = row.y + row.height - ATTACHMENT / 2
     const to = next.y + ATTACHMENT / 2
     runs.push({
-      id: `link:${row.step.recipe.key}->${next.step.recipe.key}`,
+      id: `link:${row.index}->${next.index}`,
       item: made,
       ratePerMin: row.outputRate,
       points: [

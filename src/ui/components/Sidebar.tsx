@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
-  alternateRecipes, baseRatePerMin, belts, items, maxGameTier, pipes,
+  alternateRecipes, baseRatePerMin, belts, items, maxGameTier, miners, pipes,
   producibleItems,
 } from '../../core/gameData'
 import type { Plan, PlanTarget, PlannerSettings } from '../../core/types'
@@ -17,6 +17,8 @@ interface Props {
   plan?: Plan
 }
 
+
+const PURITY = { impure: 0.5, normal: 1, pure: 2 } as const
 
 export function Sidebar({ settings, setSettings, targets, setTargets }: Props) {
   const patch = (p: Partial<PlannerSettings>) => setSettings({ ...settings, ...p })
@@ -177,6 +179,8 @@ export function Sidebar({ settings, setSettings, targets, setTargets }: Props) {
         <p className="hint">Any link above one line turns striped in the tree.</p>
       </Section>
 
+      <ExtractionSection settings={settings} setSettings={setSettings} />
+
       <Section title="Machines" count={`${Math.round(settings.defaultClock * 100)}%`}>
         <div className="field">
           <label htmlFor="clock">Default clock speed %</label>
@@ -264,6 +268,85 @@ function AlternatesSection({
         ))}
         {shown.length === 0 && <div className="picker-empty">No alternates match “{query}”.</div>}
       </div>
+    </Section>
+  )
+}
+
+/**
+ * The miner and node purity every extractor starts from.
+ *
+ * These live on each miner too — click one in the factory view, or set it on a
+ * row in What I have — which is right when a survey turns up a pure iron node
+ * and an impure copper one. It is the wrong place to be the only place: on the
+ * layout or the tree there is no miner to click, and the mark you mine at
+ * changes every number on the page.
+ */
+function ExtractionSection({
+  settings, setSettings,
+}: { settings: PlannerSettings; setSettings: (n: PlannerSettings) => void }) {
+  const ex = settings.extraction
+  const miner = miners.find((m) => m.key === ex.minerKey) ?? miners[0]
+  const overrides = Object.keys(ex.minerByResource ?? {}).length
+    + Object.keys(ex.purity ?? {}).length
+    + Object.keys(ex.clockByResource ?? {}).length
+
+  const patch = (p: Partial<typeof ex>) =>
+    setSettings({ ...settings, extraction: { ...ex, ...p } })
+
+  return (
+    <Section title="Extraction" count={miner?.name.replace('Miner ', '') ?? ''}>
+      <div className="field">
+        <label htmlFor="miner">Miner</label>
+        <select id="miner" value={ex.minerKey} onChange={(e) => patch({ minerKey: e.target.value })}>
+          {miners.map((m) => (
+            <option key={m.key} value={m.key}>{m.name} — {fmt(m.baseRatePerMin)}/min on a normal node</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="field">
+        <span className="field-label">Node purity</span>
+        <div className="segmented">
+          {(['impure', 'normal', 'pure'] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              aria-pressed={ex.defaultPurity === p}
+              onClick={() => patch({ defaultPurity: p })}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+        <p className="hint">
+          {miner?.name ?? 'A miner'} on a {ex.defaultPurity} node delivers{' '}
+          {fmt((miner?.baseRatePerMin ?? 0) * PURITY[ex.defaultPurity] * ex.minerClock)}/min.
+        </p>
+      </div>
+
+      <div className="field">
+        <label htmlFor="miner-clock">Overclock %</label>
+        <input
+          id="miner-clock"
+          type="number"
+          min={1}
+          max={250}
+          step={1}
+          value={Math.round(ex.minerClock * 1000) / 10}
+          onChange={(e) => patch({ minerClock: Math.max(0.01, Number(e.target.value) / 100) })}
+        />
+      </div>
+
+      {overrides > 0 && (
+        <button
+          type="button"
+          className="btn"
+          onClick={() => patch({ minerByResource: {}, purity: {}, clockByResource: {} })}
+          title="Nodes set individually on the factory view or in What I have"
+        >
+          Clear {overrides} per-node override{overrides === 1 ? '' : 's'}
+        </button>
+      )}
     </Section>
   )
 }
