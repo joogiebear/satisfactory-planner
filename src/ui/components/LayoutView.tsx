@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { billOfMaterials, layOut, FOUNDATION, ROW_GAP, type Placed, type Run } from '../../core/layout'
 import type { Plan, PlannerSettings } from '../../core/types'
 import { fmt } from '../format'
@@ -35,36 +35,59 @@ export function LayoutView({ plan, settings }: Props) {
   const [hover, setHover] = useState<number | null>(null)
   const [zoom, setZoom] = useState(1)
   const svgRef = useRef<SVGSVGElement>(null)
+  const drawnRef = useRef<SVGGElement>(null)
   const boxRef = useRef<HTMLDivElement>(null)
 
   if (!layout.rows.length) {
     return <p className="muted layout-empty">Nothing to lay out yet — add an output first.</p>
   }
 
-  // The buses and links run to the left of the machines, so the canvas starts
-  // there rather than at the first machine.
-  const minX = Math.min(0, ...layout.runs.flatMap((r) => r.points.map((p) => p.x)))
-  const maxX = Math.max(...layout.buildings.map((b) => b.x + b.w))
-  const vbW = maxX - minX + PAD * 2
+  const minX = layout.minX
+  const vbW = layout.width + PAD * 2
 
   // Belt widths scale off the whole drawing so they stay visible however far
-  // out you are. Text cannot: a tall thin build is mostly height, and sizing
-  // words off that gives a label taller than the gap it sits in, written across
-  // the row above. Type is measured against the width it has to fit and the gap
-  // it has to sit in, whichever is tighter.
-  const label = Math.min(vbW / 26, ROW_GAP * 0.52)
-  const small = Math.min(vbW / 52, ROW_GAP * 0.3)
+  // out you are. Text cannot: sizing words off the longest side gives, on a
+  // tall build, a label taller than the gap it sits in and written across the
+  // block above. Type is measured against a column's width and the gap it has
+  // to sit in, whichever is tighter.
+  const perColumn = layout.columns > 1 ? vbW / layout.columns : vbW
+  const label = Math.min(perColumn / 22, ROW_GAP * 0.52)
+  const small = Math.min(perColumn / 44, ROW_GAP * 0.3)
 
-  // The first row's label sits above the first row, which is at zero, so the
-  // canvas has to start above that or the top line is cut in half.
-  const top = PAD + label
-  const vbH = layout.height + PAD + top
+  const vbH = layout.height + PAD * 2 + label
   const u = Math.max(vbW, vbH) / 100
-  const viewBox = [minX - PAD, -top, vbW, vbH].join(' ')
+
+  // The box the layout reports covers its belts and machines. It does not cover
+  // the block labels, which run past the machines they name, and keeping a
+  // second set of bounds in step with the first is how the trunks came to be
+  // drawn above the top of the canvas. Measuring what was actually rendered
+  // needs no bookkeeping and cannot drift: getBBox reports content in user
+  // space, so it does not depend on the box it is measured against.
+  const [fitted, setFitted] = useState<string | null>(null)
+  const provisional = [minX - PAD, layout.minY - PAD - label, vbW, vbH].join(' ')
+  const viewBox = fitted ?? provisional
+
+  const vb = viewBox.split(' ').map(Number)
 
   // Letterboxing a tall build into a wide box leaves a sliver down the middle,
   // so the box grows with the build rather than the build shrinking into it.
-  const tall = vbH / vbW
+  const tall = vb[3] / vb[2]
+
+  useLayoutEffect(() => {
+    // The drawing only — the background grid is sized from the box it is being
+    // measured against, so including it would make each fit creep outwards by
+    // its own padding.
+    const drawn = drawnRef.current
+    if (!drawn) return
+    const box = drawn.getBBox()
+    if (!(box.width > 0) || !(box.height > 0)) return
+    const pad = PAD
+    const next = [
+      Math.floor(box.x - pad), Math.floor(box.y - pad),
+      Math.ceil(box.width + pad * 2), Math.ceil(box.height + pad * 2),
+    ].join(' ')
+    setFitted((prev) => (prev === next ? prev : next))
+  }, [layout, label])
 
   /**
    * Wheel zooms about the pointer rather than the middle.
@@ -212,8 +235,12 @@ export function LayoutView({ plan, settings }: Props) {
             </marker>
           </defs>
 
-          <rect x={minX - PAD} y={-top} width={vbW} height={vbH} fill="url(#foundations)" />
+          <rect
+            x={vb[0]} y={vb[1]} width={vb[2]} height={vb[3]}
+            fill="url(#foundations)"
+          />
 
+          <g ref={drawnRef}>
           {layout.rows.map((row) => (
             <g key={row.index} opacity={hover === null || hover === row.index ? 1 : 0.25}>
               <rect
@@ -244,6 +271,7 @@ export function LayoutView({ plan, settings }: Props) {
           {layout.buildings.map((b) => (
             <Building key={b.id} b={b} u={u} dim={hover !== null && hover !== b.row} />
           ))}
+          </g>
         </svg>
       </div>
 
