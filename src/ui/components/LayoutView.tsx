@@ -112,7 +112,7 @@ export function LayoutView({ plan, settings }: Props) {
           viewBox={viewBox}
           className="layout-svg"
           preserveAspectRatio="xMidYMid meet"
-          style={{ width: `${zoom * 100}%`, height: `${zoom * 100}%` }}
+          style={{ width: `${zoom * 100}%`, height: `calc(${zoom * 100}% - 2px)` }}
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
