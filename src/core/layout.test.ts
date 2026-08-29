@@ -20,9 +20,13 @@ describe('laying a plan out to build', () => {
     expect(footprint('Build_NotAThing_C')).toEqual({ w: FOUNDATION, h: FOUNDATION })
   })
 
-  /** A manifold is one splitter and one merger per machine, and that is the count. */
-  it('gives every machine its splitter and merger', () => {
-    const { plan: p, settings } = plan('Desc_IronPlateReinforced_C', 20)
+  /**
+   * One splitter per ingredient per machine, not one per machine. A Modular
+   * Frame Assembler eats plate and rod, and a single belt in front of it
+   * carrying both is not a thing you can build.
+   */
+  it('gives every machine a splitter for each ingredient', () => {
+    const { plan: p, settings } = plan('Desc_ModularFrame_C', 10)
     const l = layOut(p, settings)
     const machines = l.buildings.filter((b) => b.kind === 'machine').length
     const extractors = p.raw.reduce(
@@ -32,11 +36,13 @@ describe('laying a plan out to build', () => {
     // one you can walk onto and put down.
     expect(extractors).toBeGreaterThan(0)
     expect(machines).toBe(p.totals.machines + extractors)
-    expect(l.mergers).toBe(machines)
-    // Only rows that eat something need feeding — a miner row has no input.
-    const fed = l.rows.filter((r) => (r.step?.inputs.length ?? 0) > 0)
-      .reduce((n, r) => n + r.machines, 0)
-    expect(l.splitters).toBe(fed)
+
+    expect(l.splitters).toBe(l.rows.reduce((n, r) => n + r.machines * r.inputs.length, 0))
+    expect(l.mergers).toBe(l.rows.reduce((n, r) => n + r.machines * r.outputs.length, 0))
+
+    // And at least one row really does take two ingredients, or this proves
+    // nothing at all.
+    expect(l.rows.some((r) => r.inputs.length > 1)).toBe(true)
   })
 
   /** Belts that run backwards are worse than no diagram at all. */
@@ -53,17 +59,60 @@ describe('laying a plan out to build', () => {
     }
   })
 
-  it('never overlaps two machines in a row', () => {
+  it('never overlaps two machines on a line', () => {
     const { plan: p, settings } = plan('Desc_Rotor_C', 40)
     const l = layOut(p, settings)
-    for (const row of l.rows) {
-      const inRow = l.buildings
-        .filter((b) => b.row === row.index && b.kind === 'machine')
-        .sort((a, b) => a.x - b.x)
-      for (let i = 1; i < inRow.length; i++) {
-        expect(inRow[i].x).toBeGreaterThanOrEqual(inRow[i - 1].x + inRow[i - 1].w)
+    const machines = l.buildings.filter((b) => b.kind === 'machine')
+
+    // Machines wrap onto further lines, so "side by side" means sharing a y.
+    const byLine = new Map<string, typeof machines>()
+    for (const m of machines) {
+      const key = `${m.row}:${m.y}`
+      byLine.set(key, [...(byLine.get(key) ?? []), m])
+    }
+    for (const line of byLine.values()) {
+      const sorted = [...line].sort((a, b) => a.x - b.x)
+      for (let i = 1; i < sorted.length; i++) {
+        expect(sorted[i].x).toBeGreaterThanOrEqual(sorted[i - 1].x + sorted[i - 1].w)
       }
     }
+  })
+
+  /**
+   * A hundred-and-sixty-metre line is a legal factory nobody builds. Past a
+   * handful the machines wrap, which keeps a block a shape you would lay out.
+   */
+  it('wraps a big block instead of drawing one enormous line', () => {
+    const { plan: p, settings } = plan('Desc_IronPlateReinforced_C', 250)
+    const l = layOut(p, settings)
+    const big = l.rows.filter((r) => r.machines > 12)
+    expect(big.length).toBeGreaterThan(0)
+    for (const row of big) {
+      expect(row.lines).toBeGreaterThan(1)
+      expect(row.perLine).toBeLessThan(row.machines)
+    }
+  })
+
+  /**
+   * Iron rods go to the screws, the rotors and the modular frames. One belt per
+   * row left two of those apparently fed by nothing.
+   */
+  it('runs a main every consumer of an item can tap', () => {
+    const { plan: p, settings } = plan('Desc_ModularFrame_C', 10)
+    const l = layOut(p, settings)
+    let checked = 0
+
+    for (const row of l.rows) {
+      for (const port of row.inputs) {
+        const upstream = l.rows.some((r) => r.index < row.index
+          && r.outputs.some((o) => o.item.key === port.item.key))
+        if (!upstream) continue
+        checked++
+        expect(l.runs.some((r) => r.id === `main:${port.item.key}`)).toBe(true)
+        expect(l.runs.some((r) => r.id.startsWith(`tap:${port.item.key}:${row.index}:`))).toBe(true)
+      }
+    }
+    expect(checked).toBeGreaterThan(3)
   })
 
   /** Belts are drawn orthogonally, because that is how they are built. */
